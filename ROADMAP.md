@@ -74,7 +74,7 @@ Do not change pins from research alone. Sentinel is a Coolify-managed Linux/Dock
 
 ### Publication
 
-The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or current published history. No release tag exists. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`; the deployed EN/RU home and Quick Start language links resolve under `/solo-vps/`. Private Vulnerability Reporting is enabled; an independent reporter-path test remains. The hosted `fast-source` check still needs a green release-candidate run and branch policy. Repeat exact-ref scanning before tagging.
+The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or current published history. No release tag exists. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`; the deployed EN/RU home and Quick Start language links resolve under `/solo-vps/`, and both edit links target the right source file. Private Vulnerability Reporting is enabled; an independent reporter-path test remains. Hosted `Repository CI / fast-source` passed on `e6db58a`; require it in branch policy and repeat it on the eventual release commit. Repeat exact-ref scanning before tagging.
 
 ---
 
@@ -87,7 +87,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 3. On one disposable Ubuntu 24.04 VPS, prove clean install, second-run idempotency, supported Coolify upgrade/interruption recovery, whole-host DOWN/UP notification, and full lost-VPS reconstruction.
 4. Replay the exact candidate using only rendered public documentation and no ChatGPT or maintainer notes.
 5. Require a green hosted `Repository CI / fast-source` check for the release commit.
-6. Verify deployed edit links and test the enabled private vulnerability-reporting path from a reporter account.
+6. Test the enabled private vulnerability-reporting path from a reporter account.
 7. Before the release tag, repeat exact-ref history and archive scans for secrets and owner-specific state with the built-in check and an independent scanner.
 8. Prepare a dated `0.1.0` changelog entry, clean release dry-run, immutable tag and release notes.
 
@@ -108,7 +108,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-001 backup/restore/DR | PARTIAL V3 | B2, PostgreSQL restore and restic restore-test pass; clean replacement-host reconstruction pending |
 | CRIT-002 failed deploy rollback | DONE / V3 | failed immutable candidate restores the known-good image; database rollback excluded |
 | CRIT-003 workstation admin key | DONE / V3 | independent human key, sudo, root denial and hardening gate proven |
-| CRIT-004 hosted self-CI / clean target | SOURCE DONE / V2 | real upstream required check and disposable execution pending |
+| CRIT-004 hosted self-CI / clean target | HOSTED CHECK PASS / V2 | `fast-source` passed on `e6db58a`; branch policy, release-commit run and disposable execution pending |
 | CRIT-005 observability confidentiality | DONE / V3 | Repository-managed non-root Alloy uses a protected Unix socket boundary |
 | CRIT-006 Quick Start complexity | SOURCE DONE / V2 | two-part route and semantic values implemented; exact-candidate user replay pending |
 | CRIT-007 operator help surface | DONE / V2 | bounded `help`, `help-ops`, `help-dev`, `help-all` |
