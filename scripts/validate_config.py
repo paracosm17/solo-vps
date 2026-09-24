@@ -79,6 +79,15 @@ def validate_config(data: Any) -> None:
     server = require_mapping(data, "server")
     admin = require_mapping(data, "admin")
     firewall = require_mapping(data, "firewall")
+    if "evaluation" in data:
+        evaluation = data["evaluation"]
+        if not isinstance(evaluation, dict):
+            raise ConfigError("'evaluation' must be a YAML mapping when present")
+        if set(evaluation) != {"allow_small_vps"} or type(evaluation["allow_small_vps"]) is not bool:
+            raise ConfigError(
+                "'evaluation.allow_small_vps' must be an explicit boolean and the only evaluation setting"
+            )
+
     if "backup" in data:
         backup = data["backup"]
         if not isinstance(backup, dict):

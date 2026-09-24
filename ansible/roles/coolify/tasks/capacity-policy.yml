@@ -1,0 +1,22 @@
+---
+- name: Select capacity policy for this target
+  ansible.builtin.set_fact:
+    solo_vps_coolify_small_vps_evaluation: "{{ (evaluation | default({})).get('allow_small_vps', false) | bool }}"
+  changed_when: false
+
+- name: Set guarded capacity thresholds
+  ansible.builtin.set_fact:
+    solo_vps_coolify_required_cpu_count: >-
+      {{ 1 if solo_vps_coolify_small_vps_evaluation else solo_vps_coolify_minimum_cpu_count }}
+    solo_vps_coolify_required_free_disk_bytes: >-
+      {{ 10737418240 if solo_vps_coolify_small_vps_evaluation else solo_vps_coolify_minimum_free_disk_bytes }}
+  changed_when: false
+
+- name: Warn when using the unsupported small-VPS evaluation profile
+  ansible.builtin.debug:
+    msg: >-
+      UNSUPPORTED evaluation only: 1 vCPU, 2 GiB nominal RAM and 10 GiB free
+      root disk are experimental floors, not the Solo VPS supported baseline.
+      Watch free disk and memory closely. This run does not close v0.1.0
+      clean-host or recovery evidence gates.
+  when: solo_vps_coolify_small_vps_evaluation

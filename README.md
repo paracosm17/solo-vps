@@ -77,7 +77,7 @@ For normal onboarding, use `make apply` rather than assembling lower-level compo
 
 The supported alpha path is **one fresh Ubuntu 24.04 LTS VPS** with at least **2 vCPU, 2 GiB RAM and 30 GiB free disk**. You need root SSH access, provider recovery-console access, inbound TCP 22/80/443, a domain with DNS control, and a Windows PowerShell or Linux workstation with SSH/SCP. The runbook runs Make/Ansible on the VPS; WSL is also suitable when you need Linux tooling on a Windows workstation.
 
-Follow the two-part runbook in order. It includes every required command and UI action, with Windows PowerShell and Linux variants. The [source repository](https://github.com/paracosm17/solo-vps) is public, but there is no validated release or `v0.1.0` tag yet. For testing, select and record a reviewed full commit ID rather than assuming the latest `main` revision is release-ready.
+Follow the two-part runbook in order. It includes every required command and UI action, with Windows PowerShell and Linux variants. The [source repository](https://github.com/paracosm17/solo-vps) is public, but there is no validated release or `v0.1.0` tag yet. For pre-alpha testing, clone `main` as shown in the Quick Start. The checkout itself records its exact commit ID; no manual hash entry is required. The moving `main` branch is not a validated release.
 
 1. **[Set up the VPS and Coolify](docs/quick-start.md)** — from `apt-get update` to administrator access, secured SSH, Coolify registration and the dashboard over HTTPS.
 2. **[Deploy an application and enable CI/CD](docs/operations/first-app.md)** — GitHub repository, GHCR image, first deployment, dedicated CI key/account, GitHub/Coolify settings, automatic delivery, runtime ENV/secrets and live logs.

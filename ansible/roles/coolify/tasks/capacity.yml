@@ -1,4 +1,7 @@
 ---
+- name: Select guarded platform capacity policy
+  ansible.builtin.import_tasks: capacity-policy.yml
+
 - name: Read free space before installing the platform
   ansible.builtin.command:
     argv: ["{{ solo_vps_coolify_df_binary }}", --block-size=1, --output=avail, /]
@@ -8,10 +11,13 @@
 - name: Check the minimum platform capacity before host mutation
   ansible.builtin.assert:
     that:
-      - ansible_facts.get('processor_vcpus', 0) | int >= solo_vps_coolify_minimum_cpu_count
+      - ansible_facts.get('processor_vcpus', 0) | int >= solo_vps_coolify_required_cpu_count | int
       - ansible_facts.get('memtotal_mb', 0) | int >= solo_vps_coolify_minimum_memory_mb
-      - solo_vps_coolify_capacity_disk.stdout_lines[-1] | trim | int >= solo_vps_coolify_minimum_free_disk_bytes
+      - solo_vps_coolify_capacity_disk.stdout_lines[-1] | trim | int >= solo_vps_coolify_required_free_disk_bytes | int
     fail_msg: >-
-      This VPS is too small for the supported baseline. Provision at least 2 vCPU,
-      2 GiB RAM and 30 GiB free space on /. Allow additional capacity for your apps,
-      images and databases. No host baseline changes have been made by this check.
+      This VPS does not meet the selected capacity profile: at least
+      {{ solo_vps_coolify_required_cpu_count }} vCPU, 2 GiB nominal RAM and
+      {{ (solo_vps_coolify_required_free_disk_bytes | int / 1073741824) | int }} GiB
+      free on /. The supported baseline is 2 vCPU and 30 GiB free; the optional
+      evaluation.allow_small_vps profile is experimental only. No host baseline
+      changes have been made by this check.
