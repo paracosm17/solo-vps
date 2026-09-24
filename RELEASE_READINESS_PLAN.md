@@ -162,7 +162,7 @@ Create a fresh Ubuntu 24.04 VPS and use only the public rendered documentation f
 
 ### 6. Configure the GitHub release surface
 
-The first public source push is complete at `https://github.com/paracosm17/solo-vps`. The new one-commit history and working tree passed Gitleaks before publication. Verify `main` as the default branch, require a green hosted `Repository CI / fast-source` check, set Pages source to GitHub Actions and verify the deployed URLs, and enable/test private vulnerability reporting. Repeat exact-ref history and archive scans before any release tag. A demo application's CI result does not satisfy the repository CI gate.
+The first public source push is complete at `https://github.com/paracosm17/solo-vps`. The exported tree and new history passed Gitleaks before publication. `main` is the default branch, Pages now deploys from GitHub Actions, and Private Vulnerability Reporting is enabled. Require a green hosted `Repository CI / fast-source` check, verify the deployed EN/RU and edit links after `site_url` is committed, protect `main`, and test vulnerability reporting from a reporter account. Repeat exact-ref history and archive scans before any release tag. A demo application's CI result does not satisfy the repository CI gate.
 
 ### 7. Package and publish only after every prior stage passes
 

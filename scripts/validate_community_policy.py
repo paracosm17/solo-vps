@@ -20,7 +20,8 @@ SECURITY_REQUIRED = (
     "## How to report",
     "Private vulnerability reporting",
     "Do not put exploit details",
-    "The current source archive does not define a maintainer email",
+    "Use GitHub's **Report a vulnerability** flow",
+    "If the flow is unavailable, open only a minimal public issue",
     "no fixed response or remediation timeline is promised",
 )
 

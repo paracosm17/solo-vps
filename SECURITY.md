@@ -30,9 +30,7 @@ Application-specific vulnerabilities in software merely deployed through Coolify
 
 **Do not put exploit details, live IP addresses, tokens, private keys, credentials, or production configuration in a public issue.**
 
-When the public GitHub repository has **Private vulnerability reporting** enabled, use GitHub's **Report a vulnerability** flow so the report reaches maintainers privately.
-
-The current source archive does not define a maintainer email and cannot prove that GitHub private vulnerability reporting is enabled. Until the repository owner configures a private channel, open only a minimal public issue asking for a private security contact; do not include vulnerability details in that issue.
+For [this repository](https://github.com/paracosm17/solo-vps/security), **Private vulnerability reporting** is enabled. Use GitHub's **Report a vulnerability** flow so the report reaches maintainers privately. If the flow is unavailable, open only a minimal public issue asking for a private security contact; do not include vulnerability details in that issue.
 
 A useful private report should contain:
 

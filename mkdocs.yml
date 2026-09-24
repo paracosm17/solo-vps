@@ -23,9 +23,7 @@ not_in_nav: |
   operations/grafana-cloud-log-drain*.md
   adr/*.md
 
-# After the first Pages deployment, set site_url to its actual URL (including
-# /solo-vps/ and trailing slash for a project site). Verify EN/RU language and
-# edit links on the deployed site. Never use a placeholder documentation URL.
+site_url: https://paracosm17.github.io/solo-vps/
 repo_url: https://github.com/paracosm17/solo-vps
 edit_uri: edit/main/docs/
 

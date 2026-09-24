@@ -11,7 +11,7 @@ import unittest
 
 if os.name == "posix":
     from ansible.parsing.dataloader import DataLoader
-    from ansible.template import Templar
+    from ansible.template import Templar, trust_as_template
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,7 +30,7 @@ class DockerVersionTemplateTests(unittest.TestCase):
     def render_facts(self, name, variables):
         templar = Templar(loader=self.loader, variables=variables)
         return {
-            key: templar.template(value)
+            key: templar.template(trust_as_template(value))
             for key, value in self.task(name)["ansible.builtin.set_fact"].items()
         }
 

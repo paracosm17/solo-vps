@@ -7,7 +7,7 @@ import unittest
 
 if os.name == "posix":
     from ansible.parsing.dataloader import DataLoader
-    from ansible.template import Templar
+    from ansible.template import Templar, trust_as_template
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,7 +27,7 @@ class FirewallListenerTemplateTests(unittest.TestCase):
     def render(self, sockets):
         return Templar(loader=self.loader, variables={
             "solo_vps_firewall_tcp_listeners": {"stdout": sockets},
-        }).template(self.expression)
+        }).template(trust_as_template(self.expression))
 
     def test_only_local_wildcard_addresses_are_reported(self):
         sockets = "\n".join([
