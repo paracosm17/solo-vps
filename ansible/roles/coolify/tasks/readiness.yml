@@ -1,4 +1,7 @@
 ---
+- name: Select guarded platform capacity policy
+  ansible.builtin.import_tasks: capacity-policy.yml
+
 - name: Validate Coolify integration contract inputs
   ansible.builtin.import_tasks: assert-config.yml
 
@@ -113,16 +116,18 @@
       - (solo_vps_coolify_compose_version.stdout | trim | regex_replace('^v', '')) is version(solo_vps_coolify_minimum_compose_version, '>=')
       - solo_vps_coolify_docker_config_state.stat.exists
       - solo_vps_coolify_docker_config == solo_vps_coolify_expected_docker_config
-      - ansible_facts.get('processor_vcpus', 0) | int >= solo_vps_coolify_minimum_cpu_count
+      - ansible_facts.get('processor_vcpus', 0) | int >= solo_vps_coolify_required_cpu_count | int
       - ansible_facts.get('memtotal_mb', 0) | int >= solo_vps_coolify_minimum_memory_mb
-      - solo_vps_coolify_root_free_bytes | int >= solo_vps_coolify_minimum_free_disk_bytes
+      - solo_vps_coolify_root_free_bytes | int >= solo_vps_coolify_required_free_disk_bytes | int
       - solo_vps_coolify_busy_management_ports | length == 0
       - not solo_vps_coolify_existing_data
       - solo_vps_coolify_container_probe.rc != 0
     fail_msg: >-
       Coolify first-install readiness failed. Required state: Docker Engine 29.x and
       Docker Compose >= 2.24.4 from M7, the exact Ansible-owned daemon.json baseline with no
-      Coolify drift, at least 2 vCPU / 2 GiB RAM / 30 GiB free root filesystem,
+      Coolify drift, at least {{ solo_vps_coolify_required_cpu_count }} vCPU /
+      2 GiB nominal RAM / {{ (solo_vps_coolify_required_free_disk_bytes | int / 1073741824) | int }} GiB
+      free root filesystem (supported baseline: 2 vCPU / 30 GiB free),
       free management ports 8000/6001/6002, and no pre-existing /data/coolify
       or 'coolify' container. Existing Coolify hosts require a separate
       reconciliation/upgrade path and are intentionally not adopted implicitly. If this

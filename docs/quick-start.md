@@ -13,9 +13,9 @@ Prepare:
 - inbound TCP ports **22, 80, 443** allowed by the provider;
 - a Windows PowerShell or Linux workstation with `ssh` and `scp`;
 - a domain and access to its DNS records;
-- Solo VPS source: a repository URL and selected full commit ID, or the ZIP archive supplied for testing; keep the same source revision available on your workstation as well as the VPS.
+- access to the public Solo VPS repository (or a separately supplied test ZIP); you will also need the same source on your workstation in part two.
 
-**PRE-ALPHA:** use a test VPS for now. The [source repository](https://github.com/paracosm17/solo-vps) is public, but there is no validated release yet. Record the full commit ID selected for your test.
+**PRE-ALPHA:** use a disposable VPS for now. The [source repository](https://github.com/paracosm17/solo-vps) is public, but there is no validated release yet. The command below clones the current `main`; `git rev-parse HEAD` reports its exact revision automatically if you need it for an evidence report.
 
 This is the supported one-VPS alpha setup. Make/Ansible run on the VPS in the steps below; Windows PowerShell handles workstation SSH/SCP. If you run Linux-side project tools on Windows, use WSL. The exact release revision has not yet passed the clean-host and recovery gates; do not use this path as a production guarantee.
 
@@ -27,7 +27,6 @@ Choose these values before you start:
 | `ADMIN_USER` | The Linux administrator name you want Solo VPS to create |
 | `COOLIFY_DOMAIN` | Your Coolify dashboard domain, for example `coolify.example.com` |
 | `REPOSITORY_URL` | `https://github.com/paracosm17/solo-vps.git` |
-| `REVIEWED_REVISION` | The selected full commit ID |
 
 The project directory remains `solo-vps`. Commands below define their variables before use; replace every `YOUR_...` value. External backup storage, Grafana and another server are not required.
 
@@ -64,21 +63,18 @@ apt-get install -y --no-install-recommends make git nano ca-certificates
 
 The first command refreshes package indexes; the second installs the tools needed to obtain and configure the project.
 
-Use the Git path with the public repository URL and the full commit ID selected for this test. After `v0.1.0` is released, use the full commit ID pointed to by that tag. The ZIP path remains for a separately supplied test archive.
+For this test, clone the public `main` branch. Once a release tag exists, use `git clone --branch v0.1.0 --depth 1 https://github.com/paracosm17/solo-vps.git solo-vps`. The ZIP path is for a separately supplied test archive only.
 
 === "Git"
 
     **On the VPS as root:**
 
     ```bash
-    REPOSITORY_URL='https://github.com/paracosm17/solo-vps.git'
-    REVIEWED_REVISION='YOUR_REVIEWED_FULL_COMMIT_ID'
-    git clone "$REPOSITORY_URL" solo-vps
+    git clone https://github.com/paracosm17/solo-vps.git solo-vps
     cd solo-vps
-    git checkout --detach "$REVIEWED_REVISION"
     ```
 
-    You are now in the selected Solo VPS revision.
+    You are now in the Solo VPS directory. Run `git rev-parse HEAD` to record the exact revision for an evidence report; you do not need to enter it for installation.
 
 === "ZIP"
 
@@ -115,7 +111,7 @@ Use the Git path with the public repository URL and the full commit ID selected 
 
     This directory contains `Makefile`, `scripts` and `ansible`. Keep the same source copy on your workstation for part two.
 
-Before continuing, make sure that the **same Solo VPS revision is also available on your workstation**. Later chapters run project helpers there. If you used Git only on the VPS, clone `REPOSITORY_URL` on the workstation and check out the same `REVIEWED_REVISION`. If you used ZIP, keep that same ZIP unpacked locally.
+Some helpers in part two run on your workstation. After the admin handoff in step 7, copy the same `~/solo-vps` source directory from the VPS to your workstation using the commands there. This preserves the exact source revision without copying a hash manually.
 
 ## 3. Prepare the project and edit its configuration
 
@@ -143,6 +139,13 @@ These are fields to edit, not a replacement for the whole file. Preserve the oth
 `hostname` is the server's short name. You can keep `timezone` set to `UTC`.
 
 Save the file: **Ctrl+O → Enter → Ctrl+X**.
+
+**Only for a separate disposable 1 vCPU / 20 GiB VPS:** add the following section to the same config file. This permits one vCPU and at least 10 GiB **free** on `/` while retaining the RAM minimum. It is experimental and cannot close release evidence gates for the supported configuration. Watch free disk closely. Omit it on a supported VPS.
+
+```yaml
+evaluation:
+  allow_small_vps: true
+```
 
 ## 4. Send your administrator public key
 
@@ -273,6 +276,26 @@ cd ~/solo-vps
 ```
 
 Run subsequent server commands here as the configured administrator.
+
+**On your workstation, in the directory where you want to keep the source for part two:**
+
+=== "Windows PowerShell"
+
+    ```powershell
+    $ServerIp = 'YOUR_SERVER_IP'
+    $AdminUser = 'YOUR_ADMIN_USER'
+    scp -r "${AdminUser}@${ServerIp}:solo-vps" .
+    ```
+
+=== "Linux"
+
+    ```bash
+    SERVER_IP='YOUR_SERVER_IP'
+    ADMIN_USER='YOUR_ADMIN_USER'
+    scp -r "${ADMIN_USER}@${SERVER_IP}:solo-vps" .
+    ```
+
+If `solo-vps` already exists locally, choose another empty destination directory; do not overwrite local files.
 
 ## 8. Install Coolify
 
