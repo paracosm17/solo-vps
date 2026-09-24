@@ -1,0 +1,17 @@
+# Project-local Codex defaults. Codex reads this file only for trusted projects.
+# Keep the primary agent capable enough for end-to-end implementation; use
+# cheaper subagents for bounded exploration and repetitive work.
+
+model = "gpt-6-sol"
+model_reasoning_effort = "medium"
+review_model = "gpt-6-sol"
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+network_access = false
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 3
+default_subagent_model = "gpt-6-luna"
+default_subagent_reasoning_effort = "high"

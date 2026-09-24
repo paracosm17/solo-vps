@@ -1,0 +1,13 @@
+---
+- name: Validate Grafana Alloy host tooling contract
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.architecture in solo_vps_alloy_artifacts
+      - solo_vps_alloy_version | length > 0
+      - solo_vps_alloy_install_path == '/usr/local/bin/alloy'
+      - solo_vps_alloy_dpkg_deb_binary == '/usr/bin/dpkg-deb'
+      - solo_vps_alloy_artifacts[ansible_facts.architecture].url is match('^https://github\\.com/grafana/alloy/releases/download/v[0-9]+\\.[0-9]+\\.[0-9]+/alloy-[0-9]+\\.[0-9]+\\.[0-9]+-1\\.(amd64|arm64)\\.deb$')
+      - solo_vps_alloy_artifacts[ansible_facts.architecture].sha256 is match('^[0-9a-f]{64}$')
+    fail_msg: >-
+      Grafana Alloy tooling inputs are outside the supported Solo VPS contract.
+      Refusing to install unpinned or unsupported observability tooling.

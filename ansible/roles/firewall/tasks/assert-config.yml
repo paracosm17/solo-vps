@@ -1,0 +1,16 @@
+---
+- name: Confirm firewall configuration is safe to consume
+  ansible.builtin.assert:
+    that:
+      - firewall is defined
+      - firewall is mapping
+      - firewall.public_ports is defined
+      - firewall.public_ports is sequence
+      - firewall.public_ports is not string
+      - firewall.public_ports is not mapping
+      - firewall.public_ports | select('integer') | list | length == firewall.public_ports | length
+      - firewall.public_ports | unique | length == firewall.public_ports | length
+      - firewall.public_ports | difference(solo_vps_firewall_supported_public_ports) | length == 0
+    fail_msg: >-
+      firewall.public_ports must be a duplicate-free YAML list containing only
+      the currently supported public TCP edge ports: 80 and/or 443.

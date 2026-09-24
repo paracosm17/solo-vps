@@ -1,0 +1,19 @@
+---
+solo_vps_sshd_binary: /usr/sbin/sshd
+solo_vps_sshd_main_config: /etc/ssh/sshd_config
+solo_vps_sshd_dropin_dir: /etc/ssh/sshd_config.d
+solo_vps_sshd_hardening_path: /etc/ssh/sshd_config.d/00-solo-vps-hardening.conf
+solo_vps_sshd_hardened_marker: /var/lib/solo-vps/ssh-hardened
+solo_vps_sshd_service: ssh.service
+solo_vps_sshd_reconnect_timeout: 30
+solo_vps_sshd_expected_effective_options:
+  - permitrootlogin no
+  - passwordauthentication no
+  - kbdinteractiveauthentication no
+  - pubkeyauthentication yes
+  - permitemptypasswords no
+solo_vps_ssh_hardening_confirm: ""
+solo_vps_ssh_hardening_confirm_required: I_HAVE_VERIFIED_PROVIDER_RECOVERY
+
+solo_vps_ssh_human_login_confirm: ""
+solo_vps_ssh_human_login_confirm_required: I_HAVE_VERIFIED_WORKSTATION_ADMIN_LOGIN

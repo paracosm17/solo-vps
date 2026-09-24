@@ -1,0 +1,11 @@
+---
+- name: Verify Solo VPS host firewall baseline
+  hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Run firewall role verification tasks
+      ansible.builtin.import_role:
+        name: firewall
+        tasks_from: verify

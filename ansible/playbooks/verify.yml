@@ -1,0 +1,17 @@
+---
+- name: Run target preflight before aggregate verification
+  ansible.builtin.import_playbook: preflight.yml
+- name: Verify the base system baseline
+  ansible.builtin.import_playbook: verify-base.yml
+- name: Verify the administrative identity baseline
+  ansible.builtin.import_playbook: verify-users.yml
+- name: Verify the host firewall baseline
+  ansible.builtin.import_playbook: verify-firewall.yml
+- name: Verify the automatic security update baseline
+  ansible.builtin.import_playbook: verify-updates.yml
+- name: Verify the Docker host baseline
+  ansible.builtin.import_playbook: verify-docker.yml
+- name: Verify every completed managed platform phase
+  ansible.builtin.import_playbook: verify-managed.yml
+- name: Report the platform verification summary
+  ansible.builtin.import_playbook: verify-platform.yml

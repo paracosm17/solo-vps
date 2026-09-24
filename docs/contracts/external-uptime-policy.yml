@@ -1,0 +1,41 @@
+version: 1
+owner: external-http-monitor
+
+purpose:
+  detect_total_vps_loss: true
+  same_vps_monitor_is_not_sufficient: true
+
+health_target:
+  kind: public-application-health-endpoint
+  scheme: https
+  method: GET
+  expected_status: 200
+  authentication: none
+  follow_redirects: false
+  raw_coolify_management_ports_allowed: false
+
+monitor_policy:
+  default_interval_seconds: 300
+  min_interval_seconds: 60
+  max_interval_seconds: 300
+  default_timeout_seconds: 10
+  min_timeout_seconds: 1
+  max_timeout_seconds: 10
+  provider_confirmation_retries_required: true
+  max_alert_detection_seconds: 660
+  max_recovery_notification_seconds: 600
+
+notification:
+  destination_must_be_off_vps: true
+  test_notification_required: true
+  outage_alert_required: true
+  recovery_notification_required: true
+
+validation:
+  provider_api_automation_required: false
+  source_plan_makes_network_request: false
+  source_plan_mutates_provider: false
+  crit015_v3_requires_whole_target_shutdown: true
+  provider_event_or_ui_artifact_review_required: true
+  provider_artifact_sha256_required: true
+  evidence_must_not_store_health_url: true

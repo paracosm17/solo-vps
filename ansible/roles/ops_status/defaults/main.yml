@@ -1,0 +1,8 @@
+---
+solo_vps_ops_uptime_binary: /usr/bin/uptime
+solo_vps_ops_free_binary: /usr/bin/free
+solo_vps_ops_df_binary: /usr/bin/df
+solo_vps_ops_systemctl_binary: /usr/bin/systemctl
+solo_vps_ops_docker_binary: /usr/bin/docker
+solo_vps_ops_coolify_health_url: http://127.0.0.1:8000/api/health
+solo_vps_ops_coolify_health_timeout: 3

@@ -1,0 +1,136 @@
+---
+- name: Validate Coolify integration contract inputs for explicit upgrade recovery
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Inspect the Coolify upgrade transaction marker
+  ansible.builtin.stat:
+    path: "{{ solo_vps_coolify_upgrade_pending_marker }}"
+  register: solo_vps_coolify_upgrade_resume_marker_state
+
+- name: Require an interrupted Solo VPS Coolify upgrade transaction
+  ansible.builtin.assert:
+    that:
+      - solo_vps_coolify_upgrade_resume_marker_state.stat.exists
+      - solo_vps_coolify_upgrade_resume_marker_state.stat.isreg
+      - solo_vps_coolify_upgrade_resume_marker_state.stat.mode == '0600'
+    fail_msg: >-
+      No protected Solo VPS Coolify upgrade transaction exists. The resume path is
+      only for a known interrupted previous_supported -> current_supported upgrade.
+
+- name: Read the interrupted Coolify upgrade transaction
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_coolify_upgrade_pending_marker }}"
+  register: solo_vps_coolify_upgrade_resume_marker_raw
+
+- name: Validate the exact interrupted previous_supported/current_supported pair
+  ansible.builtin.assert:
+    that:
+      - "'managed_by=solo-vps' in (solo_vps_coolify_upgrade_resume_marker_raw.content | b64decode)"
+      - "('previous_supported=' ~ solo_vps_coolify_previous_supported_version) in (solo_vps_coolify_upgrade_resume_marker_raw.content | b64decode)"
+      - "('current_supported=' ~ solo_vps_coolify_version) in (solo_vps_coolify_upgrade_resume_marker_raw.content | b64decode)"
+      - "('from_version=' ~ solo_vps_coolify_previous_supported_version) in (solo_vps_coolify_upgrade_resume_marker_raw.content | b64decode)"
+      - "('to_version=' ~ solo_vps_coolify_version) in (solo_vps_coolify_upgrade_resume_marker_raw.content | b64decode)"
+      - solo_vps_coolify_upgrade_resume_confirm | default('') == 'I_HAVE_REVIEWED_THE_INTERRUPTED_COOLIFY_UPGRADE'
+    fail_msg: >-
+      Interrupted upgrade identity or confirmation does not match the supported
+      previous_supported -> current_supported transition. Solo VPS refuses automatic downgrade:
+      Coolify database migrations may already have run. Use the M16 restore path with the
+      verified pre-upgrade instance database backup if forward resume is not safe.
+
+- name: Re-download exact current supported Coolify artifacts for forward resume
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ solo_vps_coolify_source_dir }}/{{ item.name }}"
+    checksum: "{{ item.checksum }}"
+    owner: "9999"
+    group: "0"
+    mode: "0600"
+  loop: "{{ solo_vps_coolify_release_artifacts }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Reassert current supported image and disabled automatic updates for forward resume
+  ansible.builtin.lineinfile:
+    path: "{{ solo_vps_coolify_env_path }}"
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+    owner: "9999"
+    group: "0"
+    mode: "0600"
+  loop:
+    - key: LATEST_IMAGE
+      value: "{{ solo_vps_coolify_version }}"
+    - key: AUTOUPDATE
+      value: "false"
+
+- name: Validate the current supported Compose model before forward resume
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - compose
+      - --env-file
+      - "{{ solo_vps_coolify_env_path }}"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/docker-compose.yml"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/docker-compose.prod.yml"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/{{ solo_vps_coolify_compose_override_filename }}"
+      - config
+      - --quiet
+  changed_when: false
+  no_log: true
+
+- name: Retry only the current supported Coolify target
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - compose
+      - --env-file
+      - "{{ solo_vps_coolify_env_path }}"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/docker-compose.yml"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/docker-compose.prod.yml"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/{{ solo_vps_coolify_compose_override_filename }}"
+      - up
+      - -d
+      - --pull
+      - always
+      - --remove-orphans
+      - --force-recreate
+  changed_when: true
+
+- name: Reconcile proxy access after forward resume
+  ansible.builtin.import_tasks: reconcile-runtime-access.yml
+
+- name: Reconcile proxy publications after forward resume
+  ansible.builtin.import_tasks: reconcile-proxy.yml
+
+- name: Verify current supported runtime after forward resume
+  ansible.builtin.import_tasks: verify-runtime.yml
+
+- name: Commit current supported Coolify ownership after successful forward resume
+  ansible.builtin.copy:
+    dest: "{{ solo_vps_coolify_managed_marker }}"
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      managed_by=solo-vps
+      coolify_version={{ solo_vps_coolify_version }}
+      localhost_user={{ admin.user }}
+
+- name: Remove target staging after successful forward resume
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_upgrade_staging_dir }}"
+    state: absent
+
+- name: Remove the interrupted Coolify upgrade marker only after successful verification
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_upgrade_pending_marker }}"
+    state: absent
+
+- name: Run full current supported Coolify verification after forward resume
+  ansible.builtin.import_tasks: verify.yml

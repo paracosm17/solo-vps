@@ -1,0 +1,10 @@
+---
+- name: Verify the Solo VPS host metrics runtime
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Verify host metrics runtime
+      ansible.builtin.import_role:
+        name: metrics
+        tasks_from: verify-runtime.yml

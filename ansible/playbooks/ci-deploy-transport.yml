@@ -1,0 +1,8 @@
+---
+- name: Configure the restricted Solo VPS CI deployment transport
+  hosts: all
+  gather_facts: false
+  become: true
+
+  roles:
+    - role: ci_deploy_transport

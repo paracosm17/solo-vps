@@ -1,0 +1,7 @@
+---
+- name: Apply the Solo VPS automatic security update baseline
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - role: updates

@@ -1,0 +1,20 @@
+---
+- name: Confirm SSH hardening configuration is safe to consume
+  ansible.builtin.assert:
+    that:
+      - admin is defined
+      - admin is mapping
+      - admin.user is defined
+      - admin.user is string
+      - admin.user | length > 0
+      - admin.user != 'root'
+      - admin.user is match('^[a-z_][a-z0-9_-]{0,31}$')
+      - admin.human_ssh_public_key is defined
+      - admin.human_ssh_public_key is string
+      - admin.human_ssh_public_key | trim | length > 0
+      - "'PRIVATE KEY' not in (admin.human_ssh_public_key | upper)"
+    fail_msg: >-
+      SSH hardening requires the validated non-root admin identity and an explicit
+      human workstation public key. Complete the additive admin identity slice
+      and external workstation-login proof before activation; never copy a
+      workstation private key onto the VPS.

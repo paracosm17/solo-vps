@@ -1,0 +1,13 @@
+---
+- name: Run target preflight before backup readiness checks
+  ansible.builtin.import_playbook: preflight.yml
+
+- name: Check M14 backup policy readiness without repository access
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Run read-only backup policy readiness checks
+      ansible.builtin.import_role:
+        name: backup
+        tasks_from: readiness

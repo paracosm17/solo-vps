@@ -1,0 +1,11 @@
+---
+- name: Verify Solo VPS base system baseline
+  hosts: all
+  gather_facts: true
+  become: false
+
+  tasks:
+    - name: Run base role verification tasks
+      ansible.builtin.import_role:
+        name: base
+        tasks_from: verify

@@ -1,0 +1,1289 @@
+/*
+ * Solo VPS documentation UI
+ *
+ * Goal: a dense, readable developer-documentation shell. Navigation is always
+ * visible on desktop, hierarchy is explicit, surfaces stay neutral, and color
+ * is reserved for links, focus and active state.
+ */
+
+:root {
+  --solo-accent: #356a8a;
+  --solo-accent-strong: #28566f;
+  --solo-radius: 7px;
+  --solo-radius-lg: 9px;
+  --solo-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --solo-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+[data-md-color-scheme="solo-light"] {
+  color-scheme: light;
+  --solo-accent: #356a8a;
+  --solo-accent-strong: #28566f;
+  --md-primary-fg-color: #f6f8fa;
+  --md-primary-bg-color: #1f2328;
+  --md-accent-fg-color: #356a8a;
+  --md-default-bg-color: #ffffff;
+  --md-default-fg-color: #1f2328;
+  --md-default-fg-color--light: #59636e;
+  --md-typeset-color: #1f2328;
+  --md-typeset-a-color: #356a8a;
+  --md-code-bg-color: #f6f8fa;
+  --md-code-fg-color: #1f2328;
+  --md-code-hl-color: #ddf4ff;
+  --md-code-hl-color--light: rgba(9, 105, 218, 0.10);
+  --md-code-hl-number-color: #28566f;
+  --md-code-hl-special-color: #cf222e;
+  --md-code-hl-function-color: #8250df;
+  --md-code-hl-constant-color: #953800;
+  --md-code-hl-keyword-color: #cf222e;
+  --md-code-hl-string-color: #0a3069;
+  --md-code-hl-name-color: #1f2328;
+  --md-code-hl-operator-color: #57606a;
+  --md-code-hl-punctuation-color: #57606a;
+  --md-code-hl-comment-color: #6e7781;
+  --md-code-hl-generic-color: #356a8a;
+  --md-code-hl-variable-color: #953800;
+  --solo-shell-command: #28566f;
+  --solo-shell-option: #8250df;
+  --solo-header: #f6f8fa;
+  --solo-sidebar: #f6f8fa;
+  --solo-surface: #f6f8fa;
+  --solo-surface-raised: #ffffff;
+  --solo-border: #d0d7de;
+  --solo-border-strong: #afb8c1;
+  --solo-muted: #59636e;
+  --solo-nav-text: #424a53;
+  --solo-nav-heading: #1f2328;
+  --solo-text: #1f2328;
+  --solo-code-border: #d0d7de;
+  --solo-active: #e5eef3;
+  --solo-hover: #eaeef2;
+  --solo-warning-bg: #fff8c5;
+  --solo-warning-border: #bf8700;
+}
+
+[data-md-color-scheme="solo-dark"] {
+  color-scheme: dark;
+  --md-hue: 215;
+  --solo-accent: #78a9c4;
+  --solo-accent-strong: #9bc2d6;
+  --md-primary-fg-color: #010409;
+  --md-primary-bg-color: #f0f6fc;
+  --md-accent-fg-color: #78a9c4;
+  --md-default-bg-color: #0d1117;
+  --md-default-fg-color: #f0f6fc;
+  --md-default-fg-color--light: #8b949e;
+  --md-typeset-color: #c9d1d9;
+  --md-typeset-a-color: #78a9c4;
+  --md-code-bg-color: #010409;
+  --md-code-fg-color: #e6edf3;
+  --md-code-hl-color: #1f6feb;
+  --md-code-hl-color--light: rgba(56, 139, 253, 0.16);
+  --md-code-hl-number-color: #79c0ff;
+  --md-code-hl-special-color: #ffa657;
+  --md-code-hl-function-color: #d2a8ff;
+  --md-code-hl-constant-color: #79c0ff;
+  --md-code-hl-keyword-color: #ff7b72;
+  --md-code-hl-string-color: #a5d6ff;
+  --md-code-hl-name-color: #e6edf3;
+  --md-code-hl-operator-color: #f0f6fc;
+  --md-code-hl-punctuation-color: #8b949e;
+  --md-code-hl-comment-color: #8b949e;
+  --md-code-hl-generic-color: #78a9c4;
+  --md-code-hl-variable-color: #ffa657;
+  --solo-shell-command: #9bc2d6;
+  --solo-shell-option: #d2a8ff;
+  --solo-header: #010409;
+  --solo-sidebar: #0d1117;
+  --solo-surface: #161b22;
+  --solo-surface-raised: #21262d;
+  --solo-border: #30363d;
+  --solo-border-strong: #484f58;
+  --solo-muted: #8b949e;
+  --solo-nav-text: #b1bac4;
+  --solo-nav-heading: #f0f6fc;
+  --solo-text: #f0f6fc;
+  --solo-code-border: #30363d;
+  --solo-active: #1b2931;
+  --solo-hover: #161b22;
+  --solo-warning-bg: #272115;
+  --solo-warning-border: #9e6a03;
+}
+
+/* Material is designed around a 20px root. Do not shrink it to 16px: that
+ * makes the entire documentation chrome (sidebars, TOC, header) 20% smaller. */
+html {
+  font-size: 125%;
+}
+
+body,
+input,
+button,
+select,
+textarea {
+  font-family: var(--solo-font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--solo-font-mono);
+}
+
+body {
+  background: var(--md-default-bg-color);
+}
+
+.md-grid {
+  max-width: none;
+}
+
+/* Header ---------------------------------------------------------------- */
+
+.md-header {
+  background: var(--solo-header);
+  color: var(--solo-text);
+  border-bottom: 1px solid var(--solo-border);
+  box-shadow: none;
+}
+
+.md-header__inner {
+  min-height: 3rem;
+}
+
+.md-header__title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: -0.012em;
+}
+
+.md-header__button {
+  color: var(--solo-muted);
+}
+
+.md-header__button:hover {
+  color: var(--solo-text);
+  opacity: 1;
+}
+
+.md-logo img,
+.md-header__button.md-logo img {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.md-search__form {
+  border: 1px solid var(--solo-border);
+  border-radius: 7px;
+  background: var(--solo-surface);
+  box-shadow: none;
+}
+
+.md-search__form:hover,
+.md-search__form:focus-within {
+  border-color: var(--solo-border-strong);
+  background: var(--solo-surface-raised);
+}
+
+.md-search__input {
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.md-search__icon {
+  color: var(--solo-muted);
+}
+
+.md-main__inner {
+  margin-top: 0;
+}
+
+/* Primary navigation ---------------------------------------------------- */
+
+/*
+ * IMPORTANT: Material uses a layered, pane-based navigation model below its
+ * tablet breakpoint. The desktop sidebar customizations below deliberately
+ * do not apply there: overriding nested .md-nav positioning/surfaces on mobile
+ * makes multiple navigation panes visible at once. Keep mobile navigation on
+ * Material's native layout and customize only the desktop sidebar.
+ */
+@media screen and (min-width: 76.25em) {
+  .md-sidebar--primary {
+    border-right: 1px solid var(--solo-border);
+    background: var(--solo-sidebar);
+  }
+
+  .md-sidebar--primary .md-sidebar__scrollwrap {
+    margin: 0;
+    padding: 0.2rem 0.72rem 2rem;
+    background: var(--solo-sidebar) !important;
+    scrollbar-color: var(--solo-border-strong) transparent;
+    scrollbar-width: thin;
+  }
+
+  .md-sidebar--primary .md-sidebar__inner,
+  .md-sidebar--primary .md-nav--primary,
+  .md-sidebar--primary .md-nav--primary > .md-nav__list {
+    background: var(--solo-sidebar) !important;
+  }
+
+  .md-sidebar--primary .md-nav--primary > .md-nav__title {
+    display: none;
+  }
+
+  /* Nested Material navs must not introduce their own dark surfaces. The desktop
+   * sidebar is one continuous navigation panel; back/title bars are mobile UI. */
+  .md-sidebar--primary nav.md-nav,
+  .md-sidebar--primary .md-nav__list {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* Material's nested mobile title/back surface must consume no desktop space.
+   * Hiding only the text can still leave a sticky blank strip above the tree. */
+  .md-sidebar--primary .md-nav__title,
+  .md-sidebar--primary .md-nav__title::before,
+  .md-sidebar--primary .md-nav__title::after {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .md-sidebar--primary .md-sidebar__scrollwrap::before,
+  .md-sidebar--primary .md-sidebar__scrollwrap::after {
+    display: none !important;
+  }
+
+  /* Top-level sections: visible hierarchy anchors, not tiny metadata labels. */
+  .md-sidebar--primary .md-nav__item--section {
+    margin: 0 0 0.58rem;
+  }
+
+  .md-sidebar--primary .md-nav__item--section > .md-nav__link,
+  .md-sidebar--primary .md-nav__item--section > label.md-nav__link {
+    display: flex;
+    align-items: center;
+    gap: 0.48rem;
+    min-height: 1.4rem;
+    margin: 0 0 0.12rem;
+    padding: 0.18rem 0.38rem;
+    color: var(--solo-nav-text);
+    font-size: 0.72rem;
+    font-weight: 620;
+    line-height: 1.25;
+    letter-spacing: 0.01em;
+    text-transform: none;
+  }
+
+  /* The two guided routes are the primary product journey. Reference trees
+   * stay visible, but do not compete with setup tasks. */
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(-n + 2) > .md-nav__link,
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(-n + 2) > label.md-nav__link {
+    color: var(--solo-nav-heading);
+    font-weight: 760;
+  }
+
+  .md-sidebar--primary .md-nav__item--section > .md-nav__link .md-nav__icon,
+  .md-sidebar--primary .md-nav__item--section > label.md-nav__link .md-nav__icon {
+    display: none;
+  }
+
+  .md-sidebar--primary .md-nav__item--section > .md-nav__link::before,
+  .md-sidebar--primary .md-nav__item--section > label.md-nav__link::before {
+    content: "";
+    width: 0.85rem;
+    height: 0.85rem;
+    flex: 0 0 0.85rem;
+    background: var(--solo-muted);
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: contain;
+  }
+
+  .md-sidebar--primary .md-nav__item--section.md-nav__item--active > .md-nav__link,
+  .md-sidebar--primary .md-nav__item--section.md-nav__item--active > label.md-nav__link {
+    color: var(--solo-text);
+  }
+
+  .md-sidebar--primary .md-nav__item--section.md-nav__item--active > .md-nav__link::before,
+  .md-sidebar--primary .md-nav__item--section.md-nav__item--active > label.md-nav__link::before {
+    background: var(--solo-accent);
+  }
+
+  /* Basic setup */
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(1) > .md-nav__link::before,
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(1) > label.md-nav__link::before {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-basis: 0.95rem;
+    background: var(--solo-accent);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M12 3l2.4 4.9L20 9l-4 3.9.9 5.6L12 16l-4.9 2.5.9-5.6L4 9l5.6-1.1L12 3Z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M12 3l2.4 4.9L20 9l-4 3.9.9 5.6L12 16l-4.9 2.5.9-5.6L4 9l5.6-1.1L12 3Z'/%3E%3C/svg%3E");
+  }
+
+  /* After basic setup */
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(2) > .md-nav__link::before,
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(2) > label.md-nav__link::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M5 12.5 9 16l10-10M5 6h5M5 19h14'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M5 12.5 9 16l10-10M5 6h5M5 19h14'/%3E%3C/svg%3E");
+  }
+
+  /* Deploy */
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(3) > .md-nav__link::before,
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(3) > label.md-nav__link::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M4 12a8 8 0 1 0 2.3-5.7L4 8.6M4 4v4.6h4.6'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M4 12a8 8 0 1 0 2.3-5.7L4 8.6M4 4v4.6h4.6'/%3E%3C/svg%3E");
+  }
+
+  /* Backup and recovery */
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(4) > .md-nav__link::before,
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(4) > label.md-nav__link::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='4' y='4' width='16' height='6' rx='1' fill='none' stroke='black' stroke-width='2'/%3E%3Crect x='4' y='14' width='16' height='6' rx='1' fill='none' stroke='black' stroke-width='2'/%3E%3Cpath d='M7 7h.01M7 17h.01' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='4' y='4' width='16' height='6' rx='1' fill='none' stroke='black' stroke-width='2'/%3E%3Crect x='4' y='14' width='16' height='6' rx='1' fill='none' stroke='black' stroke-width='2'/%3E%3Cpath d='M7 7h.01M7 17h.01' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E");
+  }
+
+  /* Host and security */
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(5) > .md-nav__link::before,
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(5) > label.md-nav__link::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M5 4.5h10a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3V4.5Zm0 12.5a3 3 0 0 1 3-3h10'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M5 4.5h10a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3V4.5Zm0 12.5a3 3 0 0 1 3-3h10'/%3E%3C/svg%3E");
+  }
+
+  /* Reference */
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(6) > .md-nav__link::before,
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(6) > label.md-nav__link::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M5 4.5h10a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3V4.5Zm0 12.5a3 3 0 0 1 3-3h10'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M5 4.5h10a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3V4.5Zm0 12.5a3 3 0 0 1 3-3h10'/%3E%3C/svg%3E");
+  }
+
+  /* Section contents use indentation only: no decorative tree rails. */
+  .md-sidebar--primary .md-nav__item--section > nav.md-nav {
+    margin-left: 0.83rem;
+    padding-left: 0.62rem;
+  }
+
+  /* Nested groups (Deployment, Operations, Security...) keep a clear hierarchy. */
+  .md-sidebar--primary .md-nav__item--nested:not(.md-nav__item--section) {
+    margin: 0.04rem 0 0.12rem;
+  }
+
+  .md-sidebar--primary .md-nav__item--nested:not(.md-nav__item--section) > label.md-nav__link,
+  .md-sidebar--primary .md-nav__item--nested:not(.md-nav__item--section) > .md-nav__container > .md-nav__link {
+    min-height: 1.34rem;
+    margin: 0;
+    padding: 0.16rem 0.38rem;
+    color: var(--solo-nav-heading);
+    font-size: 0.77rem;
+    font-weight: 650;
+    line-height: 1.3;
+    border-radius: 6px;
+  }
+
+  /* Reference subgroups are wayfinding, not additional tutorial steps. */
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(n + 3)
+    .md-nav__item--nested:not(.md-nav__item--section) > label.md-nav__link,
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(n + 3)
+    .md-nav__item--nested:not(.md-nav__item--section) > .md-nav__container > .md-nav__link {
+    color: var(--solo-nav-text);
+    font-weight: 520;
+  }
+
+  .md-sidebar--primary .md-nav__item--nested:not(.md-nav__item--section) > label.md-nav__link .md-nav__icon {
+    width: 1rem;
+    height: 1rem;
+    margin-left: auto;
+    color: var(--solo-muted);
+  }
+
+  .md-sidebar--primary .md-nav__item--nested:not(.md-nav__item--section) > label.md-nav__link:hover,
+  .md-sidebar--primary .md-nav__item--nested:not(.md-nav__item--section) > .md-nav__container > .md-nav__link:hover {
+    background: var(--solo-hover);
+  }
+
+  .md-sidebar--primary .md-nav__item--nested.md-nav__item--active:not(.md-nav__item--section) > label.md-nav__link {
+    color: var(--solo-text);
+  }
+
+  .md-sidebar--primary .md-nav__item--nested:not(.md-nav__item--section) > nav.md-nav {
+    margin: 0.02rem 0 0.1rem 0.66rem;
+    padding-left: 0.48rem;
+  }
+
+  /* Leaf pages. */
+  .md-sidebar--primary .md-nav__item:not(.md-nav__item--section):not(.md-nav__item--nested) > .md-nav__link {
+    position: relative;
+    min-height: 1.28rem;
+    margin: 0;
+    border-radius: 6px;
+    padding: 0.16rem 0.42rem;
+    color: var(--solo-nav-text);
+    font-size: 0.77rem;
+    font-weight: 480;
+    line-height: 1.32;
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: none;
+    transition: color 100ms ease, background 100ms ease;
+  }
+
+  .md-sidebar--primary .md-nav__item:not(.md-nav__item--section):not(.md-nav__item--nested) > .md-nav__link:hover {
+    color: var(--solo-text);
+    background: var(--solo-hover);
+  }
+
+  /* Parts 1 and 2 are primary actions; Overview stays visually quieter. */
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:first-child
+    > nav.md-nav > .md-nav__list > .md-nav__item:nth-child(n + 2):not(.md-nav__item--nested) > .md-nav__link {
+    color: var(--solo-nav-heading);
+    font-weight: 700;
+  }
+
+  /* In After basic setup, only numbered chapters 3–7 are the guided route.
+   * Overview and Daily operations remain nearby as supporting pages. */
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item--section:nth-child(2)
+    > nav.md-nav > .md-nav__list > .md-nav__item:nth-child(n + 3):not(.md-nav__item--nested) > .md-nav__link {
+    color: var(--solo-nav-heading);
+    font-weight: 700;
+  }
+
+  .md-sidebar--primary .md-nav__item:not(.md-nav__item--section):not(.md-nav__item--nested) > .md-nav__link--active {
+    color: var(--solo-text);
+    background: var(--solo-active);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--solo-accent) 18%, transparent);
+    font-weight: 650;
+  }
+
+  .md-sidebar--primary .md-nav__item:not(.md-nav__item--section):not(.md-nav__item--nested) > .md-nav__link--active::before {
+    content: "";
+    position: absolute;
+    inset: 0.16rem auto 0.16rem -0.55rem;
+    width: 2px;
+    border-radius: 2px;
+    background: var(--solo-accent);
+  }
+
+  /* Material wraps titles in md-ellipsis. Allow normal phrase wrapping, but do
+   * not split words into ugly fragments. */
+  .md-sidebar--primary .md-ellipsis {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+}
+
+/* Content --------------------------------------------------------------- */
+
+.md-content {
+  min-width: 0;
+}
+
+.md-content__inner {
+  width: 100%;
+  max-width: 42rem;
+  margin-inline: auto;
+  padding: 1.65rem 1.6rem 4rem;
+}
+
+.md-path {
+  margin-bottom: 1rem;
+  color: var(--solo-muted);
+  font-size: 0.66rem;
+}
+
+.md-typeset {
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4 {
+  color: var(--solo-text);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.md-typeset h1 {
+  margin: 0 0 0.85rem;
+  font-size: 1.9rem;
+  line-height: 1.15;
+}
+
+.md-typeset h2 {
+  margin-top: 2.45rem;
+  margin-bottom: 0.75rem;
+  padding-top: 0;
+  font-size: 1.32rem;
+  line-height: 1.25;
+}
+
+.md-typeset h3 {
+  margin-top: 1.75rem;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.md-typeset p,
+.md-typeset li {
+  color: var(--md-typeset-color);
+}
+
+.md-typeset strong {
+  color: var(--solo-text);
+  font-weight: 650;
+}
+
+.md-typeset a {
+  font-weight: 550;
+  text-decoration-color: color-mix(in srgb, var(--md-typeset-a-color) 42%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.14em;
+}
+
+.md-typeset a:hover {
+  text-decoration-color: currentColor;
+}
+
+.md-typeset hr {
+  margin-block: 2.2rem;
+  border-bottom-color: var(--solo-border);
+}
+
+.md-typeset code:not(pre code) {
+  border: 1px solid var(--solo-code-border);
+  border-radius: 4px;
+  padding: 0.05rem 0.23rem;
+  background: var(--md-code-bg-color);
+  color: var(--md-code-fg-color);
+  font-size: 0.86em;
+}
+
+.md-typeset .highlight {
+  overflow: hidden;
+  border: 1px solid var(--solo-code-border);
+  border-radius: var(--solo-radius);
+  background: var(--md-code-bg-color);
+  box-shadow: none;
+}
+
+.md-typeset pre > code {
+  padding: 0.9rem 1rem;
+  font-size: 0.76rem;
+  line-height: 1.65;
+}
+
+/* Pygments token colors are explicitly defined because Solo VPS uses custom
+ * Material color schemes. This prevents variables such as BOOTSTRAP_USER from
+ * inheriting an unreadable/default color in dark mode. */
+.md-typeset .highlight code,
+.md-typeset .highlight pre {
+  color: var(--md-code-fg-color);
+}
+
+.md-typeset .highlight .nv,
+.md-typeset .highlight .vc,
+.md-typeset .highlight .vg,
+.md-typeset .highlight .vi,
+.md-typeset .highlight .vm {
+  color: var(--md-code-hl-variable-color);
+}
+
+.md-typeset .highlight .nb,
+.md-typeset .highlight .bp {
+  color: var(--md-code-hl-constant-color);
+}
+
+.md-typeset .highlight .k,
+.md-typeset .highlight .kc,
+.md-typeset .highlight .kd,
+.md-typeset .highlight .kn,
+.md-typeset .highlight .kp,
+.md-typeset .highlight .kr,
+.md-typeset .highlight .kt {
+  color: var(--md-code-hl-keyword-color);
+}
+
+.md-typeset .highlight .s,
+.md-typeset .highlight .s1,
+.md-typeset .highlight .s2,
+.md-typeset .highlight .sa,
+.md-typeset .highlight .sb,
+.md-typeset .highlight .sc,
+.md-typeset .highlight .sd,
+.md-typeset .highlight .se,
+.md-typeset .highlight .sh,
+.md-typeset .highlight .si,
+.md-typeset .highlight .sr,
+.md-typeset .highlight .ss,
+.md-typeset .highlight .sx {
+  color: var(--md-code-hl-string-color);
+}
+
+.md-typeset .highlight .c,
+.md-typeset .highlight .c1,
+.md-typeset .highlight .cm,
+.md-typeset .highlight .cp,
+.md-typeset .highlight .cpf,
+.md-typeset .highlight .cs {
+  color: var(--md-code-hl-comment-color);
+}
+
+.md-typeset .highlight .nf,
+.md-typeset .highlight .fm {
+  color: var(--md-code-hl-function-color);
+}
+
+.md-typeset .highlight .m,
+.md-typeset .highlight .mb,
+.md-typeset .highlight .mf,
+.md-typeset .highlight .mh,
+.md-typeset .highlight .mi,
+.md-typeset .highlight .mo {
+  color: var(--md-code-hl-number-color);
+}
+
+/* Complete the token map for languages where Material/Pygments emits more
+ * specific classes than the core set above. */
+.md-typeset .highlight .o,
+.md-typeset .highlight .ow {
+  color: var(--md-code-hl-operator-color);
+}
+
+.md-typeset .highlight .p {
+  color: var(--md-code-hl-punctuation-color);
+}
+
+.md-typeset .highlight .n,
+.md-typeset .highlight .na,
+.md-typeset .highlight .nl,
+.md-typeset .highlight .nn,
+.md-typeset .highlight .nx,
+.md-typeset .highlight .py,
+.md-typeset .highlight .nt {
+  color: var(--md-code-hl-name-color);
+}
+
+.md-typeset .highlight .nc,
+.md-typeset .highlight .nd,
+.md-typeset .highlight .ne {
+  color: var(--md-code-hl-function-color);
+}
+
+.md-typeset .highlight .no,
+.md-typeset .highlight .ni {
+  color: var(--md-code-hl-constant-color);
+}
+
+.md-typeset .highlight .err,
+.md-typeset .highlight .gr {
+  color: var(--md-code-hl-special-color);
+}
+
+.md-typeset .highlight .gd {
+  color: #ff7b72;
+}
+
+.md-typeset .highlight .gi {
+  color: #7ee787;
+}
+
+.md-typeset .highlight .gh,
+.md-typeset .highlight .gp,
+.md-typeset .highlight .gu,
+.md-typeset .highlight .gt {
+  color: var(--md-code-hl-generic-color);
+}
+
+/* Bash-like lexers intentionally leave external executables as plain Text.
+ * extra.js marks familiar CLI tokens so command examples scan like real shell
+ * snippets instead of only coloring builtins such as `cd`. */
+.md-typeset .highlight .solo-shell-command {
+  color: var(--solo-shell-command);
+  font-weight: 650;
+}
+
+.md-typeset .highlight .solo-shell-option {
+  color: var(--solo-shell-option);
+}
+
+/* Copy control ---------------------------------------------------------
+ * Solo VPS owns the copy control instead of styling Material's masked icon.
+ * This removes Material opacity/currentColor states from the equation and
+ * gives dark mode a deterministic high-contrast button. */
+.md-typeset .highlight {
+  position: relative;
+}
+
+.md-typeset .md-clipboard {
+  display: none !important;
+}
+
+.solo-copy-button {
+  position: absolute;
+  z-index: 2;
+  top: 0.62rem;
+  right: 0.62rem;
+  display: inline-grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--solo-border-strong);
+  border-radius: 6px;
+  background: var(--solo-surface-raised);
+  color: var(--solo-text);
+  cursor: pointer;
+  opacity: 1;
+  box-shadow: 0 1px 0 rgba(31, 35, 40, 0.04);
+  transition: background-color 100ms ease, border-color 100ms ease, color 100ms ease, transform 70ms ease;
+}
+
+.solo-copy-button svg {
+  width: 0.92rem;
+  height: 0.92rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.solo-copy-button:hover,
+.solo-copy-button:focus-visible {
+  border-color: var(--solo-accent);
+  background: var(--solo-hover);
+  color: var(--solo-accent-strong);
+  outline: none;
+}
+
+.solo-copy-button:active {
+  transform: translateY(1px);
+}
+
+.solo-copy-button[data-copied="true"] {
+  border-color: #238636;
+  background: #1a7f37;
+  color: #ffffff;
+}
+
+[data-md-color-scheme="solo-dark"] .solo-copy-button {
+  border-color: #484f58;
+  background: #21262d;
+  color: #f0f6fc;
+  box-shadow: 0 0 0 1px rgba(240, 246, 252, 0.02);
+}
+
+[data-md-color-scheme="solo-dark"] .solo-copy-button:hover,
+[data-md-color-scheme="solo-dark"] .solo-copy-button:focus-visible {
+  border-color: #58a6ff;
+  background: #30363d;
+  color: #79c0ff;
+}
+
+[data-md-color-scheme="solo-dark"] .solo-copy-button[data-copied="true"] {
+  border-color: #3fb950;
+  background: #238636;
+  color: #ffffff;
+}
+
+.md-typeset table:not([class]) {
+  border: 1px solid var(--solo-border);
+  border-radius: var(--solo-radius);
+  background: transparent;
+  box-shadow: none;
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--solo-surface);
+  color: var(--solo-text);
+  font-weight: 650;
+}
+
+.md-typeset table:not([class]) td,
+.md-typeset table:not([class]) th {
+  border-bottom-color: var(--solo-border);
+}
+
+.md-typeset blockquote {
+  margin-left: 0;
+  border-left: 3px solid var(--solo-border-strong);
+  padding: 0.1rem 0 0.1rem 0.85rem;
+  color: var(--solo-muted);
+}
+
+.md-typeset .admonition,
+.md-typeset details {
+  border: 1px solid var(--solo-border);
+  border-radius: var(--solo-radius);
+  background: var(--solo-surface-raised);
+  box-shadow: none;
+}
+
+.md-typeset .admonition-title,
+.md-typeset summary {
+  font-weight: 650;
+}
+
+.md-typeset .warning,
+.md-typeset details.warning {
+  border-color: color-mix(in srgb, var(--solo-warning-border) 72%, var(--solo-border));
+  background: var(--solo-warning-bg);
+}
+
+/* Right-hand table of contents ----------------------------------------- */
+
+.md-sidebar--secondary {
+  border-left: 1px solid transparent;
+}
+
+.md-sidebar--secondary .md-sidebar__scrollwrap {
+  padding: 1.55rem 0.85rem 2.5rem 0.8rem;
+  scrollbar-color: var(--solo-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.md-sidebar--secondary .md-nav__title {
+  margin: 0 0 0.58rem;
+  padding: 0 0 0 0.72rem;
+  color: var(--solo-nav-heading);
+  font-size: 0.68rem;
+  font-weight: 720;
+  letter-spacing: 0.025em;
+  text-transform: none;
+}
+
+.md-sidebar--secondary .md-nav__list {
+}
+
+.md-sidebar--secondary .md-nav__link {
+  position: relative;
+  margin: 0;
+  padding: 0.28rem 0 0.28rem 0.72rem;
+  color: var(--solo-nav-text);
+  font-size: 0.74rem;
+  font-weight: 470;
+  line-height: 1.38;
+}
+
+.md-sidebar--secondary .md-nav__link:hover {
+  color: var(--solo-text);
+}
+
+.md-sidebar--secondary .md-nav__link--active,
+.md-sidebar--secondary .md-nav__link.solo-toc-active {
+  color: var(--solo-text);
+  font-weight: 650;
+}
+
+.md-sidebar--secondary .md-nav__link--active::before,
+.md-sidebar--secondary .md-nav__link.solo-toc-active::before {
+  content: "";
+  position: absolute;
+  top: 0.22rem;
+  bottom: 0.22rem;
+  left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--solo-accent);
+}
+
+/* Material's scroll-spy uses a strict offset comparison. With the custom
+ * header/content geometry it can visually lag one heading after anchor clicks.
+ * extra.js owns the visible TOC state once initialized so only one item is
+ * highlighted and it always matches the section the user selected. */
+.solo-toc-sync .md-sidebar--secondary .md-nav__link--active:not(.solo-toc-active) {
+  color: var(--solo-nav-text);
+  font-weight: 470;
+}
+
+.solo-toc-sync .md-sidebar--secondary .md-nav__link--active:not(.solo-toc-active)::before {
+  content: none;
+}
+
+/* Nested TOC levels: visible indentation without decorative rails. */
+.md-sidebar--secondary .md-nav .md-nav .md-nav__link {
+  padding-left: 1.1rem;
+  font-size: 0.7rem;
+  color: var(--solo-muted);
+}
+
+.md-sidebar--secondary .md-nav .md-nav .md-nav__link--active,
+.md-sidebar--secondary .md-nav .md-nav .md-nav__link.solo-toc-active {
+  color: var(--solo-text);
+}
+
+/* Language selector ---------------------------------------------------- */
+
+.solo-language {
+  margin-left: 0.1rem;
+}
+
+.solo-language__button {
+  display: inline-flex !important;
+  width: auto !important;
+  min-width: 3.05rem;
+  height: 1.8rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.24rem;
+  border: 1px solid var(--solo-border);
+  border-radius: 7px;
+  padding: 0 0.4rem !important;
+  background: var(--solo-surface);
+  color: var(--solo-muted);
+}
+
+.solo-language__button:hover {
+  border-color: var(--solo-border-strong);
+  background: var(--solo-surface-raised);
+  color: var(--solo-text);
+}
+
+.solo-language__button > svg:first-child {
+  width: 0.72rem;
+  height: 0.72rem;
+}
+
+.solo-language__code {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+}
+
+.solo-language__chevron {
+  display: inline-flex;
+  width: 0.48rem;
+  height: 0.48rem;
+  opacity: 0.62;
+}
+
+.solo-language__chevron svg {
+  width: 100%;
+  height: 100%;
+}
+
+.solo-language__menu {
+  min-width: 8rem;
+  margin-top: 0.35rem;
+  border: 1px solid var(--solo-border);
+  border-radius: 8px;
+  background: var(--solo-surface-raised);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.solo-language__menu .md-select__list {
+  padding: 0.25rem;
+}
+
+.solo-language__menu .md-select__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-radius: 5px;
+  padding: 0.46rem 0.52rem;
+  color: var(--solo-text);
+  font-size: 0.72rem;
+  font-weight: 520;
+}
+
+.solo-language__menu .md-select__link:hover,
+.solo-language__menu .solo-language__current {
+  background: var(--solo-active);
+}
+
+.solo-language__menu code {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--solo-muted);
+  font-size: 0.66rem;
+}
+
+/* Documentation homepage ---------------------------------------------- */
+
+.solo-home-intro {
+  max-width: 39rem;
+  margin-bottom: 1.3rem;
+  color: var(--md-typeset-color);
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+.solo-home-intro strong {
+  color: var(--solo-text);
+}
+
+.solo-status {
+  display: flex;
+  gap: 0.68rem;
+  align-items: flex-start;
+  margin: 1.05rem 0 1.8rem;
+  border: 1px solid var(--solo-warning-border);
+  border-radius: var(--solo-radius);
+  padding: 0.72rem 0.82rem;
+  background: var(--solo-warning-bg);
+}
+
+.solo-status__icon {
+  flex: 0 0 auto;
+  width: 0.96rem;
+  height: 0.96rem;
+  margin-top: 0.06rem;
+  color: var(--solo-warning-border);
+}
+
+.solo-status__body {
+  min-width: 0;
+  font-size: 0.72rem;
+  line-height: 1.52;
+}
+
+.solo-status__body strong {
+  display: block;
+  margin-bottom: 0.08rem;
+}
+
+.solo-start-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 0.85rem 0 1.65rem;
+}
+
+.solo-start-card {
+  display: grid;
+  grid-template-columns: 1.65rem 1fr auto;
+  gap: 0.65rem;
+  align-items: start;
+  min-height: 5.15rem;
+  border: 1px solid var(--solo-border);
+  border-radius: var(--solo-radius-lg);
+  padding: 0.78rem;
+  background: var(--solo-surface-raised);
+  color: var(--solo-text) !important;
+  text-decoration: none !important;
+  transition: border-color 100ms ease, background 100ms ease;
+}
+
+.solo-start-card:hover {
+  border-color: color-mix(in srgb, var(--solo-accent) 45%, var(--solo-border));
+  background: var(--solo-hover);
+}
+
+.solo-start-card__icon {
+  display: inline-flex;
+  width: 1.65rem;
+  height: 1.65rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--solo-active);
+  color: var(--solo-accent);
+}
+
+.solo-start-card__icon .twemoji,
+.solo-start-card__icon svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.solo-start-card__title {
+  display: block;
+  margin-bottom: 0.14rem;
+  color: var(--solo-text);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.solo-start-card__copy {
+  display: block;
+  color: var(--solo-muted);
+  font-size: 0.7rem;
+  line-height: 1.48;
+}
+
+.solo-start-card__arrow {
+  margin-top: 0.08rem;
+  color: var(--solo-muted);
+  font-size: 0.8rem;
+}
+
+.solo-command-path {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.32rem;
+  align-items: center;
+  margin: 0.85rem 0 1.7rem;
+  border: 1px solid var(--solo-border);
+  border-radius: var(--solo-radius);
+  padding: 0.65rem 0.75rem;
+  background: var(--solo-surface);
+}
+
+.solo-command-path code {
+  border: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  color: var(--solo-text) !important;
+  font-size: 0.7rem !important;
+  font-weight: 600;
+}
+
+.solo-command-path span {
+  color: var(--solo-muted);
+  font-size: 0.66rem;
+}
+
+.md-footer {
+  border-top: 1px solid var(--solo-border);
+  background: var(--solo-header);
+}
+
+/* Desktop layout ------------------------------------------------------- */
+
+@media screen and (min-width: 76.25em) {
+  .md-sidebar--primary {
+    width: 14.5rem;
+  }
+
+  .md-sidebar--secondary {
+    width: 11.5rem;
+  }
+
+  .md-content__inner {
+    max-width: 42rem;
+  }
+
+  .md-search__inner {
+    width: 13rem;
+  }
+}
+
+@media screen and (min-width: 90em) {
+  .md-sidebar--primary {
+    width: 16rem;
+  }
+
+  .md-sidebar--secondary {
+    width: 12.25rem;
+  }
+
+  .md-content__inner {
+    max-width: 44rem;
+  }
+
+  .md-search__inner {
+    width: 14rem;
+  }
+}
+
+@media screen and (min-width: 110em) {
+  .md-sidebar--primary {
+    width: 17rem;
+  }
+
+  .md-sidebar--secondary {
+    width: 13rem;
+  }
+
+  .md-content__inner {
+    max-width: 46rem;
+  }
+}
+
+/* The release flow remains readable without a diagram runtime or images. */
+.md-typeset .solo-delivery-flow {
+  display: grid;
+  gap: 1rem;
+  margin: 1.4rem 0;
+}
+
+.md-typeset .solo-delivery-flow > div {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: .8rem;
+  padding: .9rem 1rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-left: 3px solid var(--md-accent-fg-color);
+  border-radius: .45rem;
+  background: var(--md-code-bg-color);
+}
+
+.md-typeset .solo-delivery-flow > div > div {
+  min-width: 0;
+}
+
+/* Keep direct title/text children readable too; preferred markup wraps them in an inner div. */
+.md-typeset .solo-delivery-flow > div > strong,
+.md-typeset .solo-delivery-flow > div > p {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.md-typeset .solo-delivery-flow > div > span {
+  display: grid;
+  place-items: center;
+  align-self: start;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--md-accent-fg-color);
+  border-radius: 50%;
+  font-weight: 700;
+}
+
+.md-typeset .solo-delivery-flow > div:not(:last-child)::after {
+  content: "↓";
+  position: absolute;
+  left: 1.7rem;
+  bottom: -1.15rem;
+  line-height: 1rem;
+  color: var(--md-default-fg-color--light);
+}
+
+.md-typeset .solo-delivery-flow p {
+  margin: .25rem 0 0;
+}
+
+/* Tablet / mobile ------------------------------------------------------ */
+
+@media screen and (max-width: 76.1875em) {
+  .md-content__inner {
+    max-width: 42rem;
+  }
+}
+
+@media screen and (max-width: 44.984375em) {
+  .md-content__inner {
+    padding: 1.05rem 0.75rem 3rem;
+  }
+
+  .md-typeset h1 {
+    font-size: 1.62rem;
+  }
+
+  .solo-start-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .solo-language__button {
+    min-width: 2.8rem;
+  }
+}

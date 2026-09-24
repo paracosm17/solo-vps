@@ -1,0 +1,40 @@
+// Managed by Solo VPS. Small host-metrics pipeline for CPU, memory and filesystem capacity.
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+prometheus.exporter.unix "integrations_node_exporter" {
+  set_collectors = ["cpu", "filesystem", "loadavg", "meminfo", "uname"]
+}
+
+discovery.relabel "integrations_node_exporter" {
+  targets = prometheus.exporter.unix.integrations_node_exporter.targets
+
+  rule {
+    target_label = "instance"
+    replacement  = constants.hostname
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "integrations/node_exporter"
+  }
+}
+
+prometheus.scrape "integrations_node_exporter" {
+  scrape_interval = "{{ solo_vps_metrics_scrape_interval }}"
+  targets         = discovery.relabel.integrations_node_exporter.output
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = sys.env("PROMETHEUS_URL")
+
+    basic_auth {
+      username = sys.env("PROMETHEUS_USERNAME")
+      password = sys.env("GRAFANA_CLOUD_METRICS_API_KEY")
+    }
+  }
+}

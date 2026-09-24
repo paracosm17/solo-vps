@@ -1,0 +1,31 @@
+---
+- name: Validate base system configuration for verification
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Gather installed package facts for the base baseline
+  ansible.builtin.package_facts:
+    manager: apt
+
+- name: Inspect /etc/localtime
+  ansible.builtin.stat:
+    path: /etc/localtime
+    follow: false
+  register: solo_vps_localtime_state
+
+- name: Read configured timezone name
+  ansible.builtin.slurp:
+    src: /etc/timezone
+  register: solo_vps_timezone_file
+
+- name: Verify the Solo VPS base system state
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.get('nodename', '') == server.hostname
+      - solo_vps_localtime_state.stat.islnk | default(false)
+      - solo_vps_localtime_state.stat.lnk_source | default('') == '/usr/share/zoneinfo/' ~ server.timezone
+      - solo_vps_timezone_file.content | b64decode | trim == server.timezone
+      - solo_vps_base_packages | difference(ansible_facts.packages.keys() | list) | length == 0
+    fail_msg: >-
+      Base system verification failed. Check hostname, timezone, and required
+      base packages before continuing with later host milestones.
+    success_msg: Solo VPS base hostname, timezone, and package baseline are present.

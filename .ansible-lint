@@ -1,0 +1,12 @@
+---
+profile: basic
+offline: true
+
+# Solo VPS intentionally uses one project-wide solo_vps_* variable namespace across
+# roles. Keep every other var-naming check, but do not require role_name_* prefixes.
+skip_list:
+  - var-naming[no-role-prefix]
+
+exclude_paths:
+  - legacy/
+  - .venv/

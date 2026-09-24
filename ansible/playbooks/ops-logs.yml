@@ -1,0 +1,9 @@
+---
+- name: Show bounded Docker container logs
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Read explicitly selected container logs
+      ansible.builtin.import_role:
+        name: ops_logs

@@ -1,0 +1,108 @@
+---
+- name: Confirm required project configuration is available
+  ansible.builtin.assert:
+    that:
+      - server is defined
+      - server is mapping
+      - admin is defined
+      - admin is mapping
+      - server.host is defined
+      - server.hostname is defined
+      - server.timezone is defined
+      - admin.user is defined
+      - admin.ssh_public_key_file is defined
+      - admin.human_ssh_public_key is defined
+      - admin.human_ssh_public_key | length > 0
+    fail_msg: >-
+      Required Solo VPS configuration is missing. Use the documented Makefile
+      entry points so config/config.yml is validated before target preflight.
+    success_msg: Required Solo VPS configuration is available to target preflight.
+
+- name: Confirm SSH connection is reachable
+  ansible.builtin.wait_for_connection:
+    timeout: "{{ solo_vps_ssh_connect_timeout }}"
+
+- name: Gather target facts after SSH reachability check
+  ansible.builtin.setup:
+
+- name: Confirm that Ansible facts are available
+  ansible.builtin.assert:
+    that:
+      - ansible_facts is mapping
+      - ansible_facts | length > 0
+    fail_msg: >-
+      Ansible facts are unavailable. Check SSH connectivity and Python support
+      on the target before continuing.
+    success_msg: Ansible facts are available.
+
+- name: Assert the supported Ubuntu release
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.get('distribution', '') == solo_vps_supported_distribution
+      - ansible_facts.get('distribution_version', '') == solo_vps_supported_distribution_version
+    fail_msg: >-
+      Unsupported target: detected
+      {{ ansible_facts.get('distribution', 'unknown') }}
+      {{ ansible_facts.get('distribution_version', 'unknown') }}.
+      Solo VPS currently supports only
+      {{ solo_vps_supported_distribution }}
+      {{ solo_vps_supported_distribution_version }} LTS.
+    success_msg: >-
+      Supported target detected: {{ solo_vps_supported_distribution }}
+      {{ solo_vps_supported_distribution_version }} LTS.
+
+- name: Assert the supported core-platform architecture
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.get('architecture', '') in solo_vps_supported_architectures
+    fail_msg: >-
+      Unsupported target architecture: detected
+      {{ ansible_facts.get('architecture', 'unknown') }}. The current Solo VPS
+      Docker/Coolify core path supports only amd64/x86_64 and arm64/aarch64.
+    success_msg: >-
+      Supported core-platform architecture detected:
+      {{ ansible_facts.get('architecture', 'unknown') }}.
+
+- name: Check non-interactive root privilege through sudo
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/sudo
+      - -n
+      - /usr/bin/id
+      - -u
+  register: solo_vps_sudo_probe
+  changed_when: false
+  failed_when: false
+  when: ansible_facts.get('user_uid', -1) | int != 0
+
+- name: Confirm required root privilege is available
+  ansible.builtin.assert:
+    that:
+      - >-
+        (ansible_facts.get('user_uid', -1) | int == 0) or
+        (solo_vps_sudo_probe.rc == 0 and solo_vps_sudo_probe.stdout | trim == '0')
+    fail_msg: >-
+      Solo VPS bootstrap requires either an initial root SSH login or
+      passwordless non-interactive sudo to root for the inventory user.
+      Preflight made no host changes.
+    success_msg: >-
+      Required root privilege is available through the current SSH identity
+      or passwordless non-interactive sudo.
+
+- name: Report read-only target facts
+  ansible.builtin.debug:
+    msg:
+      inventory_host: "{{ inventory_hostname }}"
+      configured_host: "{{ server.host }}"
+      configured_hostname: "{{ server.hostname }}"
+      distribution: "{{ ansible_facts.get('distribution', 'unknown') }}"
+      distribution_version: "{{ ansible_facts.get('distribution_version', 'unknown') }}"
+      distribution_release: "{{ ansible_facts.get('distribution_release', 'unknown') }}"
+      architecture: "{{ ansible_facts.get('architecture', 'unknown') }}"
+      kernel: "{{ ansible_facts.get('kernel', 'unknown') }}"
+      python_version: "{{ ansible_facts.get('python_version', 'unknown') }}"
+      current_remote_user: "{{ ansible_facts.get('user_id', 'unknown') }}"
+      current_remote_uid: "{{ ansible_facts.get('user_uid', 'unknown') }}"
+      root_privilege: >-
+        {{ 'direct-root' if ansible_facts.get('user_uid', -1) | int == 0
+        else 'passwordless-sudo' }}

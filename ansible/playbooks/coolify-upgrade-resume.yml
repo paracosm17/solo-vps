@@ -1,0 +1,13 @@
+---
+- name: Run target preflight before explicit Coolify upgrade recovery
+  ansible.builtin.import_playbook: preflight.yml
+
+- name: Resume only a known interrupted Coolify previous-to-current transition
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Run explicit forward-only Coolify upgrade recovery
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: upgrade-resume

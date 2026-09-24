@@ -1,0 +1,110 @@
+---
+- name: Validate CI deploy transport configuration
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Load the dedicated CI deployment public key
+  ansible.builtin.import_tasks: load-public-key.yml
+
+- name: Create the dedicated forwarding-only CI account
+  ansible.builtin.user:
+    name: "{{ solo_vps_ci_deploy_user }}"
+    state: present
+    create_home: true
+    shell: "{{ solo_vps_ci_deploy_shell }}"
+    password_lock: true
+    groups: ""
+    append: false
+  register: solo_vps_ci_deploy_account
+
+- name: Protect the dedicated CI account home directory
+  ansible.builtin.file:
+    path: "{{ solo_vps_ci_deploy_account.home }}"
+    state: directory
+    owner: "{{ solo_vps_ci_deploy_user }}"
+    group: "{{ solo_vps_ci_deploy_account.group | string }}"
+    mode: "0700"
+
+- name: Create the CI account SSH directory
+  ansible.builtin.file:
+    path: "{{ solo_vps_ci_deploy_account.home }}/.ssh"
+    state: directory
+    owner: "{{ solo_vps_ci_deploy_user }}"
+    group: "{{ solo_vps_ci_deploy_account.group | string }}"
+    mode: "0700"
+
+- name: Install exactly one forwarding-restricted CI public key
+  ansible.builtin.copy:
+    content: >-
+      restrict,port-forwarding,permitopen="{{ solo_vps_ci_deploy_remote_host }}:{{ solo_vps_ci_deploy_remote_port }}" {{ solo_vps_ci_deploy_public_key }}
+    dest: "{{ solo_vps_ci_deploy_account.home }}/.ssh/authorized_keys"
+    owner: "{{ solo_vps_ci_deploy_user }}"
+    group: "{{ solo_vps_ci_deploy_account.group | string }}"
+    mode: "0600"
+
+- name: Inspect the previous CI deploy sshd drop-in
+  ansible.builtin.stat:
+    path: "{{ solo_vps_ci_deploy_sshd_dropin }}"
+    follow: false
+  register: solo_vps_ci_deploy_sshd_previous_state
+
+- name: Read the previous CI deploy sshd drop-in when present
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_ci_deploy_sshd_dropin }}"
+  register: solo_vps_ci_deploy_sshd_previous_file
+  when: solo_vps_ci_deploy_sshd_previous_state.stat.isreg | default(false)
+
+- name: Install and validate the forwarding-only OpenSSH policy transactionally
+  block:
+    - name: Install the CI deploy sshd Match policy candidate
+      ansible.builtin.template:
+        src: sshd-ci-deploy.conf.j2
+        dest: "{{ solo_vps_ci_deploy_sshd_dropin }}"
+        owner: root
+        group: root
+        mode: "0644"
+      register: solo_vps_ci_deploy_sshd_change
+
+    - name: Validate complete OpenSSH daemon syntax before reload
+      ansible.builtin.command:
+        argv:
+          - /usr/sbin/sshd
+          - -t
+      changed_when: false
+
+  rescue:
+    - name: Restore the previous CI deploy sshd drop-in after validation failure
+      ansible.builtin.copy:
+        content: "{{ solo_vps_ci_deploy_sshd_previous_file.content | b64decode }}"
+        dest: "{{ solo_vps_ci_deploy_sshd_dropin }}"
+        owner: root
+        group: root
+        mode: "0644"
+      when: solo_vps_ci_deploy_sshd_previous_state.stat.isreg | default(false)
+
+    - name: Remove the invalid new CI deploy sshd drop-in when no previous file existed
+      ansible.builtin.file:
+        path: "{{ solo_vps_ci_deploy_sshd_dropin }}"
+        state: absent
+      when: not (solo_vps_ci_deploy_sshd_previous_state.stat.isreg | default(false))
+
+    - name: Prove rollback restored valid OpenSSH syntax
+      ansible.builtin.command:
+        argv:
+          - /usr/sbin/sshd
+          - -t
+      changed_when: false
+
+    - name: Stop after rolling back an invalid CI deploy SSH policy
+      ansible.builtin.fail:
+        msg: >-
+          The proposed CI deploy sshd policy failed full daemon validation and
+          was rolled back. Existing SSH service state was not reloaded.
+
+- name: Reload OpenSSH only after the full candidate configuration validates
+  ansible.builtin.systemd_service:
+    name: ssh
+    state: reloaded
+  when: solo_vps_ci_deploy_sshd_change.changed | default(false)
+
+- name: Verify the applied CI deploy transport contract
+  ansible.builtin.import_tasks: verify.yml

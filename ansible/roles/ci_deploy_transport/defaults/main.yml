@@ -1,0 +1,8 @@
+---
+solo_vps_ci_deploy_user: solo-vps-ci
+solo_vps_ci_deploy_shell: /usr/sbin/nologin
+solo_vps_ci_deploy_remote_host: 127.0.0.1
+solo_vps_ci_deploy_remote_port: 8000
+solo_vps_ci_deploy_sshd_dropin: /etc/ssh/sshd_config.d/70-solo-vps-ci-deploy.conf
+solo_vps_ci_deploy_public_key_regex: >-
+  ^ssh-ed25519[ \t]+[A-Za-z0-9+/=]+(?:[ \t]+.*)?$

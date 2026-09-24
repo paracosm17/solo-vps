@@ -1,0 +1,4 @@
+---
+solo_vps_ops_docker_binary: /usr/bin/docker
+solo_vps_ops_log_container: ""
+solo_vps_ops_log_tail: 100

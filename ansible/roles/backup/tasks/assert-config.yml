@@ -1,0 +1,15 @@
+---
+- name: Validate restic host tooling contract
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == 'Ubuntu'
+      - ansible_facts.distribution_version == '24.04'
+      - ansible_facts.architecture in solo_vps_restic_artifacts
+      - solo_vps_restic_version is match('^[0-9]+\\.[0-9]+\\.[0-9]+$')
+      - solo_vps_restic_install_path == '/usr/local/bin/restic'
+      - solo_vps_restic_artifacts[ansible_facts.architecture].url is match('^https://github\\.com/restic/restic/releases/download/v' ~ solo_vps_restic_version ~ '/restic_' ~ solo_vps_restic_version ~ '_linux_(amd64|arm64)\\.bz2$')
+      - solo_vps_restic_artifacts[ansible_facts.architecture].sha256 is match('^[0-9a-f]{64}$')
+    fail_msg: >-
+      Unsupported or unsafe M14 restic tooling configuration. Solo VPS currently
+      supports Ubuntu 24.04 on x86_64/aarch64 and installs only the exact pinned
+      official restic release into /usr/local/bin/restic.

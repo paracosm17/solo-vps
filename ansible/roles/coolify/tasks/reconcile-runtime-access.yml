@@ -1,0 +1,55 @@
+---
+# Coolify controls localhost through SSH as admin.user. Upstream v4.1.2 creates
+# application/database/service child workdirs through sudo mkdir + chown, then
+# performs later `tee`/`cd` work as the non-root server identity. Keep only the
+# required ancestor/resource namespace chain traversable; sensitive source/ssh
+# roots remain outside this exception. Proxy is itself upstream-owned by admin.user.
+- name: Look up the configured administrator for Coolify runtime access
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ admin.user }}"
+
+- name: Derive the administrator primary group for Coolify runtime access
+  ansible.builtin.set_fact:
+    solo_vps_coolify_admin_gid: "{{ ansible_facts.getent_passwd[admin.user][2] }}"
+
+- name: Reconcile the host-owned /data traversal boundary
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_data_parent }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "{{ solo_vps_coolify_non_root_parent_mode }}"
+
+- name: Reconcile the Coolify data-root traversal boundary
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_data_root }}"
+    state: directory
+    owner: "9999"
+    group: "{{ solo_vps_coolify_admin_gid }}"
+    mode: "{{ solo_vps_coolify_non_root_data_root_mode }}"
+
+- name: Reconcile Coolify resource namespace traversal for admin.user
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "9999"
+    group: "{{ solo_vps_coolify_admin_gid }}"
+    mode: "{{ solo_vps_coolify_non_root_resource_root_mode }}"
+  loop: "{{ solo_vps_coolify_non_root_resource_roots }}"
+
+- name: Reconcile the private Coolify backup root for non-root backup jobs
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_data_root }}/backups"
+    state: directory
+    owner: "9999"
+    group: "{{ solo_vps_coolify_admin_gid }}"
+    mode: "{{ solo_vps_coolify_non_root_backup_root_mode }}"
+
+- name: Reconcile the Coolify proxy working directory for admin.user
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_data_root }}/proxy"
+    state: directory
+    owner: "{{ admin.user }}"
+    group: "{{ solo_vps_coolify_admin_gid }}"
+    mode: "{{ solo_vps_coolify_non_root_proxy_mode }}"

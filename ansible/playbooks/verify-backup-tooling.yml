@@ -1,0 +1,10 @@
+---
+- name: Verify the Solo VPS pinned restic host tooling baseline
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Run read-only restic tooling verification
+      ansible.builtin.import_role:
+        name: backup
+        tasks_from: verify-tooling

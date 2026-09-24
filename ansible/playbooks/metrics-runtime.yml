@@ -1,0 +1,10 @@
+---
+- name: Apply the Solo VPS host metrics runtime
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Install and start the host metrics runtime
+      ansible.builtin.import_role:
+        name: metrics
+        tasks_from: install-runtime.yml

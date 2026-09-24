@@ -1,0 +1,60 @@
+---
+- name: Inspect the Coolify-managed log-drain container while disabled
+  ansible.builtin.command:
+    argv:
+      - docker
+      - inspect
+      - coolify-log-drain
+  register: solo_vps_log_drain_disabled_container
+  changed_when: false
+  failed_when: false
+
+- name: Read host TCP listeners while the Coolify log drain is disabled
+  ansible.builtin.command:
+    argv:
+      - ss
+      - -H
+      - -lnt
+  register: solo_vps_log_drain_disabled_listeners
+  changed_when: false
+
+- name: Probe the disabled host-loopback Fluent Bit receiver without sending data
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - >-
+        import socket,sys; s=socket.socket(); s.settimeout(1);
+        rc=s.connect_ex(('127.0.0.1',24224)); s.close();
+        sys.exit(0 if rc != 0 else 1)
+  register: solo_vps_log_drain_disabled_tcp_probe
+  changed_when: false
+  failed_when: false
+
+- name: Derive sanitized disabled-state evidence
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_disabled_listener_absent: >-
+      {{ not (solo_vps_log_drain_disabled_listeners.stdout is search('(?m)(?:^|\\s)127\\.0\\.0\\.1:24224(?:\\s|$)')) }}
+  changed_when: false
+
+- name: Verify the Coolify-managed log drain is fully stopped before recreation
+  ansible.builtin.assert:
+    that:
+      - solo_vps_log_drain_disabled_container.rc != 0
+      - solo_vps_log_drain_disabled_listener_absent | bool
+      - solo_vps_log_drain_disabled_tcp_probe.rc == 0
+    fail_msg: >-
+      Coolify Custom FluentBit is still represented by a container or reachable 127.0.0.1:24224 receiver after the
+      Enabled checkbox was turned off. Wait for the Coolify UI operation to finish and retry this read-only check.
+      Do not remove containers or edit /data/coolify/log-drains manually.
+    success_msg: Coolify Custom FluentBit is fully stopped; recreation can now be triggered from the Enabled checkbox.
+
+- name: Report the disabled log-drain recovery boundary
+  ansible.builtin.debug:
+    msg:
+      collector_container_absent: true
+      host_loopback_listener_24224_absent: true
+      host_loopback_tcp_connect_rejected: true
+      generated_configuration_modified: false
+      next: Re-enable Custom FluentBit with the Coolify Enabled checkbox, then run make verify-observability-log-drain.
+      changed: false

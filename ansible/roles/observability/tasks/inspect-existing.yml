@@ -1,0 +1,33 @@
+---
+- name: Inspect the managed Grafana Alloy path
+  ansible.builtin.stat:
+    path: "{{ solo_vps_alloy_install_path }}"
+    follow: false
+  register: solo_vps_alloy_managed_path_state
+
+- name: Inspect common conflicting Grafana Alloy paths
+  ansible.builtin.stat:
+    path: "{{ item }}"
+    follow: false
+  loop: "{{ solo_vps_alloy_conflicting_paths }}"
+  register: solo_vps_alloy_conflicting_path_states
+
+- name: Read existing managed Grafana Alloy version when present
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_alloy_install_path }}"
+      - --version
+  changed_when: false
+  register: solo_vps_alloy_existing_version
+  when: solo_vps_alloy_managed_path_state.stat.exists
+
+- name: Refuse implicit migration or replacement of existing Grafana Alloy tooling
+  ansible.builtin.assert:
+    that:
+      - not (solo_vps_alloy_managed_path_state.stat.islnk | default(false))
+      - not solo_vps_alloy_managed_path_state.stat.exists or (solo_vps_alloy_existing_version.stdout is match('^alloy, version v' ~ solo_vps_alloy_version ~ '( |$)'))
+      - (solo_vps_alloy_conflicting_path_states.results | selectattr('stat.exists') | list | length) == 0
+    fail_msg: >-
+      Existing Grafana Alloy tooling does not match the Solo VPS managed
+      baseline. Refusing implicit takeover or upgrade. Review/migrate the
+      existing Alloy installation explicitly before continuing.

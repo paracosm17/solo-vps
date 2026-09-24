@@ -1,0 +1,115 @@
+---
+- name: Validate admin access configuration for verification
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Load the expected admin public key for verification
+  ansible.builtin.import_tasks: load-public-key.yml
+
+- name: Read the admin passwd entry
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ admin.user }}"
+    fail_key: false
+
+- name: Confirm the admin account exists before inspecting its files
+  ansible.builtin.assert:
+    that:
+      - admin.user in (ansible_facts.get('getent_passwd', {}))
+    fail_msg: "Admin account '{{ admin.user }}' does not exist."
+
+- name: Record the admin home directory from the passwd database
+  ansible.builtin.set_fact:
+    solo_vps_admin_home: "{{ ansible_facts.getent_passwd[admin.user][4] }}"
+
+- name: Read sudo group membership
+  ansible.builtin.getent:
+    database: group
+    key: "{{ solo_vps_admin_sudo_group }}"
+    fail_key: false
+
+- name: Confirm the expected sudo group exists
+  ansible.builtin.assert:
+    that:
+      - solo_vps_admin_sudo_group in (ansible_facts.get('getent_group', {}))
+      - ansible_facts.getent_group[solo_vps_admin_sudo_group] | length > 2
+    fail_msg: "Required sudo group '{{ solo_vps_admin_sudo_group }}' does not exist."
+
+- name: Inspect the admin SSH directory
+  ansible.builtin.stat:
+    path: "{{ solo_vps_admin_home }}/.ssh"
+    follow: false
+  register: solo_vps_admin_ssh_dir
+
+- name: Inspect the admin authorized_keys file
+  ansible.builtin.stat:
+    path: "{{ solo_vps_admin_home }}/.ssh/authorized_keys"
+    follow: false
+  register: solo_vps_admin_authorized_keys_state
+
+- name: Read the admin authorized_keys file
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_admin_home }}/.ssh/authorized_keys"
+  register: solo_vps_admin_authorized_keys_file
+  when: solo_vps_admin_authorized_keys_state.stat.isreg | default(false)
+
+- name: Inspect the managed sudoers policy
+  ansible.builtin.stat:
+    path: "{{ solo_vps_admin_sudoers_path }}"
+    follow: false
+  register: solo_vps_admin_sudoers_state
+
+- name: Read the managed sudoers policy
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_admin_sudoers_path }}"
+  register: solo_vps_admin_sudoers_file
+  when: solo_vps_admin_sudoers_state.stat.isreg | default(false)
+
+- name: Validate the managed sudoers fragment
+  ansible.builtin.command:
+    argv:
+      - /usr/sbin/visudo
+      - -cf
+      - "{{ solo_vps_admin_sudoers_path }}"
+  changed_when: false
+  register: solo_vps_admin_sudoers_validation
+  when: solo_vps_admin_sudoers_state.stat.isreg | default(false)
+
+- name: Prove the admin can obtain root without an interactive sudo password
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/sudo
+      - -n
+      - /usr/bin/id
+      - -u
+  become: true
+  become_user: "{{ admin.user }}"
+  changed_when: false
+  register: solo_vps_admin_sudo_probe
+
+- name: Verify the Solo VPS admin identity state
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.getent_passwd[admin.user][5] == solo_vps_admin_shell
+      - admin.user in (ansible_facts.getent_group[solo_vps_admin_sudo_group][2].split(','))
+      - solo_vps_admin_ssh_dir.stat.isdir | default(false)
+      - solo_vps_admin_ssh_dir.stat.pw_name | default('') == admin.user
+      - solo_vps_admin_ssh_dir.stat.mode | default('') == '0700'
+      - solo_vps_admin_authorized_keys_state.stat.isreg | default(false)
+      - solo_vps_admin_authorized_keys_state.stat.pw_name | default('') == admin.user
+      - solo_vps_admin_authorized_keys_state.stat.mode | default('') == '0600'
+      - solo_vps_admin_authorized_key in ((solo_vps_admin_authorized_keys_file.content | default('') | b64decode).splitlines())
+      - solo_vps_human_admin_authorized_key in ((solo_vps_admin_authorized_keys_file.content | default('') | b64decode).splitlines())
+      - solo_vps_admin_sudoers_state.stat.isreg | default(false)
+      - solo_vps_admin_sudoers_state.stat.pw_name | default('') == 'root'
+      - solo_vps_admin_sudoers_state.stat.gr_name | default('') == 'root'
+      - solo_vps_admin_sudoers_state.stat.mode | default('') == '0440'
+      - "(admin.user ~ ' ALL=(ALL:ALL) NOPASSWD: ALL') in ((solo_vps_admin_sudoers_file.content | default('') | b64decode).splitlines())"
+      - solo_vps_admin_sudoers_validation.rc | default(1) == 0
+      - solo_vps_admin_sudo_probe.stdout | trim == '0'
+    fail_msg: >-
+      Admin identity verification failed. Check the account, sudo membership,
+      authorized key, SSH file permissions, and managed sudoers
+      fragment before any SSH daemon hardening.
+    success_msg: >-
+      Solo VPS admin identity, automation key, human workstation key, and
+      sudo policy are present. SSH daemon hardening state is verified separately.

@@ -1,0 +1,13 @@
+---
+- name: Run target preflight before Coolify lifecycle inspection
+  ansible.builtin.import_playbook: preflight.yml
+
+- name: Inspect the supported Coolify lifecycle without mutation
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Run read-only Coolify upgrade preflight
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: upgrade-preflight

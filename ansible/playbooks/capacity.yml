@@ -1,0 +1,18 @@
+---
+- name: Check initial platform capacity before applying the host baseline
+  hosts: all
+  become: true
+  gather_facts: true
+  vars_files:
+    - ../roles/coolify/defaults/main.yml
+  tasks:
+    - name: Inspect existing platform data before the initial capacity gate
+      ansible.builtin.stat:
+        path: "{{ solo_vps_coolify_data_root }}"
+      register: solo_vps_capacity_data
+
+    - name: Check resources for a new platform
+      ansible.builtin.include_role:
+        name: coolify
+        tasks_from: capacity
+      when: not solo_vps_capacity_data.stat.exists

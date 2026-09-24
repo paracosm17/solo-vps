@@ -1,0 +1,35 @@
+[Unit]
+Description=Solo VPS host metrics via Grafana Alloy
+Documentation=https://grafana.com/docs/alloy/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ solo_vps_metrics_user }}
+Group={{ solo_vps_metrics_group }}
+EnvironmentFile={{ solo_vps_metrics_runtime_env_path }}
+WorkingDirectory={{ solo_vps_metrics_state_dir }}
+ExecStart=/usr/local/bin/alloy run --disable-reporting --server.http.enable-pprof=false --server.http.listen-addr={{ solo_vps_metrics_http_host }}:{{ solo_vps_metrics_http_port }} --storage.path={{ solo_vps_metrics_state_dir }} {{ solo_vps_metrics_config_path }}
+Restart=on-failure
+RestartSec=5s
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectControlGroups=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectClock=true
+LockPersonality=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadWritePaths={{ solo_vps_metrics_state_dir }}
+
+[Install]
+WantedBy=multi-user.target

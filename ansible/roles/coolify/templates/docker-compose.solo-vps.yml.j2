@@ -1,0 +1,22 @@
+# Managed by Solo VPS.
+# Requires Docker Compose >= 2.24.4 for the !override merge tag.
+# The upstream production Compose publishes these ports on all interfaces;
+# replace the complete port lists so first-run management stays on IPv4 loopback.
+services:
+  coolify:
+    ports: !override
+      - target: 8080
+        published: "${APP_PORT:-8000}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+
+  soketi:
+    ports: !override
+      - target: 6001
+        published: "${SOKETI_PORT:-6001}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+      - target: 6002
+        published: "6002"
+        host_ip: 127.0.0.1
+        protocol: tcp

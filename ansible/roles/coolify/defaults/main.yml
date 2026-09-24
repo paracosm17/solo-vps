@@ -1,0 +1,107 @@
+---
+# Version updates are deliberate project changes, not a public user knob.
+solo_vps_coolify_version: "4.1.2"
+solo_vps_coolify_previous_supported_version: "4.1.1"
+solo_vps_coolify_release_tag: "v{{ solo_vps_coolify_version }}"
+# docker-compose.prod.yml defaults LATEST_IMAGE to latest; never rely on that fallback.
+solo_vps_coolify_image_tag: "{{ solo_vps_coolify_version }}"
+solo_vps_coolify_expected_image: "ghcr.io/coollabsio/coolify:{{ solo_vps_coolify_image_tag }}"
+solo_vps_coolify_release_base_url: >-
+  https://raw.githubusercontent.com/coollabsio/coolify/{{ solo_vps_coolify_release_tag }}
+
+# Initial installation artifacts are pinned to a release tag and checksum.
+# Do not replace these with floating CDN URLs in the installation backend.
+solo_vps_coolify_release_artifacts:
+  - name: docker-compose.yml
+    url: "{{ solo_vps_coolify_release_base_url }}/docker-compose.yml"
+    checksum: sha256:0223699dfef8a421116872b050830b21cfedfc58911576a0129c2082aeaadc59
+  - name: docker-compose.prod.yml
+    url: "{{ solo_vps_coolify_release_base_url }}/docker-compose.prod.yml"
+    checksum: sha256:93b8e0ca8d7b3a16d63b07268e60404d32a8585761cba75e069dc632d933368c
+  - name: .env.production
+    url: "{{ solo_vps_coolify_release_base_url }}/.env.production"
+    checksum: sha256:e83f83f43168ce923cd35bc98250a6fc6cbf9fee70869105943f0cfc975fa7a2
+
+solo_vps_coolify_data_parent: /data
+solo_vps_coolify_data_root: /data/coolify
+solo_vps_coolify_source_dir: /data/coolify/source
+solo_vps_coolify_env_path: /data/coolify/source/.env
+solo_vps_coolify_managed_marker: /data/coolify/.solo-vps-managed
+solo_vps_coolify_pending_marker: /data/coolify/.solo-vps-installing
+solo_vps_coolify_configured_marker: /data/coolify/.solo-vps-install-configured
+solo_vps_coolify_upgrade_pending_marker: /data/coolify/.solo-vps-upgrading
+solo_vps_coolify_upgrade_staging_dir: "/data/coolify/source/.solo-vps-upgrade-{{ solo_vps_coolify_version }}"
+solo_vps_coolify_localhost_key_path: >-
+  /data/coolify/ssh/keys/id.{{ admin.user }}@host.docker.internal
+solo_vps_coolify_required_directories:
+  - /data/coolify
+  - /data/coolify/source
+  - /data/coolify/ssh
+  - /data/coolify/ssh/keys
+  - /data/coolify/ssh/mux
+  - /data/coolify/applications
+  - /data/coolify/databases
+  - /data/coolify/backups
+  - /data/coolify/services
+  - /data/coolify/proxy
+  - /data/coolify/proxy/dynamic
+  - /data/coolify/sentinel
+
+# Coolify v4.1.2 supports a non-root SSH server user through passwordless sudo.
+# Its lifecycle commands create per-resource directories below applications,
+# databases, and services, then chown those child directories to the configured
+# server user. The namespace parents therefore need execute-only group traversal
+# or admin.user cannot reach its own child directory for later unprivileged
+# `tee`/`cd` operations. Proxy lifecycle has the same constraint but the proxy
+# directory itself is upstream-managed by admin.user.
+#
+# Keep /data host-owned, /data/coolify and resource namespace roots UID 9999-owned
+# with admin-group traversal only, and leave sensitive source/ssh roots at 0700.
+solo_vps_coolify_non_root_parent_mode: "0711"
+solo_vps_coolify_non_root_data_root_mode: "0710"
+solo_vps_coolify_non_root_resource_root_mode: "0710"
+# Pinned Coolify writes database backup files through the configured non-root SSH
+# identity. Keep the backup namespace private while granting that identity only
+# write+traverse access at the namespace root; UID 9999 remains the owner.
+solo_vps_coolify_non_root_backup_root_mode: "0730"
+solo_vps_coolify_non_root_resource_roots:
+  - /data/coolify/applications
+  - /data/coolify/databases
+  - /data/coolify/services
+solo_vps_coolify_non_root_proxy_mode: "0700"
+
+# First-run management stays on loopback and is reached through an SSH tunnel.
+solo_vps_coolify_initial_access_mode: ssh-tunnel
+solo_vps_coolify_management_ports:
+  - 8000
+  - 6001
+  - 6002
+
+solo_vps_coolify_supported_docker_majors:
+  - 29
+solo_vps_coolify_minimum_docker_major: 29
+solo_vps_coolify_maximum_docker_major: 29
+# !override is required to replace upstream port sequences rather than append.
+solo_vps_coolify_minimum_compose_version: "2.24.4"
+solo_vps_coolify_management_bind_address: 127.0.0.1
+solo_vps_coolify_compose_override_filename: docker-compose.solo-vps.yml
+solo_vps_coolify_minimum_cpu_count: 2
+# A nominal 2 GiB VPS reports less MemTotal after kernel reservations.
+solo_vps_coolify_minimum_memory_mb: 1900
+solo_vps_coolify_minimum_free_disk_bytes: 32212254720
+
+solo_vps_coolify_docker_binary: /usr/bin/docker
+solo_vps_coolify_openssl_binary: /usr/bin/openssl
+solo_vps_coolify_ssh_keygen_binary: /usr/bin/ssh-keygen
+solo_vps_coolify_ss_binary: /usr/bin/ss
+solo_vps_coolify_df_binary: /usr/bin/df
+solo_vps_coolify_find_binary: /usr/bin/find
+solo_vps_coolify_docker_daemon_config_path: /etc/docker/daemon.json
+
+# M7 remains the authority for daemon.json. Readiness and verification refuse drift.
+solo_vps_coolify_expected_docker_config:
+  live-restore: true
+  log-driver: local
+  log-opts:
+    max-size: 20m
+    max-file: "5"

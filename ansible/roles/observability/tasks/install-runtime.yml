@@ -1,0 +1,533 @@
+---
+- name: Confirm the pinned Alloy binary exists before runtime activation
+  ansible.builtin.stat:
+    path: "{{ solo_vps_alloy_install_path }}"
+    follow: false
+  register: solo_vps_alloy_runtime_binary
+
+- name: Require the reviewed Alloy tooling and architecture
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.architecture in solo_vps_alloy_artifacts
+      - ansible_facts.architecture in solo_vps_docker_api_proxy_images
+      - solo_vps_alloy_runtime_binary.stat.isreg | default(false)
+    fail_msg: >-
+      The retained-log runtime requires the pinned Alloy tooling first. Run
+      `make observability-tooling` and `make verify-observability-tooling`, then retry.
+
+- name: Read the installed Alloy version before runtime activation
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_alloy_install_path }}"
+      - --version
+  changed_when: false
+  register: solo_vps_alloy_runtime_version
+
+- name: Require the pinned Alloy version before runtime activation
+  ansible.builtin.assert:
+    that:
+      - "('version v' ~ solo_vps_alloy_version) in solo_vps_alloy_runtime_version.stdout"
+    fail_msg: >-
+      The installed Alloy binary does not match the reviewed Solo VPS pin.
+      Reconcile tooling explicitly before enabling retained application logs.
+
+- name: Inspect root-only Grafana Cloud credentials for Alloy runtime
+  ansible.builtin.stat:
+    path: "{{ solo_vps_observability_credentials_path }}"
+    follow: false
+  register: solo_vps_alloy_runtime_credentials
+
+- name: Require root-only Grafana Cloud credentials before runtime activation
+  ansible.builtin.assert:
+    that:
+      - solo_vps_alloy_runtime_credentials.stat.isreg | default(false)
+      - (solo_vps_alloy_runtime_credentials.stat.uid | default(-1)) == 0
+      - (solo_vps_alloy_runtime_credentials.stat.gid | default(-1)) == 0
+      - (solo_vps_alloy_runtime_credentials.stat.mode | default('')) == '0600'
+    fail_msg: >-
+      Grafana Cloud runtime credentials are missing or have unexpected ownership/mode.
+      Run the workstation observability credential delivery and
+      `make verify-observability-credentials` before enabling Alloy.
+
+- name: Validate Grafana Cloud credentials locally on the target without returning values
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import json, re, sys
+        try:
+            with open(sys.argv[1], "r", encoding="utf-8") as handle:
+                data = json.load(handle)
+            if sorted(data) != ["GRAFANA_CLOUD_API_KEY", "LOKI_URL", "LOKI_USERNAME"]:
+                raise ValueError("unexpected schema")
+            if not re.fullmatch(r"https://[^/]+/loki/api/v1/push", str(data["LOKI_URL"])):
+                raise ValueError("invalid Loki URL")
+            if not re.fullmatch(r"[0-9]+", str(data["LOKI_USERNAME"])):
+                raise ValueError("invalid Logs user ID")
+            if len(str(data["GRAFANA_CLOUD_API_KEY"])) < 20:
+                raise ValueError("invalid access token length")
+        except Exception:
+            print("invalid Grafana Cloud runtime credential schema", file=sys.stderr)
+            raise SystemExit(2)
+      - "{{ solo_vps_observability_credentials_path }}"
+  changed_when: false
+  no_log: true
+
+- name: Create the dedicated non-login Alloy group
+  ansible.builtin.group:
+    name: "{{ solo_vps_alloy_group }}"
+    system: true
+    state: present
+
+- name: Create the dedicated non-login Alloy user
+  ansible.builtin.user:
+    name: "{{ solo_vps_alloy_user }}"
+    group: "{{ solo_vps_alloy_group }}"
+    groups: ""
+    append: false
+    system: true
+    create_home: false
+    home: /nonexistent
+    shell: /usr/sbin/nologin
+    password_lock: true
+    state: present
+
+- name: Install the boot-time Docker API proxy runtime-directory contract
+  ansible.builtin.template:
+    src: solo-vps-observability.tmpfiles.j2
+    dest: "{{ solo_vps_docker_api_proxy_tmpfiles_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  register: solo_vps_docker_api_proxy_tmpfiles_change
+
+- name: Materialize the Docker API proxy runtime directory through systemd-tmpfiles
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/systemd-tmpfiles
+      - --create
+      - "{{ solo_vps_docker_api_proxy_tmpfiles_path }}"
+  changed_when: false
+
+- name: Enforce the Alloy-only Docker API proxy runtime-directory boundary now
+  ansible.builtin.file:
+    path: "{{ solo_vps_docker_api_proxy_runtime_dir }}"
+    state: directory
+    owner: root
+    group: "{{ solo_vps_alloy_group }}"
+    mode: "0750"
+
+- name: Inspect the repository-managed Docker API proxy container
+  ansible.builtin.command:
+    argv:
+      - docker
+      - container
+      - inspect
+      - "{{ solo_vps_docker_api_proxy_name }}"
+  changed_when: false
+  failed_when: false
+  register: solo_vps_docker_api_proxy_existing_raw
+
+- name: Decode existing Docker API proxy state when present
+  ansible.builtin.set_fact:
+    solo_vps_docker_api_proxy_existing: >-
+      {{ (solo_vps_docker_api_proxy_existing_raw.stdout | from_json | first)
+         if solo_vps_docker_api_proxy_existing_raw.rc == 0 else {} }}
+  no_log: true
+
+- name: Select the reviewed Docker API proxy image for the target architecture
+  ansible.builtin.set_fact:
+    solo_vps_docker_api_proxy_image: "{{ solo_vps_docker_api_proxy_images[ansible_facts.architecture] }}"
+
+- name: Initialize absent Docker API proxy safety evidence
+  ansible.builtin.set_fact:
+    solo_vps_docker_api_proxy_existing_env: []
+    solo_vps_docker_api_proxy_existing_mounts: []
+    solo_vps_docker_api_proxy_existing_portbindings: {}
+    solo_vps_docker_api_proxy_existing_running: false
+    solo_vps_docker_api_proxy_existing_network_mode: ""
+  no_log: true
+
+- name: Derive existing Docker API proxy safety evidence when present
+  ansible.builtin.set_fact:
+    solo_vps_docker_api_proxy_existing_env: "{{ solo_vps_docker_api_proxy_existing.Config.Env | default([]) }}"
+    solo_vps_docker_api_proxy_existing_mounts: "{{ solo_vps_docker_api_proxy_existing.Mounts | default([]) }}"
+    solo_vps_docker_api_proxy_existing_portbindings: "{{ solo_vps_docker_api_proxy_existing.HostConfig.PortBindings | default({}) }}"
+    solo_vps_docker_api_proxy_existing_running: "{{ solo_vps_docker_api_proxy_existing.State.Running | default(false) | bool }}"
+    solo_vps_docker_api_proxy_existing_network_mode: "{{ solo_vps_docker_api_proxy_existing.HostConfig.NetworkMode | default('') }}"
+  when: solo_vps_docker_api_proxy_existing_raw.rc == 0
+  no_log: true
+
+- name: Classify exact desired or exact legacy Docker API proxy state before mutation
+  ansible.builtin.set_fact:
+    solo_vps_docker_api_proxy_existing_desired: >-
+      {{
+        solo_vps_docker_api_proxy_existing_raw.rc == 0
+        and solo_vps_docker_api_proxy_existing.Config.Image == solo_vps_docker_api_proxy_image
+        and (solo_vps_docker_api_proxy_existing.HostConfig.Privileged | bool)
+        and (solo_vps_docker_api_proxy_existing.HostConfig.ReadonlyRootfs | bool)
+        and solo_vps_docker_api_proxy_existing.HostConfig.RestartPolicy.Name == 'unless-stopped'
+        and 'CONTAINERS=1' in solo_vps_docker_api_proxy_existing_env
+        and 'EVENTS=1' in solo_vps_docker_api_proxy_existing_env
+        and 'PING=1' in solo_vps_docker_api_proxy_existing_env
+        and 'VERSION=1' in solo_vps_docker_api_proxy_existing_env
+        and 'NETWORKS=1' in solo_vps_docker_api_proxy_existing_env
+        and 'POST=0' in solo_vps_docker_api_proxy_existing_env
+        and 'AUTH=0' in solo_vps_docker_api_proxy_existing_env
+        and 'EXEC=0' in solo_vps_docker_api_proxy_existing_env
+        and 'IMAGES=0' in solo_vps_docker_api_proxy_existing_env
+        and 'INFO=0' in solo_vps_docker_api_proxy_existing_env
+        and 'SECRETS=0' in solo_vps_docker_api_proxy_existing_env
+        and 'VOLUMES=0' in solo_vps_docker_api_proxy_existing_env
+        and ('BIND_CONFIG=' ~ solo_vps_docker_api_proxy_bind_config) in solo_vps_docker_api_proxy_existing_env
+        and solo_vps_docker_api_proxy_existing_network_mode == 'none'
+        and (solo_vps_docker_api_proxy_existing_portbindings | length) == 0
+        and (solo_vps_docker_api_proxy_existing_mounts | length) == 2
+        and (solo_vps_docker_api_proxy_existing_mounts
+             | selectattr('Destination', 'equalto', solo_vps_docker_api_proxy_socket)
+             | selectattr('RW', 'equalto', false)
+             | list | length) == 1
+        and (solo_vps_docker_api_proxy_existing_mounts
+             | selectattr('Source', 'equalto', solo_vps_docker_api_proxy_runtime_dir)
+             | selectattr('Destination', 'equalto', solo_vps_docker_api_proxy_container_socket_dir)
+             | selectattr('RW', 'equalto', true)
+             | list | length) == 1
+      }}
+    solo_vps_docker_api_proxy_existing_legacy: >-
+      {{
+        solo_vps_docker_api_proxy_existing_raw.rc == 0
+        and solo_vps_docker_api_proxy_existing.Config.Image == solo_vps_docker_api_proxy_image
+        and (solo_vps_docker_api_proxy_existing.HostConfig.Privileged | bool)
+        and (solo_vps_docker_api_proxy_existing.HostConfig.ReadonlyRootfs | bool)
+        and solo_vps_docker_api_proxy_existing.HostConfig.RestartPolicy.Name == 'unless-stopped'
+        and 'CONTAINERS=1' in solo_vps_docker_api_proxy_existing_env
+        and 'EVENTS=1' in solo_vps_docker_api_proxy_existing_env
+        and 'PING=1' in solo_vps_docker_api_proxy_existing_env
+        and 'VERSION=1' in solo_vps_docker_api_proxy_existing_env
+        and 'NETWORKS=1' in solo_vps_docker_api_proxy_existing_env
+        and 'POST=0' in solo_vps_docker_api_proxy_existing_env
+        and 'AUTH=0' in solo_vps_docker_api_proxy_existing_env
+        and 'EXEC=0' in solo_vps_docker_api_proxy_existing_env
+        and 'IMAGES=0' in solo_vps_docker_api_proxy_existing_env
+        and 'INFO=0' in solo_vps_docker_api_proxy_existing_env
+        and 'SECRETS=0' in solo_vps_docker_api_proxy_existing_env
+        and 'VOLUMES=0' in solo_vps_docker_api_proxy_existing_env
+        and 'BIND_CONFIG=' not in (solo_vps_docker_api_proxy_existing_env | join('\n'))
+        and solo_vps_docker_api_proxy_existing_network_mode in ['default', 'bridge']
+        and (solo_vps_docker_api_proxy_existing_portbindings | length) == 1
+        and (solo_vps_docker_api_proxy_existing_portbindings.get('2375/tcp', []) | length) == 1
+        and (solo_vps_docker_api_proxy_existing_portbindings.get('2375/tcp', [{}])[0].get('HostIp', '')) == solo_vps_docker_api_proxy_legacy_host
+        and (solo_vps_docker_api_proxy_existing_portbindings.get('2375/tcp', [{}])[0].get('HostPort', '')) == (solo_vps_docker_api_proxy_legacy_port | string)
+        and (solo_vps_docker_api_proxy_existing_mounts | length) == 1
+        and (solo_vps_docker_api_proxy_existing_mounts
+             | selectattr('Destination', 'equalto', solo_vps_docker_api_proxy_socket)
+             | selectattr('RW', 'equalto', false)
+             | list | length) == 1
+      }}
+  no_log: true
+
+- name: Refuse implicit takeover of an unexpected Docker API proxy container
+  ansible.builtin.assert:
+    that:
+      - >-
+        solo_vps_docker_api_proxy_existing_raw.rc != 0 or
+        (solo_vps_docker_api_proxy_existing_desired | bool) or
+        (solo_vps_docker_api_proxy_existing_legacy | bool)
+    fail_msg: >-
+      A container named {{ solo_vps_docker_api_proxy_name }} already exists but does not
+      match either the exact previous V3 loopback contract or the desired Unix-socket
+      contract. Solo VPS will not silently replace it. Return this failure to the maintainer.
+  no_log: true
+
+- name: Remove only the exact known V3 loopback proxy before Unix-socket migration
+  ansible.builtin.command:
+    argv:
+      - docker
+      - container
+      - rm
+      - --force
+      - "{{ solo_vps_docker_api_proxy_name }}"
+  when: solo_vps_docker_api_proxy_existing_legacy | bool
+  register: solo_vps_docker_api_proxy_legacy_remove
+  changed_when: true
+
+- name: Remove a stale managed proxy socket before starting a non-running proxy
+  ansible.builtin.file:
+    path: "{{ solo_vps_docker_api_proxy_host_socket }}"
+    state: absent
+  when: >-
+    solo_vps_docker_api_proxy_existing_raw.rc != 0 or
+    (solo_vps_docker_api_proxy_existing_legacy | bool) or
+    ((solo_vps_docker_api_proxy_existing_desired | bool) and not (solo_vps_docker_api_proxy_existing_running | bool))
+
+- name: Inspect the pinned Docker API proxy image locally
+  ansible.builtin.command:
+    argv:
+      - docker
+      - image
+      - inspect
+      - "{{ solo_vps_docker_api_proxy_image }}"
+  changed_when: false
+  failed_when: false
+  register: solo_vps_docker_api_proxy_image_state
+
+- name: Pull the exact reviewed Docker API proxy image when absent
+  ansible.builtin.command:
+    argv:
+      - docker
+      - image
+      - pull
+      - "{{ solo_vps_docker_api_proxy_image }}"
+  when: solo_vps_docker_api_proxy_image_state.rc != 0
+  register: solo_vps_docker_api_proxy_pull
+  changed_when: true
+
+- name: Create the Alloy-only Unix-socket Docker API proxy when absent or migrated
+  ansible.builtin.command:
+    argv:
+      - docker
+      - container
+      - create
+      - --name
+      - "{{ solo_vps_docker_api_proxy_name }}"
+      - --restart
+      - unless-stopped
+      - --network
+      - none
+      - --privileged
+      - --read-only
+      - --tmpfs
+      - /tmp:size=16m,mode=1777
+      - --tmpfs
+      - /run:size=16m,mode=0755
+      - --tmpfs
+      - /var/lib/haproxy:size=16m,mode=0755
+      - --env
+      - "BIND_CONFIG={{ solo_vps_docker_api_proxy_bind_config }}"
+      - --env
+      - CONTAINERS=1
+      - --env
+      - EVENTS=1
+      - --env
+      - PING=1
+      - --env
+      - VERSION=1
+      - --env
+      - NETWORKS=1
+      - --env
+      - POST=0
+      - --env
+      - AUTH=0
+      - --env
+      - EXEC=0
+      - --env
+      - IMAGES=0
+      - --env
+      - INFO=0
+      - --env
+      - SECRETS=0
+      - --env
+      - VOLUMES=0
+      - --volume
+      - "{{ solo_vps_docker_api_proxy_socket }}:{{ solo_vps_docker_api_proxy_socket }}:ro"
+      - --mount
+      - "type=bind,source={{ solo_vps_docker_api_proxy_runtime_dir }},target={{ solo_vps_docker_api_proxy_container_socket_dir }}"
+      - "{{ solo_vps_docker_api_proxy_image }}"
+  when: >-
+    solo_vps_docker_api_proxy_existing_raw.rc != 0 or
+    (solo_vps_docker_api_proxy_existing_legacy | bool)
+  register: solo_vps_docker_api_proxy_create
+  changed_when: true
+
+- name: Start the repository-managed Unix-socket Docker API proxy when needed
+  ansible.builtin.command:
+    argv:
+      - docker
+      - container
+      - start
+      - "{{ solo_vps_docker_api_proxy_name }}"
+  when: >-
+    solo_vps_docker_api_proxy_existing_raw.rc != 0 or
+    (solo_vps_docker_api_proxy_existing_legacy | bool) or
+    ((solo_vps_docker_api_proxy_existing_desired | bool) and not (solo_vps_docker_api_proxy_existing_running | bool))
+  register: solo_vps_docker_api_proxy_start
+  changed_when: true
+
+- name: Wait for the managed Docker API proxy Unix socket to appear
+  ansible.builtin.wait_for:
+    path: "{{ solo_vps_docker_api_proxy_host_socket }}"
+    state: present
+    timeout: 15
+  changed_when: false
+
+- name: Prove the non-root Alloy identity can reach the managed proxy socket path
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/sudo
+      - -n
+      - -u
+      - "{{ solo_vps_alloy_user }}"
+      - --
+      - /usr/bin/test
+      - -S
+      - "{{ solo_vps_docker_api_proxy_host_socket }}"
+  changed_when: false
+
+- name: Create the Alloy state directory
+  ansible.builtin.file:
+    path: "{{ solo_vps_alloy_state_dir }}"
+    state: directory
+    owner: "{{ solo_vps_alloy_user }}"
+    group: "{{ solo_vps_alloy_group }}"
+    mode: "0700"
+
+- name: Create the Alloy configuration directory outside the root-only credential tree
+  ansible.builtin.file:
+    path: "{{ solo_vps_alloy_config_dir }}"
+    state: directory
+    owner: root
+    group: "{{ solo_vps_alloy_group }}"
+    mode: "0750"
+
+- name: Materialize the root-only Alloy runtime environment locally on the target
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import json, os, pathlib, stat, sys, tempfile
+        source = pathlib.Path(sys.argv[1])
+        destination = pathlib.Path(sys.argv[2])
+        with source.open("r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        content = "".join(
+            f"{key}={json.dumps(str(data[key]))}\n"
+            for key in ("LOKI_URL", "LOKI_USERNAME", "GRAFANA_CLOUD_API_KEY")
+        ).encode("utf-8")
+        current = destination.read_bytes() if destination.exists() and destination.is_file() else None
+        metadata_ok = False
+        if destination.exists() and destination.is_file() and not destination.is_symlink():
+            st = destination.stat()
+            metadata_ok = st.st_uid == 0 and st.st_gid == 0 and stat.S_IMODE(st.st_mode) == 0o600
+        if current == content and metadata_ok:
+            print("changed=no")
+            raise SystemExit(0)
+        if destination.exists() and (destination.is_symlink() or not destination.is_file()):
+            print("refusing unsafe Alloy runtime environment path", file=sys.stderr)
+            raise SystemExit(2)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        fd, temporary = tempfile.mkstemp(prefix=destination.name + ".", dir=destination.parent)
+        try:
+            with os.fdopen(fd, "wb") as handle:
+                handle.write(content)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.chmod(temporary, 0o600)
+            os.chown(temporary, 0, 0)
+            os.replace(temporary, destination)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+        print("changed=yes")
+      - "{{ solo_vps_observability_credentials_path }}"
+      - "{{ solo_vps_observability_runtime_env_path }}"
+  register: solo_vps_alloy_runtime_env_change
+  changed_when: "'changed=yes' in solo_vps_alloy_runtime_env_change.stdout"
+  no_log: true
+
+- name: Render the non-secret Alloy Docker log pipeline
+  ansible.builtin.template:
+    src: config.alloy.j2
+    dest: "{{ solo_vps_alloy_config_path }}"
+    owner: root
+    group: "{{ solo_vps_alloy_group }}"
+    mode: "0640"
+  register: solo_vps_alloy_runtime_config_change
+
+- name: Prove the non-root Alloy identity can access managed runtime paths
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/sudo
+      - -n
+      - -u
+      - "{{ solo_vps_alloy_user }}"
+      - --
+      - /usr/bin/test
+      - -w
+      - "{{ solo_vps_alloy_state_dir }}"
+  changed_when: false
+
+- name: Prove the non-root Alloy identity can read its managed configuration
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/sudo
+      - -n
+      - -u
+      - "{{ solo_vps_alloy_user }}"
+      - --
+      - /usr/bin/test
+      - -r
+      - "{{ solo_vps_alloy_config_path }}"
+  changed_when: false
+
+- name: Validate the Alloy runtime configuration with target-local credentials only
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import json, os, sys
+        with open(sys.argv[1], "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        environment = os.environ.copy()
+        environment.update({
+            "LOKI_URL": str(data["LOKI_URL"]),
+            "LOKI_USERNAME": str(data["LOKI_USERNAME"]),
+            "GRAFANA_CLOUD_API_KEY": str(data["GRAFANA_CLOUD_API_KEY"]),
+        })
+        os.execve(sys.argv[2], [sys.argv[2], "validate", sys.argv[3]], environment)
+      - "{{ solo_vps_observability_credentials_path }}"
+      - "{{ solo_vps_alloy_install_path }}"
+      - "{{ solo_vps_alloy_config_path }}"
+  changed_when: false
+  no_log: true
+
+- name: Install the hardened Alloy systemd unit
+  ansible.builtin.template:
+    src: solo-vps-alloy.service.j2
+    dest: "/etc/systemd/system/{{ solo_vps_alloy_service_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  register: solo_vps_alloy_runtime_unit_change
+
+- name: Reload systemd after installing or changing the Alloy unit
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  when: solo_vps_alloy_runtime_unit_change.changed
+
+- name: Enable and start the Alloy retained-log service
+  ansible.builtin.systemd_service:
+    name: "{{ solo_vps_alloy_service_name }}"
+    enabled: true
+    state: started
+  register: solo_vps_alloy_runtime_service_start
+
+- name: Restart Alloy after managed config or credential changes
+  ansible.builtin.systemd_service:
+    name: "{{ solo_vps_alloy_service_name }}"
+    state: restarted
+  when: >-
+    (solo_vps_alloy_runtime_env_change.changed or solo_vps_alloy_runtime_config_change.changed or
+     solo_vps_alloy_runtime_unit_change.changed) and
+    not (solo_vps_alloy_runtime_service_start.changed | default(false))
+
+- name: Verify the active Alloy retained-log runtime
+  ansible.builtin.import_tasks: verify-runtime.yml
+
+- name: Remove the obsolete PRE-ALPHA Alloy config from the root-only credential tree
+  ansible.builtin.file:
+    path: "{{ solo_vps_alloy_legacy_config_path }}"
+    state: absent
+  when: solo_vps_alloy_legacy_config_path != solo_vps_alloy_config_path

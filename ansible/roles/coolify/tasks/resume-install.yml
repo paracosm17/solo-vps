@@ -1,0 +1,28 @@
+---
+- name: Read the known interrupted-install transaction
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_coolify_pending_marker }}"
+  register: solo_vps_coolify_resume_marker
+
+- name: Validate the interrupted-install identity before continuing
+  ansible.builtin.assert:
+    that:
+      - solo_vps_coolify_install_pending_marker.stat.isreg | default(false)
+      - solo_vps_coolify_install_pending_marker.stat.uid == 0
+      - solo_vps_coolify_install_pending_marker.stat.mode == '0600'
+      - "'managed_by=solo-vps' in (solo_vps_coolify_resume_marker.content | b64decode).splitlines()"
+      - "'state=installing' in (solo_vps_coolify_resume_marker.content | b64decode).splitlines()"
+      - "('coolify_version=' ~ solo_vps_coolify_version) in (solo_vps_coolify_resume_marker.content | b64decode).splitlines()"
+      - "('localhost_user=' ~ admin.user) in (solo_vps_coolify_resume_marker.content | b64decode).splitlines()"
+    fail_msg: >-
+      Interrupted installation belongs to a different version or administrator.
+      Use its original Solo VPS revision/configuration and inspect the transaction;
+      do not delete /data/coolify or generate replacement credentials.
+
+- name: Continue an installation with resumable secret handling
+  ansible.builtin.import_tasks: install.yml
+  when: "'install_protocol=2' in (solo_vps_coolify_resume_marker.content | b64decode).splitlines()"
+
+- name: Verify and adopt an older completed first-install transaction
+  ansible.builtin.import_tasks: recover.yml
+  when: "'install_protocol=2' not in (solo_vps_coolify_resume_marker.content | b64decode).splitlines()"

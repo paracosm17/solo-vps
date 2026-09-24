@@ -1,0 +1,19 @@
+# Managed by Solo VPS for the M11 GitHub-hosted deployment tunnel.
+# This account may open only client-local (-L) TCP forwarding to Coolify loopback API.
+Match User {{ solo_vps_ci_deploy_user }}
+    PasswordAuthentication no
+    KbdInteractiveAuthentication no
+    PubkeyAuthentication yes
+    AuthenticationMethods publickey
+    AllowAgentForwarding no
+    AllowTcpForwarding local
+    AllowStreamLocalForwarding no
+    GatewayPorts no
+    PermitOpen {{ solo_vps_ci_deploy_remote_host }}:{{ solo_vps_ci_deploy_remote_port }}
+    PermitListen none
+    PermitTTY no
+    PermitTunnel no
+    PermitUserRC no
+    X11Forwarding no
+    MaxSessions 0
+Match all

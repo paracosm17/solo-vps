@@ -1,0 +1,39 @@
+---
+- name: Inspect the OpenSSH daemon binary
+  ansible.builtin.stat:
+    path: "{{ solo_vps_sshd_binary }}"
+    follow: false
+  register: solo_vps_sshd_binary_state
+
+- name: Inspect the main OpenSSH daemon configuration
+  ansible.builtin.stat:
+    path: "{{ solo_vps_sshd_main_config }}"
+    follow: false
+  register: solo_vps_sshd_main_config_state
+
+- name: Confirm expected Ubuntu OpenSSH files are available
+  ansible.builtin.assert:
+    that:
+      - solo_vps_sshd_binary_state.stat.isreg | default(false)
+      - solo_vps_sshd_binary_state.stat.executable | default(false)
+      - solo_vps_sshd_main_config_state.stat.isreg | default(false)
+    fail_msg: >-
+      Expected Ubuntu OpenSSH server files are unavailable. Do not attempt
+      SSH policy activation on an unexpected target layout.
+
+- name: Read the main OpenSSH daemon configuration
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_sshd_main_config }}"
+  register: solo_vps_sshd_main_config_file
+
+- name: Confirm Ubuntu sshd_config activates the drop-in directory
+  ansible.builtin.assert:
+    that:
+      - >-
+        ((solo_vps_sshd_main_config_file.content | b64decode)
+        | regex_search('(?im)^\\s*Include\\s+/etc/ssh/sshd_config\\.d/\\*\\.conf(?:\\s+#.*)?\\s*$'))
+        is not none
+    fail_msg: >-
+      /etc/ssh/sshd_config does not contain the expected active
+      Include /etc/ssh/sshd_config.d/*.conf directive. Refusing to install a
+      drop-in that may not affect the effective SSH policy.

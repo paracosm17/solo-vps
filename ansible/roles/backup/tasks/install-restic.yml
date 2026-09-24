@@ -1,0 +1,77 @@
+---
+- name: Validate restic host tooling inputs
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Inspect existing restic tooling before mutation
+  ansible.builtin.import_tasks: inspect-existing.yml
+
+- name: Install pinned restic when the managed binary is absent
+  when: not solo_vps_restic_managed_path_state.stat.exists
+  block:
+    - name: Install bzip2 decompression dependency for the release artifact
+      ansible.builtin.apt:
+        name: bzip2
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Download the pinned restic release artifact with checksum verification
+      ansible.builtin.get_url:
+        url: "{{ solo_vps_restic_artifacts[ansible_facts.architecture].url }}"
+        dest: "{{ solo_vps_restic_stage_dir }}/solo-vps-restic-{{ solo_vps_restic_version }}.bz2"
+        checksum: "sha256:{{ solo_vps_restic_artifacts[ansible_facts.architecture].sha256 }}"
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Decompress the verified restic release artifact
+      ansible.builtin.command:
+        argv:
+          - "{{ solo_vps_restic_bunzip2_binary }}"
+          - --keep
+          - --force
+          - "{{ solo_vps_restic_stage_dir }}/solo-vps-restic-{{ solo_vps_restic_version }}.bz2"
+      changed_when: true
+
+    - name: Mark the staged restic binary executable for validation
+      ansible.builtin.file:
+        path: "{{ solo_vps_restic_stage_dir }}/solo-vps-restic-{{ solo_vps_restic_version }}"
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Validate the staged restic binary version before installation
+      ansible.builtin.command:
+        argv:
+          - "{{ solo_vps_restic_stage_dir }}/solo-vps-restic-{{ solo_vps_restic_version }}"
+          - version
+      changed_when: false
+      register: solo_vps_restic_staged_version
+
+    - name: Reject a staged binary with an unexpected version
+      ansible.builtin.assert:
+        that:
+          - solo_vps_restic_staged_version.stdout is match('^restic ' ~ solo_vps_restic_version ~ '( |$)')
+        fail_msg: >-
+          The checksum-verified restic artifact did not report the expected
+          version. Refusing to install it into the managed system path.
+
+    - name: Install the validated restic binary atomically
+      ansible.builtin.copy:
+        src: "{{ solo_vps_restic_stage_dir }}/solo-vps-restic-{{ solo_vps_restic_version }}"
+        dest: "{{ solo_vps_restic_install_path }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0755"
+  always:
+    - name: Remove temporary restic release files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ solo_vps_restic_stage_dir }}/solo-vps-restic-{{ solo_vps_restic_version }}.bz2"
+        - "{{ solo_vps_restic_stage_dir }}/solo-vps-restic-{{ solo_vps_restic_version }}"
+
+- name: Verify pinned restic host tooling
+  ansible.builtin.import_tasks: verify-tooling.yml

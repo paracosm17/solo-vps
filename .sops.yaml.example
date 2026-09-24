@@ -1,0 +1,10 @@
+---
+creation_rules:
+  - path_regex: '(^|[\\/])secrets[\\/].*\.enc\.yaml$'
+    age:
+      - age1REPLACE_WITH_YOUR_PUBLIC_RECIPIENT
+    mac_only_encrypted: false
+
+stores:
+  yaml:
+    indent: 2

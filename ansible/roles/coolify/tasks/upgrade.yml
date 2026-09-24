@@ -1,0 +1,208 @@
+---
+- name: Run the read-only Coolify upgrade preflight
+  ansible.builtin.import_tasks: upgrade-preflight.yml
+
+- name: Validate explicit Coolify upgrade confirmations before mutation
+  ansible.builtin.assert:
+    that:
+      - solo_vps_coolify_upgrade_confirm | default('') == 'I_HAVE_REVIEWED_THE_COOLIFY_UPGRADE_PLAN'
+    fail_msg: >-
+      Review the upgrade plan and confirm it before changing Coolify.
+      A local control-plane checkpoint must succeed before the transaction starts.
+  when: solo_vps_coolify_upgrade_required
+
+- name: Create and validate a local control-plane checkpoint before upgrade mutation
+  ansible.builtin.script:
+    cmd: "{{ (role_path ~ '/../../../scripts/coolify_upgrade_checkpoint.py') | quote }} --data {{ solo_vps_coolify_data_root | quote }}"
+    executable: /usr/bin/python3
+  register: solo_vps_coolify_upgrade_checkpoint
+  changed_when: true
+  when: solo_vps_coolify_upgrade_required
+
+- name: Report the retained local upgrade checkpoint
+  ansible.builtin.debug:
+    msg: "Local control-plane checkpoint: {{ (solo_vps_coolify_upgrade_checkpoint.stdout | from_json).checkpoint }}"
+  when: solo_vps_coolify_upgrade_required
+
+- name: Remove stale target staging only before a new reviewed transaction
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_upgrade_staging_dir }}"
+    state: absent
+  when: solo_vps_coolify_upgrade_required
+
+- name: Create the private target Coolify upgrade staging directory
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_upgrade_staging_dir }}"
+    state: directory
+    owner: "9999"
+    group: "0"
+    mode: "0700"
+  when: solo_vps_coolify_upgrade_required
+
+- name: Record the Coolify upgrade transaction before mutation
+  ansible.builtin.copy:
+    dest: "{{ solo_vps_coolify_upgrade_pending_marker }}"
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      managed_by=solo-vps
+      state=upgrading
+      previous_supported={{ solo_vps_coolify_previous_supported_version }}
+      current_supported={{ solo_vps_coolify_version }}
+      from_version={{ solo_vps_coolify_upgrade_from_version }}
+      to_version={{ solo_vps_coolify_version }}
+      localhost_user={{ admin.user }}
+      checkpoint={{ (solo_vps_coolify_upgrade_checkpoint.stdout | from_json).checkpoint }}
+  when: solo_vps_coolify_upgrade_required
+
+- name: Stop the disposable candidate after recording the transaction
+  ansible.builtin.fail:
+    msg: >-
+      EXPECTED EVALUATION INTERRUPTION: the local checkpoint and protected upgrade
+      marker exist, but target release files have not been promoted. Run the exact
+      candidate forward-resume command; do not delete the marker or downgrade.
+  when:
+    - solo_vps_coolify_upgrade_required
+    - solo_vps_coolify_evaluation_candidate | default(false) | bool
+    - solo_vps_coolify_upgrade_test_interrupt_after_marker | default(false) | bool
+
+- name: Download exact target Coolify release artifacts into the upgrade staging directory
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ solo_vps_coolify_upgrade_staging_dir }}/{{ item.name }}"
+    checksum: "{{ item.checksum }}"
+    owner: "9999"
+    group: "0"
+    mode: "0600"
+  loop: "{{ solo_vps_coolify_release_artifacts }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: solo_vps_coolify_upgrade_required
+
+- name: Validate the staged target Compose model without exposing secrets
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - compose
+      - --env-file
+      - "{{ solo_vps_coolify_env_path }}"
+      - -f
+      - "{{ solo_vps_coolify_upgrade_staging_dir }}/docker-compose.yml"
+      - -f
+      - "{{ solo_vps_coolify_upgrade_staging_dir }}/docker-compose.prod.yml"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/{{ solo_vps_coolify_compose_override_filename }}"
+      - config
+      - --quiet
+  changed_when: false
+  no_log: true
+  when: solo_vps_coolify_upgrade_required
+
+- name: Promote the verified target Coolify release artifacts
+  ansible.builtin.copy:
+    src: "{{ solo_vps_coolify_upgrade_staging_dir }}/{{ item.name }}"
+    dest: "{{ solo_vps_coolify_source_dir }}/{{ item.name }}"
+    remote_src: true
+    owner: "9999"
+    group: "0"
+    mode: "0600"
+  loop: "{{ solo_vps_coolify_release_artifacts }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: solo_vps_coolify_upgrade_required
+
+- name: Pin the target Coolify image and keep automatic upgrades disabled
+  ansible.builtin.lineinfile:
+    path: "{{ solo_vps_coolify_env_path }}"
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+    owner: "9999"
+    group: "0"
+    mode: "0600"
+  loop:
+    - key: LATEST_IMAGE
+      value: "{{ solo_vps_coolify_version }}"
+    - key: AUTOUPDATE
+      value: "false"
+  when: solo_vps_coolify_upgrade_required
+
+- name: Revalidate the promoted target Compose model before restart
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - compose
+      - --env-file
+      - "{{ solo_vps_coolify_env_path }}"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/docker-compose.yml"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/docker-compose.prod.yml"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/{{ solo_vps_coolify_compose_override_filename }}"
+      - config
+      - --quiet
+  changed_when: false
+  no_log: true
+  when: solo_vps_coolify_upgrade_required
+
+- name: Start the exact target Coolify release
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - compose
+      - --env-file
+      - "{{ solo_vps_coolify_env_path }}"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/docker-compose.yml"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/docker-compose.prod.yml"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/{{ solo_vps_coolify_compose_override_filename }}"
+      - up
+      - -d
+      - --pull
+      - always
+      - --remove-orphans
+      - --force-recreate
+  changed_when: true
+  when: solo_vps_coolify_upgrade_required
+
+- name: Reconcile the upgraded platform proxy access and port policy
+  ansible.builtin.import_tasks: reconcile-runtime-access.yml
+  when: solo_vps_coolify_upgrade_required
+
+- name: Reconcile upgraded platform proxy publications
+  ansible.builtin.import_tasks: reconcile-proxy.yml
+  when: solo_vps_coolify_upgrade_required
+
+- name: Verify the upgraded Coolify runtime before committing the version marker
+  ansible.builtin.import_tasks: verify-runtime.yml
+  when: solo_vps_coolify_upgrade_required
+
+- name: Record the current supported Coolify version after successful upgrade verification
+  ansible.builtin.copy:
+    dest: "{{ solo_vps_coolify_managed_marker }}"
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      managed_by=solo-vps
+      coolify_version={{ solo_vps_coolify_version }}
+      localhost_user={{ admin.user }}
+  when: solo_vps_coolify_upgrade_required
+
+- name: Remove the Coolify upgrade staging directory after successful verification
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_upgrade_staging_dir }}"
+    state: absent
+  when: solo_vps_coolify_upgrade_required
+
+- name: Remove the Coolify upgrade transaction marker after successful verification
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_upgrade_pending_marker }}"
+    state: absent
+  when: solo_vps_coolify_upgrade_required
+
+- name: Verify the current supported Coolify installation after lifecycle handling
+  ansible.builtin.import_tasks: verify.yml

@@ -1,0 +1,20 @@
+---
+extends: default
+
+ignore: |
+  legacy/
+  .venv/
+
+rules:
+  document-start: disable
+  line-length:
+    max: 240
+  truthy: disable
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: false
+  braces:
+    max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true

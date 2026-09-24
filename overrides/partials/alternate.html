@@ -1,0 +1,32 @@
+<div class="md-header__option solo-language">
+  <div class="md-select">
+    <button
+      class="md-header__button md-icon solo-language__button"
+      aria-label="{{ lang.t('select.language') }}"
+      title="{{ lang.t('select.language') }}"
+    >
+      {% set icon = config.theme.icon.alternate or "material/translate" %}
+      {% include ".icons/" ~ icon ~ ".svg" %}
+      <span class="solo-language__code">{{ config.theme.language | upper }}</span>
+      <span class="solo-language__chevron" aria-hidden="true">
+        {% include ".icons/material/chevron-down.svg" %}
+      </span>
+    </button>
+    <div class="md-select__inner solo-language__menu">
+      <ul class="md-select__list">
+        {% for alt in config.extra.alternate %}
+          <li class="md-select__item">
+            <a
+              href="{{ alt.link | url }}"
+              hreflang="{{ alt.lang }}"
+              class="md-select__link{% if alt.lang == config.theme.language %} solo-language__current{% endif %}"
+            >
+              <span>{{ alt.name }}</span>
+              <code>{{ alt.lang | upper }}</code>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,16 @@
+---
+- name: Load the dedicated CI deployment public key from the Ansible controller
+  ansible.builtin.set_fact:
+    solo_vps_ci_deploy_public_key: >-
+      {{ lookup('ansible.builtin.file', ci_deploy.ssh_public_key_file | expanduser, errors='strict') | trim }}
+
+- name: Confirm the CI deployment key is exactly one Ed25519 public key
+  ansible.builtin.assert:
+    that:
+      - solo_vps_ci_deploy_public_key | length > 0
+      - "'\n' not in solo_vps_ci_deploy_public_key"
+      - "'PRIVATE KEY' not in solo_vps_ci_deploy_public_key"
+      - solo_vps_ci_deploy_public_key is match(solo_vps_ci_deploy_public_key_regex)
+    fail_msg: >-
+      ci_deploy.ssh_public_key_file must contain exactly one Ed25519 OpenSSH
+      public key. Never provide the GitHub Actions private deployment key here.

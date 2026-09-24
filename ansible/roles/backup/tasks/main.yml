@@ -1,0 +1,3 @@
+---
+- name: Install and verify pinned restic host tooling
+  ansible.builtin.import_tasks: install-restic.yml

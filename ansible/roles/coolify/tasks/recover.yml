@@ -1,0 +1,238 @@
+---
+- name: Validate Coolify integration contract inputs
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Inspect Coolify ownership and first-install transaction markers
+  ansible.builtin.stat:
+    path: "{{ item.path }}"
+  loop:
+    - name: managed
+      path: "{{ solo_vps_coolify_managed_marker }}"
+    - name: pending
+      path: "{{ solo_vps_coolify_pending_marker }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: solo_vps_coolify_recovery_marker_states
+
+- name: Derive Coolify recovery marker state
+  ansible.builtin.set_fact:
+    solo_vps_coolify_recovery_managed_marker: >-
+      {{ (solo_vps_coolify_recovery_marker_states.results
+          | selectattr('item.name', 'equalto', 'managed') | first).stat }}
+    solo_vps_coolify_recovery_pending_marker: >-
+      {{ (solo_vps_coolify_recovery_marker_states.results
+          | selectattr('item.name', 'equalto', 'pending') | first).stat }}
+
+- name: Refuse recovery of an already managed installation
+  ansible.builtin.assert:
+    that:
+      - not solo_vps_coolify_recovery_managed_marker.exists
+      - >-
+        solo_vps_coolify_recovery_pending_marker.exists
+        or (solo_vps_coolify_recovery_allow_unmarked | default(false) | bool)
+    fail_msg: >-
+      Coolify recovery is only for an interrupted Solo VPS first install. A managed
+      installation must use make verify-coolify. An unmarked partial installation is
+      never adopted implicitly; the explicit make coolify-recover path is required.
+
+- name: Read the first-install transaction marker when available
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_coolify_pending_marker }}"
+  register: solo_vps_coolify_recovery_pending_raw
+  when: solo_vps_coolify_recovery_pending_marker.exists
+
+- name: Validate the first-install transaction identity
+  ansible.builtin.assert:
+    that:
+      - "'managed_by=solo-vps' in (solo_vps_coolify_recovery_pending_raw.content | b64decode)"
+      - "'state=installing' in (solo_vps_coolify_recovery_pending_raw.content | b64decode)"
+      - "('coolify_version=' ~ solo_vps_coolify_version) in (solo_vps_coolify_recovery_pending_raw.content | b64decode)"
+      - "('localhost_user=' ~ admin.user) in (solo_vps_coolify_recovery_pending_raw.content | b64decode)"
+    fail_msg: >-
+      The interrupted-install marker does not match this Solo VPS version/admin
+      identity. Recovery refuses to adopt drift.
+  when: solo_vps_coolify_recovery_pending_marker.exists
+
+- name: Look up the configured administrator account for localhost-key recovery
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ admin.user }}"
+
+- name: Derive the administrator home for localhost-key recovery
+  ansible.builtin.set_fact:
+    solo_vps_coolify_recovery_admin_home: "{{ ansible_facts.getent_passwd[admin.user][4] }}"
+
+- name: Inspect required recoverable Coolify files
+  ansible.builtin.stat:
+    path: "{{ item.path }}"
+    checksum_algorithm: sha256
+  loop:
+    - name: environment
+      path: "{{ solo_vps_coolify_env_path }}"
+    - name: compose_override
+      path: "{{ solo_vps_coolify_source_dir }}/{{ solo_vps_coolify_compose_override_filename }}"
+    - name: bootstrap_localhost_private_key
+      path: "{{ solo_vps_coolify_localhost_key_path }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: solo_vps_coolify_recovery_file_states
+
+- name: Derive the bootstrap localhost private-key state
+  ansible.builtin.set_fact:
+    solo_vps_coolify_recovery_bootstrap_key_state: >-
+      {{ (solo_vps_coolify_recovery_file_states.results
+          | selectattr('item.name', 'equalto', 'bootstrap_localhost_private_key') | first).stat }}
+
+- name: Find Coolify-normalized localhost private-key files after production seeding
+  ansible.builtin.find:
+    paths: "{{ solo_vps_coolify_data_root }}/ssh/keys"
+    recurse: false
+    file_type: file
+    use_regex: true
+    patterns: '^ssh_key@[^.]+$'
+  register: solo_vps_coolify_recovery_normalized_keys
+
+- name: Derive the recoverable localhost private-key candidates
+  ansible.builtin.set_fact:
+    solo_vps_coolify_recovery_key_candidates: >-
+      {{
+        ([solo_vps_coolify_localhost_key_path]
+          if solo_vps_coolify_recovery_bootstrap_key_state.exists
+          else [])
+        + (solo_vps_coolify_recovery_normalized_keys.files | map(attribute='path') | list)
+      }}
+
+- name: Require exactly one recoverable localhost private-key candidate
+  ansible.builtin.assert:
+    that:
+      - solo_vps_coolify_recovery_key_candidates | length == 1
+    fail_msg: >-
+      Interrupted Coolify state must expose exactly one localhost SSH private key:
+      either the pre-seed id.<admin.user>@host.docker.internal bootstrap key or the
+      post-seed ssh_key@<uuid> file materialized by Coolify. Recovery refuses
+      ambiguous or missing key state.
+
+- name: Inspect the effective recoverable localhost private key
+  ansible.builtin.stat:
+    path: "{{ solo_vps_coolify_recovery_key_candidates[0] }}"
+  register: solo_vps_coolify_recovery_key_state
+
+- name: Read the administrator authorized_keys for localhost-key proof
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_coolify_recovery_admin_home }}/.ssh/authorized_keys"
+  no_log: true
+  register: solo_vps_coolify_recovery_authorized_keys
+
+- name: Derive the effective localhost public key without exposing the private key
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_ssh_keygen_binary }}"
+      - -y
+      - -f
+      - "{{ solo_vps_coolify_recovery_key_candidates[0] }}"
+  changed_when: false
+  no_log: true
+  register: solo_vps_coolify_recovery_public_key
+
+- name: Verify pinned Coolify source artifacts before recovery
+  ansible.builtin.stat:
+    path: "{{ solo_vps_coolify_source_dir }}/{{ item.name }}"
+    checksum_algorithm: sha256
+  loop: "{{ solo_vps_coolify_release_artifacts }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: solo_vps_coolify_recovery_artifact_states
+
+- name: Inspect the Coolify Docker network before recovery
+  ansible.builtin.command:
+    argv: ["{{ solo_vps_coolify_docker_binary }}", network, inspect, coolify]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_coolify_recovery_network_probe
+
+- name: Confirm pinned image and autoupdate settings without exposing secrets
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/grep
+      - -Fx
+      - "{{ item }}"
+      - "{{ solo_vps_coolify_env_path }}"
+  changed_when: false
+  loop:
+    - "LATEST_IMAGE={{ solo_vps_coolify_image_tag }}"
+    - AUTOUPDATE=false
+
+- name: Derive recoverable Coolify file state
+  ansible.builtin.set_fact:
+    solo_vps_coolify_recovery_env_state: >-
+      {{ (solo_vps_coolify_recovery_file_states.results
+          | selectattr('item.name', 'equalto', 'environment') | first).stat }}
+    solo_vps_coolify_recovery_override_state: >-
+      {{ (solo_vps_coolify_recovery_file_states.results
+          | selectattr('item.name', 'equalto', 'compose_override') | first).stat }}
+
+- name: Require the exact Solo VPS first-install footprint before recovery
+  ansible.builtin.assert:
+    that:
+      - solo_vps_coolify_recovery_env_state.exists
+      - solo_vps_coolify_recovery_env_state.isreg
+      - solo_vps_coolify_recovery_env_state.mode == '0600'
+      - solo_vps_coolify_recovery_override_state.exists
+      - solo_vps_coolify_recovery_override_state.isreg
+      - solo_vps_coolify_recovery_override_state.mode == '0600'
+      - solo_vps_coolify_recovery_key_state.stat.exists
+      - solo_vps_coolify_recovery_key_state.stat.isreg
+      - solo_vps_coolify_recovery_key_state.stat.mode == '0600'
+      - solo_vps_coolify_recovery_key_state.stat.uid == 9999
+      - >-
+        (solo_vps_coolify_recovery_public_key.stdout | trim)
+        in (solo_vps_coolify_recovery_authorized_keys.content | b64decode)
+      - solo_vps_coolify_recovery_network_probe.rc == 0
+    fail_msg: >-
+      Interrupted Coolify state does not match the recoverable Solo VPS footprint.
+      Do not delete or overwrite /data/coolify on a real server; inspect the target
+      and choose an explicit recovery/rebuild path.
+
+- name: Assert every pinned recovery artifact checksum matches
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+      - item.stat.isreg
+      - "('sha256:' ~ (item.stat.checksum | default(''))) == item.item.checksum"
+    fail_msg: "Pinned Coolify recovery artifact drifted: {{ item.item.name }}"
+  loop: "{{ solo_vps_coolify_recovery_artifact_states.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+
+- name: Reconcile proxy access before adopting an older installation
+  ansible.builtin.import_tasks: reconcile-runtime-access.yml
+
+- name: Reconcile proxy publications before adopting an older installation
+  ansible.builtin.import_tasks: reconcile-proxy.yml
+
+- name: Verify the interrupted Coolify runtime before adopting the transaction
+  ansible.builtin.import_tasks: verify-runtime.yml
+
+- name: Record successful Solo VPS ownership after recovery verification
+  ansible.builtin.copy:
+    dest: "{{ solo_vps_coolify_managed_marker }}"
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      managed_by=solo-vps
+      coolify_version={{ solo_vps_coolify_version }}
+      localhost_user={{ admin.user }}
+
+- name: Remove the first-install transaction marker after successful recovery
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_pending_marker }}"
+    state: absent
+
+- name: Report recovered Coolify first-install transaction
+  ansible.builtin.debug:
+    msg:
+      status: PASS
+      recovery: verified-runtime-then-marked-managed
+      release: "{{ solo_vps_coolify_version }}"
+      localhost_user: "{{ admin.user }}"

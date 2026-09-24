@@ -1,0 +1,13 @@
+---
+- name: Run target preflight before installing backup runtime
+  ansible.builtin.import_playbook: preflight.yml
+
+- name: Install the Solo VPS M14 restic operational runtime without contacting storage
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Install the backup operational runtime and disabled schedule
+      ansible.builtin.import_role:
+        name: backup
+        tasks_from: runtime

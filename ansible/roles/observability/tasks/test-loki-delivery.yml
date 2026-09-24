@@ -1,0 +1,97 @@
+---
+- name: Inspect root-only Grafana Cloud runtime credentials
+  ansible.builtin.stat:
+    path: /etc/solo-vps/observability/grafana-cloud.json
+    follow: false
+  register: solo_vps_loki_credentials_state
+
+- name: Require the reviewed Grafana Cloud credential file
+  ansible.builtin.assert:
+    that:
+      - solo_vps_loki_credentials_state.stat.exists
+      - solo_vps_loki_credentials_state.stat.isreg
+      - not solo_vps_loki_credentials_state.stat.islnk | default(false)
+      - solo_vps_loki_credentials_state.stat.pw_name == 'root'
+      - solo_vps_loki_credentials_state.stat.gr_name == 'root'
+      - solo_vps_loki_credentials_state.stat.mode == '0600'
+    fail_msg: Run make verify-observability-credentials before testing remote Loki delivery.
+
+- name: Read Grafana Cloud runtime credentials without printing them
+  ansible.builtin.slurp:
+    src: /etc/solo-vps/observability/grafana-cloud.json
+  register: solo_vps_loki_credentials_raw
+  no_log: true
+
+- name: Decode Grafana Cloud runtime credentials in memory
+  ansible.builtin.set_fact:
+    solo_vps_loki_credentials: "{{ solo_vps_loki_credentials_raw.content | b64decode | from_json }}"
+  no_log: true
+
+- name: Validate the Grafana Cloud runtime schema before the smoke push
+  ansible.builtin.assert:
+    that:
+      - solo_vps_loki_credentials.keys() | sort == ['GRAFANA_CLOUD_API_KEY', 'LOKI_URL', 'LOKI_USERNAME'] | sort
+      - solo_vps_loki_credentials.LOKI_URL is match('^https://[^/]+/loki/api/v1/push$')
+      - solo_vps_loki_credentials.LOKI_USERNAME is match('^[0-9]+$')
+      - solo_vps_loki_credentials.GRAFANA_CLOUD_API_KEY | length > 0
+    fail_msg: Grafana Cloud runtime credentials do not match the expected schema.
+  no_log: true
+
+- name: Read remote nanosecond timestamp for the synthetic log entry
+  ansible.builtin.command:
+    argv:
+      - date
+      - +%s%N
+  register: solo_vps_loki_smoke_timestamp
+  changed_when: false
+
+- name: Push one non-secret synthetic log entry to Grafana Cloud Loki
+  ansible.builtin.uri:
+    url: "{{ solo_vps_loki_credentials.LOKI_URL }}"
+    method: POST
+    force_basic_auth: true
+    url_username: "{{ solo_vps_loki_credentials.LOKI_USERNAME }}"
+    url_password: "{{ solo_vps_loki_credentials.GRAFANA_CLOUD_API_KEY }}"
+    body_format: json
+    body:
+      streams:
+        - stream:
+            job: solo-vps-smoke
+            service_name: solo-vps-smoke
+            source: synthetic
+          values:
+            - - "{{ solo_vps_loki_smoke_timestamp.stdout }}"
+              - solo-vps retained-log connectivity smoke
+    status_code:
+      - 204
+    return_content: false
+  register: solo_vps_loki_smoke_push
+  failed_when: false
+  changed_when: false
+  no_log: true
+
+- name: Classify the remote Loki smoke result without exposing credentials
+  ansible.builtin.set_fact:
+    solo_vps_loki_smoke_status: "{{ solo_vps_loki_smoke_push.status | default(0) | int }}"
+  changed_when: false
+
+- name: Require successful Grafana Cloud Loki ingestion
+  ansible.builtin.assert:
+    that:
+      - solo_vps_loki_smoke_status == 204
+    fail_msg: >-
+      Grafana Cloud Loki smoke push failed with HTTP {{ solo_vps_loki_smoke_status }}.
+      401/403 normally means user ID, token, or logs:write scope; 404 normally means the push URL;
+      0/5xx normally means network/provider availability. No credential value was printed.
+    success_msg: Grafana Cloud Loki accepted one synthetic Solo VPS log entry.
+
+- name: Report the explicit remote-delivery proof
+  ansible.builtin.debug:
+    msg:
+      remote_ingestion: PASS / HTTP 204
+      synthetic_service_name: solo-vps-smoke
+      synthetic_job: solo-vps-smoke
+      payload_contains_secrets: false
+      credentials_printed: false
+      application_log_drain_proven: false / verify separately
+      next: Open Grafana Logs Drilldown with Last 15 minutes and find service_name=solo-vps-smoke.

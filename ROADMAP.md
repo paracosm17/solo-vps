@@ -1,0 +1,204 @@
+# Solo VPS — ROADMAP
+
+> **Last updated:** 2026-09-24
+> **Project status:** PRE-ALPHA  
+> **Current phase:** first-release productization and runtime evidence
+> **Current supported user contract:** [`README.md`](README.md)  
+> **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
+> **Next action:** prove the selected Coolify `4.3.21` evaluation candidate on a disposable Ubuntu 24.04 VPS before changing the supported lifecycle pins.
+
+This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
+
+---
+
+## 1. Current snapshot
+
+The maintained VPS has V3 operator evidence for the complete guided route:
+
+```text
+Ubuntu 24.04 host
+→ administrator access and SSH hardening
+→ Docker and Coolify
+→ GitHub Actions / GHCR application delivery
+→ runtime configuration and live logs
+→ retained logs
+→ PostgreSQL backup and isolated restore
+→ external uptime alert
+→ Backblaze B2 + restic off-site backup/restore-test
+→ host metrics and alert delivery
+→ failed-image rollback and planned reboot recovery
+```
+
+This is not V4. The exact release candidate has not been replayed from a clean VPS using only public documentation.
+
+### Validation levels
+
+```text
+V0  not validated
+V1  static/lint/syntax
+V2  local/unit/source behavior
+V3  integration/controlled real environment
+V4  complete clean Ubuntu VPS replay
+V5  real production-use evidence
+```
+
+`DONE` means done only at the stated level.
+
+### Product boundary
+
+- **There is exactly one VPS** in the maintained compute topology.
+- The controller and recovery-secret source is the normal **home workstation (Windows or Linux)**.
+- GitHub/GHCR, object storage, Grafana Cloud and uptime monitoring are managed external services.
+- A disposable/replacement VPS is validation or recovery infrastructure, not a permanent second node.
+- Team access-control automation and shell customization remain post-`v0.1.0` work.
+
+---
+
+## 2. Active first-release work
+
+### Documentation/productization
+
+The public route now treats chapters 1–7 as the guided setup sequence. Failures and maintenance is a separate runbook. Guided commands use semantic `SERVER_IP` / `ADMIN_USER` values, the navigation gives the tutorial more visual weight than reference trees, and the palette is calmer. The upgrade guide defines a new-checkout tagged-source update contract instead of an active-checkout `git pull` workflow.
+
+Remaining proof is the exact-candidate owner replay without ChatGPT. Any hidden value, missing UI action, or undocumented recovery step found there is a release defect.
+
+### Time-dependent evidence
+
+The immediate retained-log path is V3: entries survived application redeploy and Alloy restart. Repository-managed Alloy runs non-root and remains the maintained log-delivery path. The deliberately delayed three-day marker lookup is still pending and can now be performed.
+
+### Coolify lifecycle
+
+The source still supports only Coolify `4.1.1 → 4.1.2`. Official upstream review on 2026-09-17 selected `4.3.21` as the **disposable evaluation candidate**, not yet as a supported Solo VPS target. That reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data.
+
+Do not change pins from research alone. Sentinel is a Coolify-managed Linux/Docker metrics agent, not a Solo VPS server mode and not Redis Sentinel. The old verified "Sentinel absent" result records a `4.1.2` bridge-to-loopback incompatibility; it is not the desired contract for `4.3.19+`. A committed, safety-gated [exercise sheet](docs/coolify-4.3.21-evaluation.md) now proves the exact candidate artifacts, an HTTPS push path, the high-trust Docker/host boundary, absence of unintended public ports and deterministic interruption/forward-resume behavior. Runtime execution on a disposable Ubuntu 24.04 VPS remains pending. Only after that proof may policy, supported pins and public upgrade docs change together.
+
+### Publication
+
+The public upstream is `https://github.com/paracosm17/solo-vps`; no release tag exists. The source includes `Repository CI / fast-source` and a strict-PR MkDocs build with artifact-based Pages deployment. The release scanner rejects common operator-state paths in both the tracked snapshot and reachable history. Hosted required-check evidence, a deployed Pages URL, branch policy and Private Vulnerability Reporting remain publication-time gates; scan the exact public refs before the first push.
+
+---
+
+## 3. Release gates
+
+### Must pass before `v0.1.0`
+
+1. Complete the delayed three-day retained-log lookup.
+2. Choose and implement the reviewed Coolify release/lifecycle target.
+3. On one disposable Ubuntu 24.04 VPS, prove clean install, second-run idempotency, supported Coolify upgrade/interruption recovery, whole-host DOWN/UP notification, and full lost-VPS reconstruction.
+4. Replay the exact candidate using only rendered public documentation and no ChatGPT or maintainer notes.
+5. Publish the reviewed source to the real upstream and require hosted `Repository CI / fast-source`.
+6. Choose the default branch, enable GitHub Actions as the Pages source, verify deployment, and set `site_url`, `repo_url`, and `edit_uri` from real URLs.
+7. Enable and test a guaranteed private vulnerability-reporting path.
+8. Before the first push, scan the exact public tree and history for secrets and owner-specific state with the built-in check and an independent scanner.
+9. Prepare a dated `0.1.0` changelog entry, clean release dry-run, immutable tag and release notes.
+
+### Explicitly deferred
+
+- developer/team onboarding, dev/prod permissions and offboarding workflow;
+- optional shell tools, zsh profiles and theme catalog;
+- additional observability components;
+- Tailscale, error tracking and database administration UI;
+- multi-node, HA, Kubernetes/Nomad and self-hosted S3.
+
+---
+
+## 4. Critic-review state
+
+| Finding | State | Current evidence / remaining work |
+| --- | --- | --- |
+| CRIT-001 backup/restore/DR | PARTIAL V3 | B2, PostgreSQL restore and restic restore-test pass; clean replacement-host reconstruction pending |
+| CRIT-002 failed deploy rollback | DONE / V3 | failed immutable candidate restores the known-good image; database rollback excluded |
+| CRIT-003 workstation admin key | DONE / V3 | independent human key, sudo, root denial and hardening gate proven |
+| CRIT-004 hosted self-CI / clean target | SOURCE DONE / V2 | real upstream required check and disposable execution pending |
+| CRIT-005 observability confidentiality | DONE / V3 | Repository-managed non-root Alloy uses a protected Unix socket boundary |
+| CRIT-006 Quick Start complexity | SOURCE DONE / V2 | two-part route and semantic values implemented; exact-candidate user replay pending |
+| CRIT-007 operator help surface | DONE / V2 | bounded `help`, `help-ops`, `help-dev`, `help-all` |
+| CRIT-008 Passport factual drift | DONE / V2 | Passport is design boundary; README owns current user contract |
+| CRIT-009 ROADMAP sprawl | DONE / V2 | current state, gates and next action are concise |
+| CRIT-010 contract-test imbalance | PARTIAL | source gates exist; runtime V4 evidence remains higher priority than more wording tests |
+| CRIT-011 Docker/Coolify lifecycle | SOURCE DONE / V2 + CURRENT V3 | Docker 29.x and current no-op path proven; `4.3.21` disposable evaluation pending |
+| CRIT-012 CI deployment transport | DEFERRED | restricted SSH tunnel remains the proven default |
+| CRIT-013 recovery priority | CLOSED | recovery path implemented before optional observability expansion |
+| CRIT-014 private security channel | BLOCKED | GitHub setting or another guaranteed private route required |
+| CRIT-015 external outage detection | PARTIAL V3 | application-level DOWN/UP proven; whole-target outage pending |
+| CRIT-016 migration safety | DONE / V2 | app-owned preflight and image-only rollback boundary |
+| CRIT-017 release/upgrade story | PARTIAL | tagged-source contract documented; first tag and lifecycle proof pending |
+| CRIT-018 documentation duplication | DONE / V2 | user, architecture, plan and evidence roles separated |
+| CRIT-019 optional-feature leakage | DONE / V2 | optional capabilities do not gate the core Quick Start |
+| CRIT-020 revision metadata | BLOCKED | immutable public release identity pending |
+
+The Coolify-native Custom FluentBit experiment is **rejected as the maintained default**. Grafana Cloud credential encryption/delivery integration PASS remains historical evidence. Repository-managed non-root Alloy is the maintained retained-log implementation.
+
+---
+
+## 5. Canonical milestone state
+
+| Milestone | Priority | State | Validation / remaining gate |
+| --- | --- | --- | --- |
+| M1 — Repository Skeleton & Ansible Foundation | P1 | DONE | V2 |
+| M2 — Preflight & Configuration Contract | P1 | DONE | V2 + maintained-host use |
+| M3 — Base System Role | P1 | DONE | V3; V4 replay pending |
+| M4 — Admin User & SSH Hardening | P1 | DONE | V3; V4 replay pending |
+| M5 — Firewall & Host Exposure Baseline | P1 | DONE | V3; V4 replay pending |
+| M6 — Automatic Security Updates | P1 | DONE | V3; V4 replay pending |
+| M7 — Docker Host | P1 | DONE | Docker 29.x V3; V4 pending |
+| M8 — Optional Tailscale Administrative Plane | P3 | DEFERRED | post-release optional work |
+| M9 — Coolify Installation Backend | P1 | DONE | current/no-op V3; reviewed new lifecycle pending |
+| M10 — First End-to-End Application | P1 | DONE | V3 |
+| M11 — GitHub Actions + GHCR Template | P1 | DONE | consumer repository V3 |
+| M12 — Dependency & Image Hygiene | P2 | DONE | V2 |
+| M13 — Infrastructure Secrets with SOPS + age | P1 | DONE | V3 |
+| M14 — Off-Site Restic Backup | P1 | DONE | B2 snapshot/freshness/restore-test V3 |
+| M15 — Database-Aware Backup Strategy | P1 | DONE | local and off-site isolated restore V3 |
+| M16 — Disaster Recovery & Restore Test | P1 | SOURCE DONE | V2; replacement-host V4 pending |
+| M17 — `make doctor` expansion | P2 | DONE | V2 + maintained-host use |
+| M18 — `make verify` | P2 | DONE | V2 + maintained-host use |
+| M19 — Security Audit | P2 | DONE | V3 |
+| M20 — Automated Integration Testing | P2 | IN PROGRESS | clean-target harness ready; disposable run pending |
+| M21 — Author Shell / Ops UX | P3 | DEFERRED | post-release optional work |
+| M22 — UI-first Operational Visibility | P2 | DONE | V3 |
+| M23 — Application Error Tracking UX | P3 | DEFERRED | post-release optional work |
+| M24 — Professional Observability UX | P3 | DONE | optional retained logs and metrics V3; expansion frozen |
+| M25 — PostgreSQL Application UX / Guidance | P3 | DEFERRED | optional DB administration work |
+| M26 — Public README & Quick Start | P1 | SOURCE DONE | release productization V2; owner-only V4 replay pending |
+| M27 — Architecture Documentation & ADR | P2 | DONE | V2 |
+| M28 — SECURITY / CONTRIBUTING / LICENSE | P2 | DONE | V2; private reporting setting pending |
+| M29 — Upgrade Guide | P2 | SOURCE DONE | tagged-source contract documented; Coolify target/proof pending |
+| M30 — Release Process | P2 | SOURCE DONE | hosted dry-run and public release pending |
+
+---
+
+## 6. Batched external-validation window
+
+Use one temporary Ubuntu 24.04 VPS and reimage it between scenarios:
+
+1. clean install and second-run `changed=0`, `failed=0`;
+2. supported Coolify install/upgrade and controlled interrupted-transition recovery;
+3. whole-target external outage and recovery notification;
+4. complete lost-VPS reconstruction from off-site recovery inputs;
+5. final exact-candidate first-user replay.
+
+The maintained product topology remains one VPS.
+
+---
+
+## 7. Handoff
+
+### Completed in the current productization pass
+
+- chapters 1–7 are the only numbered guided setup tasks;
+- failures and maintenance moved to the Maintenance reference group;
+- public guided commands use semantic server/admin values instead of a fixed documentation IP and username;
+- primary tutorial navigation is visually stronger and the palette is less saturated;
+- Solo VPS source updates use a documented new-checkout exact-tag model;
+- Passport, ROADMAP and CHANGELOG ownership drift is reconciled.
+
+### Remaining blockers
+
+- three-day Grafana marker lookup;
+- reviewed current Coolify target and disposable lifecycle proof;
+- replacement-host recovery and whole-host outage proof;
+- exact-candidate owner replay;
+- public repository settings, hosted CI, private security reporting and release identity.
+
+**Target validation:** V3 for individual real integrations; V4 only after the complete clean-user replay.

@@ -1,0 +1,463 @@
+---
+- name: Inspect the Alloy retained-log service enabled state
+  ansible.builtin.command:
+    argv: [systemctl, is-enabled, "{{ solo_vps_alloy_service_name }}"]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_enabled
+
+- name: Inspect the Alloy retained-log service active state
+  ansible.builtin.command:
+    argv: [systemctl, is-active, "{{ solo_vps_alloy_service_name }}"]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_active
+
+- name: Read detailed Alloy service state without exposing environment values
+  ansible.builtin.command:
+    argv:
+      - systemctl
+      - show
+      - "{{ solo_vps_alloy_service_name }}"
+      - --property=ActiveState
+      - --property=SubState
+      - --property=Result
+      - --property=NRestarts
+      - --property=ExecMainCode
+      - --property=ExecMainStatus
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_service_state
+
+- name: Read the configured Alloy service identity
+  ansible.builtin.command:
+    argv: [systemctl, show, "{{ solo_vps_alloy_service_name }}", --property=User, --value]
+  changed_when: false
+  register: solo_vps_alloy_runtime_service_user
+
+- name: Read Alloy host group membership without changing it
+  ansible.builtin.command:
+    argv: [/usr/bin/id, -nG, "{{ solo_vps_alloy_user }}"]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_service_groups
+
+- name: Inspect the repository-managed Docker API proxy
+  ansible.builtin.command:
+    argv: [docker, container, inspect, "{{ solo_vps_docker_api_proxy_name }}"]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_proxy_raw
+
+- name: Require the repository-managed Docker API proxy before detailed verification
+  ansible.builtin.assert:
+    that:
+      - solo_vps_alloy_runtime_proxy_raw.rc == 0
+    fail_msg: >-
+      The repository-managed Docker API proxy is missing. Run `make observability-runtime`
+      before using the read-only runtime verifier.
+
+- name: Decode Docker API proxy state for read-only verification
+  ansible.builtin.set_fact:
+    solo_vps_alloy_runtime_proxy: >-
+      {{ (solo_vps_alloy_runtime_proxy_raw.stdout | from_json | first)
+         if solo_vps_alloy_runtime_proxy_raw.rc == 0 else {} }}
+  no_log: true
+
+- name: Inspect the root-only Alloy runtime environment
+  ansible.builtin.stat:
+    path: "{{ solo_vps_observability_runtime_env_path }}"
+    follow: false
+  register: solo_vps_alloy_runtime_env_stat
+
+- name: Inspect the managed Alloy configuration directory
+  ansible.builtin.stat:
+    path: "{{ solo_vps_alloy_config_dir }}"
+    follow: false
+  register: solo_vps_alloy_runtime_config_dir_stat
+
+- name: Inspect the managed Alloy configuration
+  ansible.builtin.stat:
+    path: "{{ solo_vps_alloy_config_path }}"
+    follow: false
+  register: solo_vps_alloy_runtime_config_stat
+
+- name: Prove the non-root Alloy identity can read the managed configuration
+  ansible.builtin.command:
+    argv: [/usr/bin/sudo, -n, -u, "{{ solo_vps_alloy_user }}", --, /usr/bin/test, -r, "{{ solo_vps_alloy_config_path }}"]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_config_readable
+
+- name: Inspect the group-gated Docker API proxy runtime directory
+  ansible.builtin.stat:
+    path: "{{ solo_vps_docker_api_proxy_runtime_dir }}"
+    follow: false
+  register: solo_vps_alloy_runtime_proxy_dir_stat
+
+- name: Inspect the managed Docker API proxy Unix socket
+  ansible.builtin.stat:
+    path: "{{ solo_vps_docker_api_proxy_host_socket }}"
+    follow: false
+  register: solo_vps_alloy_runtime_proxy_socket_stat
+
+- name: Inspect the boot-time tmpfiles contract for the proxy runtime directory
+  ansible.builtin.stat:
+    path: "{{ solo_vps_docker_api_proxy_tmpfiles_path }}"
+    follow: false
+  register: solo_vps_alloy_runtime_proxy_tmpfiles_stat
+
+- name: Prove Alloy can traverse the managed proxy runtime directory
+  ansible.builtin.command:
+    argv: [/usr/bin/sudo, -n, -u, "{{ solo_vps_alloy_user }}", --, /usr/bin/test, -x, "{{ solo_vps_docker_api_proxy_runtime_dir }}"]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_proxy_dir_alloy_access
+
+- name: Prove an unrelated host identity cannot traverse the proxy runtime directory
+  ansible.builtin.command:
+    argv: [/usr/bin/sudo, -n, -u, nobody, --, /usr/bin/test, -x, "{{ solo_vps_docker_api_proxy_runtime_dir }}"]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_proxy_dir_unrelated_access
+
+- name: Prove Alloy still cannot read the real Docker daemon socket directly
+  ansible.builtin.command:
+    argv: [/usr/bin/sudo, -n, -u, "{{ solo_vps_alloy_user }}", --, /usr/bin/test, -r, "{{ solo_vps_docker_api_proxy_socket }}"]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_direct_socket_read
+
+- name: Probe the Unix-socket Docker API proxy as the intended Alloy identity
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/sudo
+      - -n
+      - -u
+      - "{{ solo_vps_alloy_user }}"
+      - --
+      - /usr/bin/python3
+      - -c
+      - |
+          import http.client, socket, sys
+          class UnixHTTPConnection(http.client.HTTPConnection):
+              def __init__(self, path, timeout=3):
+                  super().__init__("localhost", timeout=timeout)
+                  self.path = path
+              def connect(self):
+                  sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                  sock.settimeout(self.timeout)
+                  sock.connect(self.path)
+                  self.sock = sock
+          try:
+              conn = UnixHTTPConnection(sys.argv[1])
+              conn.request("GET", sys.argv[2], headers={"Connection": "close"})
+              response = conn.getresponse()
+              print(response.status)
+              response.close()
+              conn.close()
+          except Exception:
+              print(-1)
+      - "{{ solo_vps_docker_api_proxy_host_socket }}"
+      - "{{ item.path }}"
+  loop:
+    - {name: ping, path: /_ping}
+    - {name: containers, path: "/containers/json?limit=1"}
+    - {name: networks, path: /networks}
+    - {name: info, path: /info}
+  loop_control:
+    label: "{{ item.name }}"
+  changed_when: false
+  failed_when: false
+  no_log: true
+  register: solo_vps_alloy_runtime_proxy_alloy_probes
+
+- name: Probe the managed proxy as an unrelated host identity without reading response content
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/sudo
+      - -n
+      - -u
+      - nobody
+      - --
+      - /usr/bin/python3
+      - -c
+      - |
+          import http.client, socket, sys
+          class UnixHTTPConnection(http.client.HTTPConnection):
+              def __init__(self, path, timeout=3):
+                  super().__init__("localhost", timeout=timeout)
+                  self.path = path
+              def connect(self):
+                  sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                  sock.settimeout(self.timeout)
+                  sock.connect(self.path)
+                  self.sock = sock
+          try:
+              conn = UnixHTTPConnection(sys.argv[1])
+              conn.request("GET", "/_ping", headers={"Connection": "close"})
+              response = conn.getresponse()
+              print(response.status)
+              response.close()
+              conn.close()
+          except Exception:
+              print(-1)
+      - "{{ solo_vps_docker_api_proxy_host_socket }}"
+  changed_when: false
+  failed_when: false
+  no_log: true
+  register: solo_vps_alloy_runtime_proxy_unrelated_probe
+
+- name: Wait briefly for the loopback Alloy HTTP listener
+  ansible.builtin.wait_for:
+    host: "{{ solo_vps_alloy_http_host }}"
+    port: "{{ solo_vps_alloy_http_port }}"
+    state: started
+    connect_timeout: 1
+    timeout: 15
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_http_wait
+
+- name: Read the current Alloy systemd invocation identifier without exposing runtime data
+  ansible.builtin.command:
+    argv: [systemctl, show, "{{ solo_vps_alloy_service_name }}", --property=InvocationID, --value]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_invocation_id
+  no_log: true
+
+- name: Read only current-invocation Alloy logs before readiness probes without printing payloads
+  ansible.builtin.command:
+    argv:
+      - journalctl
+      - "_SYSTEMD_INVOCATION_ID={{ solo_vps_alloy_runtime_invocation_id.stdout | default('') | trim }}"
+      - --lines
+      - "120"
+      - --no-pager
+      - --output
+      - cat
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_recent_logs
+  no_log: true
+  when: (solo_vps_alloy_runtime_invocation_id.stdout | default('') | trim | length) > 0
+
+- name: Read host TCP listeners after the bounded Alloy startup wait
+  ansible.builtin.command:
+    argv: [ss, -lntH]
+  changed_when: false
+  register: solo_vps_alloy_runtime_listeners
+
+- name: Probe Alloy readiness on loopback without hiding startup diagnostics
+  ansible.builtin.uri:
+    url: "http://{{ solo_vps_alloy_http_host }}:{{ solo_vps_alloy_http_port }}/-/ready"
+    method: GET
+    return_content: true
+    status_code: 200
+    timeout: 2
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_ready
+
+- name: Probe Alloy component health on loopback without hiding startup diagnostics
+  ansible.builtin.uri:
+    url: "http://{{ solo_vps_alloy_http_host }}:{{ solo_vps_alloy_http_port }}/-/healthy"
+    method: GET
+    return_content: true
+    status_code: 200
+    timeout: 2
+  changed_when: false
+  failed_when: false
+  register: solo_vps_alloy_runtime_healthy
+
+- name: Derive sanitized Alloy runtime evidence
+  ansible.builtin.set_fact:
+    solo_vps_alloy_runtime_proxy_env: "{{ solo_vps_alloy_runtime_proxy.Config.Env | default([]) }}"
+    solo_vps_alloy_runtime_proxy_mounts: "{{ solo_vps_alloy_runtime_proxy.Mounts | default([]) }}"
+    solo_vps_alloy_runtime_proxy_portbindings: "{{ solo_vps_alloy_runtime_proxy.HostConfig.PortBindings | default({}) }}"
+    solo_vps_alloy_runtime_proxy_ping_status: "{{ solo_vps_alloy_runtime_proxy_alloy_probes.results[0].stdout | default('-1') | trim | int }}"
+    solo_vps_alloy_runtime_proxy_containers_status: "{{ solo_vps_alloy_runtime_proxy_alloy_probes.results[1].stdout | default('-1') | trim | int }}"
+    solo_vps_alloy_runtime_proxy_networks_status: "{{ solo_vps_alloy_runtime_proxy_alloy_probes.results[2].stdout | default('-1') | trim | int }}"
+    solo_vps_alloy_runtime_proxy_info_status: "{{ solo_vps_alloy_runtime_proxy_alloy_probes.results[3].stdout | default('-1') | trim | int }}"
+    solo_vps_alloy_runtime_proxy_unrelated_status: "{{ solo_vps_alloy_runtime_proxy_unrelated_probe.stdout | default('-1') | trim | int }}"
+    solo_vps_alloy_runtime_auth_errors: >-
+      {{ (solo_vps_alloy_runtime_recent_logs.stdout | default('') | regex_search('(?i)((loki|grafana|remote[_ -]?write|prometheus)[^\n]*(401|403|unauthorized|forbidden)|(401|403|unauthorized|forbidden)[^\n]*(loki|grafana|remote[_ -]?write|prometheus))')) is not none }}
+    solo_vps_alloy_runtime_docker_errors: >-
+      {{ (solo_vps_alloy_runtime_recent_logs.stdout | default('') | regex_search('(?i)(docker.*(denied|forbidden|connection refused|unexpected eof)|request forbidden by administrative rules)')) is not none }}
+    solo_vps_alloy_runtime_unknown_flag_errors: >-
+      {{ (solo_vps_alloy_runtime_recent_logs.stdout | default('') | regex_search('(?i)(unknown flag|unrecognized (argument|option)|flag provided but not defined)')) is not none }}
+    solo_vps_alloy_runtime_permission_errors: >-
+      {{ (solo_vps_alloy_runtime_recent_logs.stdout | default('') | regex_search('(?i)(permission denied|operation not permitted)')) is not none }}
+    solo_vps_alloy_runtime_relative_storage_permission_errors: >-
+      {{ (solo_vps_alloy_runtime_recent_logs.stdout | default('') | regex_search('(?i)(mkdir +data-alloy[^\\n]*permission denied|failed to create the remotecfg service[^\n]*permission denied)')) is not none }}
+    solo_vps_alloy_runtime_bind_errors: >-
+      {{ (solo_vps_alloy_runtime_recent_logs.stdout | default('') | regex_search('(?i)(address already in use|bind[^\\n]*(failed|error)|listen[^\\n]*(failed|error))')) is not none }}
+    solo_vps_alloy_runtime_config_errors: >-
+      {{ (solo_vps_alloy_runtime_recent_logs.stdout | default('') | regex_search('(?i)(failed to (load|start)|configuration[^\\n]*(error|invalid)|config[^\\n]*(error|invalid)|decoding[^\\n]*config)')) is not none }}
+  no_log: true
+
+- name: Report sanitized Alloy current-invocation diagnostics when runtime or diagnostics are unhealthy
+  ansible.builtin.debug:
+    msg:
+      service_active: "{{ solo_vps_alloy_runtime_active.stdout | default('unknown') | trim }}"
+      service_state: "{{ solo_vps_alloy_runtime_service_state.stdout_lines | default([]) }}"
+      loopback_listener_present: >-
+        {{ (solo_vps_alloy_http_host ~ ':' ~ (solo_vps_alloy_http_port | string)) in
+           (solo_vps_alloy_runtime_listeners.stdout | default('')) }}
+      readiness_status: "{{ solo_vps_alloy_runtime_ready.status | default(-1) }}"
+      health_status: "{{ solo_vps_alloy_runtime_healthy.status | default(-1) }}"
+      journal_scope: current-systemd-invocation
+      journal_scope_available: "{{ (solo_vps_alloy_runtime_invocation_id.stdout | default('') | trim | length) > 0 }}"
+      journal_scope_query_ok: "{{ (solo_vps_alloy_runtime_recent_logs.rc | default(-1)) == 0 }}"
+      startup_unknown_flag_error: "{{ solo_vps_alloy_runtime_unknown_flag_errors | bool }}"
+      startup_permission_error: "{{ solo_vps_alloy_runtime_permission_errors | bool }}"
+      startup_relative_storage_permission_error: "{{ solo_vps_alloy_runtime_relative_storage_permission_errors | bool }}"
+      startup_bind_error: "{{ solo_vps_alloy_runtime_bind_errors | bool }}"
+      startup_config_error: "{{ solo_vps_alloy_runtime_config_errors | bool }}"
+      recent_provider_auth_error: "{{ solo_vps_alloy_runtime_auth_errors | bool }}"
+      recent_docker_api_error: "{{ solo_vps_alloy_runtime_docker_errors | bool }}"
+      raw_journal_printed: false
+      credentials_printed: false
+      next_step: >-
+        Return this sanitized diagnostic block to the maintainer. The classifiers cover only
+        the current systemd service invocation. Do not rotate Grafana credentials, widen host
+        ports, or change Docker permissions based only on a historical failure.
+  when: >-
+    solo_vps_alloy_runtime_active.rc != 0 or
+    (solo_vps_alloy_runtime_invocation_id.rc | default(-1)) != 0 or
+    (solo_vps_alloy_runtime_invocation_id.stdout | default('') | trim | length) == 0 or
+    (solo_vps_alloy_runtime_recent_logs.rc | default(-1)) != 0 or
+    (solo_vps_alloy_runtime_ready.status | default(-1)) != 200 or
+    (solo_vps_alloy_runtime_healthy.status | default(-1)) != 200 or
+    (solo_vps_alloy_runtime_auth_errors | bool) or
+    (solo_vps_alloy_runtime_docker_errors | bool) or
+    (solo_vps_alloy_runtime_unknown_flag_errors | bool) or
+    (solo_vps_alloy_runtime_permission_errors | bool) or
+    (solo_vps_alloy_runtime_relative_storage_permission_errors | bool) or
+    (solo_vps_alloy_runtime_bind_errors | bool) or
+    (solo_vps_alloy_runtime_config_errors | bool)
+
+- name: Verify the repository-managed retained-log runtime contract
+  ansible.builtin.assert:
+    that:
+      - solo_vps_alloy_runtime_enabled.rc == 0
+      - solo_vps_alloy_runtime_active.rc == 0
+      - solo_vps_alloy_runtime_service_user.stdout | trim == solo_vps_alloy_user
+      - solo_vps_alloy_runtime_service_groups.rc == 0
+      - "'docker' not in (solo_vps_alloy_runtime_service_groups.stdout | split)"
+      - solo_vps_alloy_runtime_proxy_raw.rc == 0
+      - solo_vps_alloy_runtime_proxy.State.Running | default(false) | bool
+      - solo_vps_alloy_runtime_proxy.Config.Image == solo_vps_docker_api_proxy_images[ansible_facts.architecture]
+      - solo_vps_alloy_runtime_proxy.HostConfig.Privileged | bool
+      - solo_vps_alloy_runtime_proxy.HostConfig.ReadonlyRootfs | bool
+      - solo_vps_alloy_runtime_proxy.HostConfig.RestartPolicy.Name == 'unless-stopped'
+      - solo_vps_alloy_runtime_proxy.HostConfig.NetworkMode == 'none'
+      - "'CONTAINERS=1' in solo_vps_alloy_runtime_proxy_env"
+      - "'EVENTS=1' in solo_vps_alloy_runtime_proxy_env"
+      - "'NETWORKS=1' in solo_vps_alloy_runtime_proxy_env"
+      - "'POST=0' in solo_vps_alloy_runtime_proxy_env"
+      - "'AUTH=0' in solo_vps_alloy_runtime_proxy_env"
+      - "'EXEC=0' in solo_vps_alloy_runtime_proxy_env"
+      - "'IMAGES=0' in solo_vps_alloy_runtime_proxy_env"
+      - "'INFO=0' in solo_vps_alloy_runtime_proxy_env"
+      - "'SECRETS=0' in solo_vps_alloy_runtime_proxy_env"
+      - "'VOLUMES=0' in solo_vps_alloy_runtime_proxy_env"
+      - "('BIND_CONFIG=' ~ solo_vps_docker_api_proxy_bind_config) in solo_vps_alloy_runtime_proxy_env"
+      - (solo_vps_alloy_runtime_proxy_portbindings | length) == 0
+      - >-
+        (solo_vps_alloy_runtime_proxy_mounts
+         | selectattr('Destination', 'equalto', solo_vps_docker_api_proxy_socket)
+         | selectattr('RW', 'equalto', false)
+         | list | length) == 1
+      - >-
+        (solo_vps_alloy_runtime_proxy_mounts
+         | selectattr('Source', 'equalto', solo_vps_docker_api_proxy_runtime_dir)
+         | selectattr('Destination', 'equalto', solo_vps_docker_api_proxy_container_socket_dir)
+         | selectattr('RW', 'equalto', true)
+         | list | length) == 1
+      - solo_vps_alloy_runtime_env_stat.stat.isreg | default(false)
+      - (solo_vps_alloy_runtime_env_stat.stat.uid | default(-1)) == 0
+      - (solo_vps_alloy_runtime_env_stat.stat.gid | default(-1)) == 0
+      - (solo_vps_alloy_runtime_env_stat.stat.mode | default('')) == '0600'
+      - solo_vps_alloy_runtime_config_dir_stat.stat.isdir | default(false)
+      - (solo_vps_alloy_runtime_config_dir_stat.stat.uid | default(-1)) == 0
+      - (solo_vps_alloy_runtime_config_dir_stat.stat.gr_name | default('')) == solo_vps_alloy_group
+      - (solo_vps_alloy_runtime_config_dir_stat.stat.mode | default('')) == '0750'
+      - solo_vps_alloy_runtime_config_readable.rc == 0
+      - solo_vps_alloy_runtime_config_stat.stat.isreg | default(false)
+      - (solo_vps_alloy_runtime_config_stat.stat.uid | default(-1)) == 0
+      - (solo_vps_alloy_runtime_config_stat.stat.gr_name | default('')) == solo_vps_alloy_group
+      - (solo_vps_alloy_runtime_config_stat.stat.mode | default('')) == '0640'
+      - solo_vps_alloy_runtime_proxy_tmpfiles_stat.stat.isreg | default(false)
+      - (solo_vps_alloy_runtime_proxy_tmpfiles_stat.stat.uid | default(-1)) == 0
+      - (solo_vps_alloy_runtime_proxy_tmpfiles_stat.stat.gid | default(-1)) == 0
+      - (solo_vps_alloy_runtime_proxy_tmpfiles_stat.stat.mode | default('')) == '0644'
+      - solo_vps_alloy_runtime_proxy_dir_stat.stat.isdir | default(false)
+      - (solo_vps_alloy_runtime_proxy_dir_stat.stat.uid | default(-1)) == 0
+      - (solo_vps_alloy_runtime_proxy_dir_stat.stat.gr_name | default('')) == solo_vps_alloy_group
+      - (solo_vps_alloy_runtime_proxy_dir_stat.stat.mode | default('')) == '0750'
+      - solo_vps_alloy_runtime_proxy_socket_stat.stat.issock | default(false)
+      - (solo_vps_alloy_runtime_proxy_socket_stat.stat.mode | default('')) == '0666'
+      - solo_vps_alloy_runtime_proxy_dir_alloy_access.rc == 0
+      - solo_vps_alloy_runtime_proxy_dir_unrelated_access.rc != 0
+      - solo_vps_alloy_runtime_direct_socket_read.rc != 0
+      - solo_vps_alloy_runtime_proxy_ping_status == 200
+      - solo_vps_alloy_runtime_proxy_containers_status == 200
+      - solo_vps_alloy_runtime_proxy_networks_status == 200
+      - solo_vps_alloy_runtime_proxy_info_status == 403
+      - solo_vps_alloy_runtime_proxy_unrelated_status == -1
+      - "':2375' not in (solo_vps_alloy_runtime_listeners.stdout | default(''))"
+      - "(solo_vps_alloy_http_host ~ ':' ~ (solo_vps_alloy_http_port | string)) in solo_vps_alloy_runtime_listeners.stdout"
+      - (solo_vps_alloy_runtime_ready.status | default(-1)) == 200
+      - "'Alloy is ready.' in (solo_vps_alloy_runtime_ready.content | default(''))"
+      - (solo_vps_alloy_runtime_healthy.status | default(-1)) == 200
+      - "'healthy' in (solo_vps_alloy_runtime_healthy.content | default('') | lower)"
+      - solo_vps_alloy_runtime_invocation_id.rc == 0
+      - (solo_vps_alloy_runtime_invocation_id.stdout | default('') | trim | length) > 0
+      - (solo_vps_alloy_runtime_recent_logs.rc | default(-1)) == 0
+      - not (solo_vps_alloy_runtime_auth_errors | bool)
+      - not (solo_vps_alloy_runtime_docker_errors | bool)
+      - not (solo_vps_alloy_runtime_unknown_flag_errors | bool)
+      - not (solo_vps_alloy_runtime_permission_errors | bool)
+      - not (solo_vps_alloy_runtime_relative_storage_permission_errors | bool)
+      - not (solo_vps_alloy_runtime_bind_errors | bool)
+      - not (solo_vps_alloy_runtime_config_errors | bool)
+    fail_msg: >-
+      The repository-managed retained-log runtime is not healthy or its Docker API
+      confidentiality boundary is not identity-gated. Use the sanitized diagnostics before changing Docker permissions, credentials, or listener exposure.
+
+- name: Report sanitized Alloy retained-log runtime evidence
+  ansible.builtin.debug:
+    msg:
+      alloy_service: running/enabled
+      alloy_identity: dedicated non-root solo-vps-alloy
+      alloy_config_directory: root:solo-vps-alloy 0750
+      alloy_config: root:solo-vps-alloy 0640
+      alloy_config_readable_by_service: true
+      current_invocation_diagnostic_errors: false
+      journal_scope: current-systemd-invocation
+      alloy_http: 127.0.0.1:12345 only
+      docker_api_proxy: running
+      docker_api_proxy_transport: Unix socket only
+      docker_api_proxy_socket_directory: root:solo-vps-alloy 0750
+      docker_api_proxy_socket_mode: "0666 inside protected directory"
+      docker_api_proxy_tcp_listener: absent
+      docker_api_proxy_network_mode: none
+      docker_api_proxy_methods: GET/HEAD only (POST=0)
+      docker_api_proxy_read_scope: coarse CONTAINERS + NETWORKS API read boundary inside trusted Alloy-only Unix boundary
+      docker_api_proxy_sections: containers + networks + events + ping + version
+      docker_api_proxy_container_read_probe: allowed as Alloy
+      docker_api_proxy_network_read_probe: allowed as Alloy
+      docker_api_proxy_info_read_probe: denied as Alloy
+      docker_api_proxy_unrelated_identity_probe: denied before HTTP response
+      alloy_direct_docker_socket_readable: false
+      proxy_docker_socket_mount: read-only high-trust boundary
+      runtime_env_owner: root:root
+      runtime_env_mode: "0600"
+      grafana_credentials_printed: false
+      raw_journal_printed: false
+      recent_provider_auth_errors: "{{ solo_vps_alloy_runtime_auth_errors | bool }}"
+      recent_docker_api_errors: "{{ solo_vps_alloy_runtime_docker_errors | bool }}"
+      retained_application_delivery: verify fresh application stdout/stderr in Grafana Logs Drilldown after migration
+      changed: false

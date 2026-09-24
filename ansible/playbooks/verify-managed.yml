@@ -1,0 +1,57 @@
+---
+- name: Verify the installed Solo VPS phases without changing them
+  hosts: all
+  become: true
+  gather_facts: true
+  vars_files:
+    - ../roles/ssh/defaults/main.yml
+    - ../roles/coolify/defaults/main.yml
+  tasks:
+    - name: Inspect managed phase markers and runtime paths
+      ansible.builtin.stat:
+        path: "{{ item.path }}"
+        follow: false
+      loop:
+        - {name: ssh, path: "{{ solo_vps_sshd_hardened_marker }}"}
+        - {name: ssh_dropin, path: "{{ solo_vps_sshd_hardening_path }}"}
+        - {name: coolify, path: "{{ solo_vps_coolify_managed_marker }}"}
+        - {name: coolify_data, path: "{{ solo_vps_coolify_data_root }}"}
+        - {name: installing, path: "{{ solo_vps_coolify_pending_marker }}"}
+        - {name: upgrading, path: "{{ solo_vps_coolify_upgrade_pending_marker }}"}
+      register: solo_vps_phase_states
+
+    - name: Derive installed phase state
+      ansible.builtin.set_fact:
+        solo_vps_phase: >-
+          {{ dict(solo_vps_phase_states.results | map(attribute='item.name')
+                  | zip(solo_vps_phase_states.results | map(attribute='stat'))) }}
+
+    - name: Refuse to report an interrupted installation as healthy
+      ansible.builtin.assert:
+        that:
+          - not solo_vps_phase.installing.exists
+          - not solo_vps_phase.upgrading.exists
+          - not solo_vps_phase.coolify_data.exists or solo_vps_phase.coolify.exists
+        fail_msg: >-
+          Coolify is incomplete or unmanaged. For an interrupted Solo VPS install,
+          rerun make platform. For an upgrade, inspect make coolify-upgrade-preflight
+          and the documented coolify-upgrade-resume path. Do not delete runtime data.
+
+    - name: Verify the effective SSH policy after hardening
+      ansible.builtin.include_role:
+        name: ssh
+        tasks_from: verify
+      when: solo_vps_phase.ssh.exists or solo_vps_phase.ssh_dropin.exists or solo_vps_phase.coolify.exists
+
+    - name: Verify the installed Coolify runtime and ownership
+      ansible.builtin.include_role:
+        name: coolify
+        tasks_from: verify
+      when: solo_vps_phase.coolify.exists
+
+    - name: Report completed phase checks
+      ansible.builtin.debug:
+        msg:
+          ssh: "{{ 'verified' if (solo_vps_phase.ssh.exists or solo_vps_phase.ssh_dropin.exists or solo_vps_phase.coolify.exists) else 'not activated yet' }}"
+          coolify: "{{ 'verified' if solo_vps_phase.coolify.exists else 'not installed yet' }}"
+          optional_profiles: "Not required by core verification; use their dedicated verifiers when enabled."

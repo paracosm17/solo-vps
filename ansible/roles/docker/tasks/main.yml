@@ -1,0 +1,221 @@
+---
+- name: Validate Docker host role inputs
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Gather installed package facts before Docker installation
+  ansible.builtin.package_facts:
+    manager: apt
+
+- name: Inspect whether Docker Engine is already installed before any repository mutation
+  ansible.builtin.stat:
+    path: "{{ solo_vps_docker_binary }}"
+  register: solo_vps_docker_binary_state
+
+- name: Refuse an unmanaged existing Docker binary before any repository mutation
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.packages.get('docker-ce', []) | length > 0
+    fail_msg: >-
+      A Docker binary exists but the managed docker-ce package is not present in APT package facts.
+      Solo VPS will not mutate repository/daemon/service state around an unknown runtime. Review and
+      migrate the existing Docker installation explicitly first.
+  when: solo_vps_docker_binary_state.stat.exists
+
+- name: Derive the installed Docker CE package major before any repository mutation
+  ansible.builtin.set_fact:
+    solo_vps_docker_existing_package_version: "{{ ansible_facts.packages['docker-ce'][0].version }}"
+    solo_vps_docker_existing_server_major: >-
+      {{ (ansible_facts.packages['docker-ce'][0].version
+          | regex_findall('^(?:[0-9]+:)?([0-9]+)[.]')
+          | first
+          | default('-1')) | int }}
+  when: solo_vps_docker_binary_state.stat.exists
+
+- name: Refuse an unsupported existing Docker major before any Docker role mutation
+  ansible.builtin.assert:
+    that:
+      - solo_vps_docker_existing_server_major in solo_vps_docker_supported_major_versions
+    fail_msg: >-
+      Existing Docker CE package {{ solo_vps_docker_existing_package_version }} is outside this
+      Solo VPS release support window {{ solo_vps_docker_supported_major_versions }}. Refusing before
+      repository, daemon, service, or package mutation. Review a supported lifecycle path first.
+  when: solo_vps_docker_binary_state.stat.exists
+
+- name: Derive conflicting Docker/container runtime packages
+  ansible.builtin.set_fact:
+    solo_vps_docker_installed_conflicts: >-
+      {{ solo_vps_docker_conflicting_packages
+         | intersect(ansible_facts.packages.keys() | list)
+         | list }}
+
+- name: Detect whether snap tooling is present
+  ansible.builtin.stat:
+    path: "{{ solo_vps_snap_binary }}"
+  register: solo_vps_docker_snap_binary_state
+
+- name: Inspect Docker snap presence without changing host state
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_snap_binary }}"
+      - list
+      - docker
+  changed_when: false
+  failed_when: false
+  register: solo_vps_docker_snap_probe
+  when: solo_vps_docker_snap_binary_state.stat.exists
+
+- name: Refuse implicit migration from conflicting Docker installations
+  ansible.builtin.assert:
+    that:
+      - solo_vps_docker_installed_conflicts | length == 0
+      - >-
+        (not solo_vps_docker_snap_binary_state.stat.exists) or
+        (solo_vps_docker_snap_probe.rc | default(1) != 0)
+    fail_msg: >-
+      A conflicting Docker/container runtime installation is already present.
+      Installed APT conflicts: {{ solo_vps_docker_installed_conflicts | join(', ') | default('none', true) }}.
+      Docker snap detected: {{ (solo_vps_docker_snap_probe.rc | default(1)) == 0 }}.
+      Solo VPS will not silently remove or replace an existing runtime because
+      that can interrupt containers or change data/runtime ownership. Review and
+      migrate the existing installation explicitly before rerunning M7.
+
+- name: Ensure the APT keyring directory exists
+  ansible.builtin.file:
+    path: "{{ solo_vps_docker_keyring_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install Docker official repository signing key
+  ansible.builtin.get_url:
+    url: "{{ solo_vps_docker_key_url }}"
+    dest: "{{ solo_vps_docker_key_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  register: solo_vps_docker_repository_key_result
+
+- name: Read the native dpkg architecture for the Docker repository
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_dpkg_binary }}"
+      - --print-architecture
+  changed_when: false
+  register: solo_vps_docker_dpkg_architecture
+
+- name: Configure the Docker official APT repository
+  ansible.builtin.template:
+    src: docker.sources.j2
+    dest: "{{ solo_vps_docker_source_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  register: solo_vps_docker_repository_source_result
+
+- name: Derive whether Docker package installation is still required
+  ansible.builtin.set_fact:
+    solo_vps_docker_missing_packages: >-
+      {{ solo_vps_docker_packages
+         | difference(ansible_facts.packages.keys() | list)
+         | list }}
+
+- name: Refresh APT metadata after Docker repository changes or before first install
+  ansible.builtin.apt:
+    update_cache: true
+  when: >-
+    solo_vps_docker_repository_key_result.changed or
+    solo_vps_docker_repository_source_result.changed or
+    solo_vps_docker_missing_packages | length > 0
+
+- name: Confirm Docker CE is available from the configured repository
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_apt_cache_binary }}"
+      - policy
+      - docker-ce
+  environment:
+    LC_ALL: C
+  changed_when: false
+  register: solo_vps_docker_ce_policy
+  when: solo_vps_docker_missing_packages | length > 0
+
+- name: Refuse Docker installation when the official repository has no package candidate
+  ansible.builtin.assert:
+    that:
+      - "'Candidate:' in solo_vps_docker_ce_policy.stdout"
+      - "'Candidate: (none)' not in solo_vps_docker_ce_policy.stdout"
+    fail_msg: >-
+      Docker CE is not available after refreshing APT metadata for the managed
+      official repository. Review {{ solo_vps_docker_source_path }},
+      {{ solo_vps_docker_key_path }}, target codename/architecture, and `apt-cache policy docker-ce`
+      before continuing. Solo VPS will not fall back to distro Docker or a convenience script.
+  when: solo_vps_docker_missing_packages | length > 0
+
+- name: Derive the Docker CE candidate major version
+  ansible.builtin.set_fact:
+    solo_vps_docker_ce_candidate_version: >-
+      {{ solo_vps_docker_ce_policy.stdout
+         | regex_findall('(?m)^\s*Candidate:\s*(\S+)')
+         | first
+         | default('') }}
+    solo_vps_docker_ce_candidate_major: >-
+      {{ (solo_vps_docker_ce_policy.stdout
+          | regex_findall('(?m)^\s*Candidate:\s*(?:[0-9]+:)?([0-9]+)[.]')
+          | first
+          | default('-1')) | int }}
+  when: solo_vps_docker_missing_packages | length > 0
+
+- name: Refuse an untested Docker major before first installation
+  ansible.builtin.assert:
+    that:
+      - solo_vps_docker_ce_candidate_major in solo_vps_docker_supported_major_versions
+    fail_msg: >-
+      The Docker repository candidate {{ solo_vps_docker_ce_candidate_version | default('unknown') }}
+      is outside this Solo VPS release support window {{ solo_vps_docker_supported_major_versions }}.
+      Refusing before package installation prevents a future Docker major from being selected
+      silently. Upgrade the Solo VPS source only after that Docker major has been reviewed and tested.
+  when: solo_vps_docker_missing_packages | length > 0
+
+- name: Install Docker Engine, Buildx, and Compose plugin packages
+  ansible.builtin.apt:
+    name: "{{ solo_vps_docker_packages }}"
+    state: present
+
+- name: Ensure the Docker daemon configuration directory exists
+  ansible.builtin.file:
+    path: "{{ solo_vps_docker_daemon_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configure the Solo VPS Docker daemon baseline
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: "{{ solo_vps_docker_daemon_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "{{ solo_vps_dockerd_binary }} --validate --config-file %s"
+  notify: Restart Docker daemon
+
+- name: Enable and start Docker runtime services
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop: "{{ solo_vps_docker_services }}"
+
+- name: Grant the managed administrator Docker socket access additively
+  ansible.builtin.user:
+    name: "{{ admin.user }}"
+    groups:
+      - "{{ solo_vps_docker_group }}"
+    append: true
+
+- name: Apply Docker daemon configuration changes before verification
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify the Docker host baseline
+  ansible.builtin.import_tasks: verify.yml

@@ -1,0 +1,54 @@
+---
+- name: Validate Coolify integration contract inputs
+  ansible.builtin.assert:
+    that:
+      - admin is defined
+      - admin is mapping
+      - admin.user is defined
+      - admin.user | length > 0
+      - ansible_user is defined
+      - ansible_user == admin.user
+      - ansible_host is defined
+      - ansible_host | string | length > 0
+      - solo_vps_coolify_version is match('^[0-9]+\\.[0-9]+\\.[0-9]+$')
+      - solo_vps_coolify_previous_supported_version is match('^[0-9]+\\.[0-9]+\\.[0-9]+$')
+      - solo_vps_coolify_previous_supported_version != solo_vps_coolify_version
+      - solo_vps_coolify_release_tag == 'v' ~ solo_vps_coolify_version
+      - solo_vps_coolify_image_tag == solo_vps_coolify_version
+      - solo_vps_coolify_release_artifacts | length == 3
+      - solo_vps_coolify_initial_access_mode == 'ssh-tunnel'
+      - solo_vps_coolify_data_parent == '/data'
+      - solo_vps_coolify_data_root == '/data/coolify'
+      - solo_vps_coolify_managed_marker == '/data/coolify/.solo-vps-managed'
+      - solo_vps_coolify_localhost_key_path == '/data/coolify/ssh/keys/id.' ~ admin.user ~ '@host.docker.internal'
+      - solo_vps_coolify_management_ports == [8000, 6001, 6002]
+      - solo_vps_coolify_supported_docker_majors == [29]
+      - solo_vps_coolify_minimum_docker_major == 29
+      - solo_vps_coolify_maximum_docker_major == 29
+      - solo_vps_coolify_management_bind_address == '127.0.0.1'
+      - solo_vps_coolify_minimum_compose_version == '2.24.4'
+      - solo_vps_coolify_compose_override_filename == 'docker-compose.solo-vps.yml'
+      - solo_vps_coolify_non_root_parent_mode == '0711'
+      - solo_vps_coolify_non_root_data_root_mode == '0710'
+      - solo_vps_coolify_non_root_backup_root_mode == '0730'
+      - solo_vps_coolify_non_root_proxy_mode == '0700'
+    fail_msg: >-
+      The M9 Coolify contract requires an explicit ansible_host and inventory connection as admin.user,
+      an exact project-pinned release, the canonical /data/coolify data root,
+      the SSH-tunnel/127.0.0.1 initial-access model, the bounded non-root /data -> resource/proxy/backup access contract, and Compose >= 2.24.4.
+      Do not reopen root SSH or use a
+      floating/latest Coolify install path to bypass this readiness gate.
+
+- name: Validate pinned Coolify release artifact metadata
+  ansible.builtin.assert:
+    that:
+      - item.url is match('^https://raw\\.githubusercontent\\.com/coollabsio/coolify/v[0-9]+\\.[0-9]+\\.[0-9]+/.+$')
+      - item.url is search('/' ~ solo_vps_coolify_release_tag ~ '/')
+      - item.checksum is match('^sha256:[0-9a-f]{64}$')
+    fail_msg: >-
+      Coolify release artifacts must be fetched from the exact official GitHub
+      release tag with a committed SHA-256 checksum. Floating CDN artifacts are
+      intentionally not accepted by this contract.
+  loop: "{{ solo_vps_coolify_release_artifacts }}"
+  loop_control:
+    label: "{{ item.name }}"

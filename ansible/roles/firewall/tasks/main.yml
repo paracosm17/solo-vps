@@ -1,0 +1,99 @@
+---
+- name: Validate firewall configuration
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Install the UFW host firewall
+  ansible.builtin.apt:
+    name: "{{ solo_vps_firewall_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Confirm the supported OpenSSH binary exists
+  ansible.builtin.stat:
+    path: "{{ solo_vps_firewall_sshd_binary }}"
+  register: solo_vps_firewall_sshd_binary_state
+
+- name: Refuse firewall activation without the supported OpenSSH layout
+  ansible.builtin.assert:
+    that:
+      - solo_vps_firewall_sshd_binary_state.stat.exists
+      - solo_vps_firewall_sshd_binary_state.stat.isreg | default(false)
+    fail_msg: >-
+      The supported OpenSSH server binary was not found at
+      {{ solo_vps_firewall_sshd_binary }}. Refusing to activate a firewall
+      without proving the SSH ingress port first.
+
+- name: Read the effective OpenSSH configuration before firewall changes
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_firewall_sshd_binary }}"
+      - -T
+  changed_when: false
+  register: solo_vps_firewall_sshd_effective
+
+- name: Require the current supported SSH port before firewall activation
+  ansible.builtin.assert:
+    that:
+      - "'port ' ~ (solo_vps_firewall_ssh_port | string) in solo_vps_firewall_sshd_effective.stdout_lines"
+    fail_msg: >-
+      Solo VPS currently supports public SSH on TCP/{{ solo_vps_firewall_ssh_port }}
+      only. The target reports a different effective sshd port, so UFW activation
+      is refused before access can be restricted.
+
+- name: Ensure UFW applies policy to IPv6 as well as IPv4
+  ansible.builtin.lineinfile:
+    path: /etc/default/ufw
+    regexp: '^IPV6='
+    line: IPV6=yes
+    create: false
+
+# Preserve the active administrative ingress path before changing any default
+# policy or enabling UFW. This ordering is intentional and access-critical.
+- name: Allow the supported SSH ingress before default-deny activation
+  community.general.ufw:
+    rule: allow
+    port: "{{ solo_vps_firewall_ssh_port | string }}"
+    proto: tcp
+    comment: Solo VPS SSH
+
+- name: Allow configured public HTTP and HTTPS edge ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item | string }}"
+    proto: tcp
+    comment: Solo VPS public edge
+  loop: "{{ firewall.public_ports }}"
+
+- name: Remove supported public edge rules disabled by configuration
+  community.general.ufw:
+    rule: allow
+    port: "{{ item | string }}"
+    proto: tcp
+    delete: true
+  loop: "{{ solo_vps_firewall_supported_public_ports | difference(firewall.public_ports) }}"
+
+- name: Deny unsolicited incoming host traffic by default
+  community.general.ufw:
+    direction: incoming
+    default: deny
+
+- name: Allow outgoing host traffic by default
+  community.general.ufw:
+    direction: outgoing
+    default: allow
+
+- name: Enable UFW after the SSH allow rule and defaults are represented
+  community.general.ufw:
+    state: enabled
+
+- name: Drop the existing Ansible SSH control connection after UFW activation
+  ansible.builtin.meta: reset_connection
+
+- name: Prove UFW still permits a fresh administrative SSH connection
+  ansible.builtin.wait_for_connection:
+    timeout: "{{ solo_vps_firewall_reconnect_timeout }}"
+  become: false
+
+- name: Verify the firewall baseline after activation
+  ansible.builtin.import_tasks: verify.yml

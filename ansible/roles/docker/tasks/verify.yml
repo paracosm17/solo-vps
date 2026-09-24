@@ -1,0 +1,181 @@
+---
+- name: Validate Docker host role inputs
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Gather installed package facts for Docker verification
+  ansible.builtin.package_facts:
+    manager: apt
+
+- name: Inspect managed Docker repository key
+  ansible.builtin.stat:
+    path: "{{ solo_vps_docker_key_path }}"
+  register: solo_vps_docker_key_state
+
+- name: Inspect managed Docker repository source
+  ansible.builtin.stat:
+    path: "{{ solo_vps_docker_source_path }}"
+  register: solo_vps_docker_source_state
+
+- name: Inspect managed Docker daemon configuration
+  ansible.builtin.stat:
+    path: "{{ solo_vps_docker_daemon_config_path }}"
+  register: solo_vps_docker_daemon_config_state
+
+- name: Read managed Docker repository source
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_docker_source_path }}"
+  register: solo_vps_docker_source
+
+- name: Read managed Docker daemon configuration
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_docker_daemon_config_path }}"
+  register: solo_vps_docker_daemon_config_raw
+
+- name: Validate the installed Docker daemon configuration
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_dockerd_binary }}"
+      - --validate
+      - --config-file
+      - "{{ solo_vps_docker_daemon_config_path }}"
+  changed_when: false
+  register: solo_vps_docker_daemon_validation
+
+- name: Read Docker service enabled state without changing host state
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_systemctl_binary }}"
+      - is-enabled
+      - "{{ item }}"
+  changed_when: false
+  failed_when: false
+  loop: "{{ solo_vps_docker_services }}"
+  register: solo_vps_docker_service_enabled
+
+- name: Read Docker service active state without changing host state
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_systemctl_binary }}"
+      - is-active
+      - "{{ item }}"
+  changed_when: false
+  failed_when: false
+  loop: "{{ solo_vps_docker_services }}"
+  register: solo_vps_docker_service_active
+
+- name: Read Docker daemon systemd command line
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_systemctl_binary }}"
+      - show
+      - docker.service
+      - --property=ExecStart
+      - --value
+  changed_when: false
+  register: solo_vps_docker_service_execstart
+
+- name: Read Docker Engine server version
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_docker_binary }}"
+      - version
+      - --format
+      - "{{ '{{.Server.Version}}' }}"
+  changed_when: false
+  register: solo_vps_docker_server_version
+
+- name: Read Docker Compose plugin version
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_docker_binary }}"
+      - compose
+      - version
+      - --short
+  changed_when: false
+  register: solo_vps_docker_compose_version
+
+- name: Read the effective Docker logging driver
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_docker_binary }}"
+      - info
+      - --format
+      - "{{ '{{.LoggingDriver}}' }}"
+  changed_when: false
+  register: solo_vps_docker_effective_log_driver
+
+- name: Read managed administrator group membership
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/id
+      - -nG
+      - "{{ admin.user }}"
+  changed_when: false
+  register: solo_vps_docker_admin_groups
+
+- name: Inspect Docker Unix socket
+  ansible.builtin.stat:
+    path: "{{ solo_vps_docker_socket_path }}"
+  register: solo_vps_docker_socket_state
+
+- name: Derive Docker verification evidence
+  ansible.builtin.set_fact:
+    solo_vps_docker_daemon_config: >-
+      {{ solo_vps_docker_daemon_config_raw.content | b64decode | from_json }}
+    solo_vps_docker_repository_text: >-
+      {{ solo_vps_docker_source.content | b64decode }}
+    solo_vps_docker_enabled_states: >-
+      {{ solo_vps_docker_service_enabled.results | map(attribute='stdout') | list }}
+    solo_vps_docker_active_states: >-
+      {{ solo_vps_docker_service_active.results | map(attribute='stdout') | list }}
+    solo_vps_docker_server_major: >-
+      {{ (solo_vps_docker_server_version.stdout | trim).split('.')[0] | int }}
+
+- name: Verify the Docker host baseline
+  ansible.builtin.assert:
+    that:
+      - solo_vps_docker_packages | difference(ansible_facts.packages.keys() | list) | length == 0
+      - solo_vps_docker_key_state.stat.exists
+      - solo_vps_docker_key_state.stat.isreg | default(false)
+      - solo_vps_docker_key_state.stat.mode == '0644'
+      - solo_vps_docker_source_state.stat.exists
+      - solo_vps_docker_source_state.stat.isreg | default(false)
+      - solo_vps_docker_daemon_config_state.stat.exists
+      - solo_vps_docker_daemon_config_state.stat.isreg | default(false)
+      - "'URIs: ' ~ solo_vps_docker_repository_uri in solo_vps_docker_repository_text"
+      - "'Suites: ' ~ ansible_facts.distribution_release in solo_vps_docker_repository_text"
+      - "'Signed-By: ' ~ solo_vps_docker_key_path in solo_vps_docker_repository_text"
+      - solo_vps_docker_daemon_config.get('log-driver') == solo_vps_docker_log_driver
+      - solo_vps_docker_daemon_config.get('log-opts', {}).get('max-size') == solo_vps_docker_log_max_size
+      - solo_vps_docker_daemon_config.get('log-opts', {}).get('max-file') == (solo_vps_docker_log_max_file | string)
+      - solo_vps_docker_daemon_config.get('live-restore') == (solo_vps_docker_live_restore | bool)
+      - "'hosts' not in solo_vps_docker_daemon_config"
+      - (solo_vps_docker_enabled_states | unique | list) == ['enabled']
+      - (solo_vps_docker_active_states | unique | list) == ['active']
+      - solo_vps_docker_service_execstart.stdout is not search('tcp://')
+      - solo_vps_docker_server_major in solo_vps_docker_supported_major_versions
+      - solo_vps_docker_compose_version.stdout | length > 0
+      - solo_vps_docker_effective_log_driver.stdout | trim == solo_vps_docker_log_driver
+      - solo_vps_docker_group in solo_vps_docker_admin_groups.stdout.split()
+      - solo_vps_docker_socket_state.stat.exists
+      - solo_vps_docker_socket_state.stat.issock | default(false)
+      - solo_vps_docker_socket_state.stat.pw_name == 'root'
+      - solo_vps_docker_socket_state.stat.gr_name == solo_vps_docker_group
+    fail_msg: >-
+      Docker host verification failed. The official packages/repository, daemon
+      configuration, active services, Compose plugin, non-TCP daemon access,
+      admin docker-group membership, and Unix socket ownership must match the
+      Solo VPS M7 baseline.
+    success_msg: Solo VPS Docker host baseline is active and internally consistent.
+
+- name: Report Docker host operational evidence
+  ansible.builtin.debug:
+    msg:
+      docker_server_version: "{{ solo_vps_docker_server_version.stdout | trim }}"
+      supported_docker_majors: "{{ solo_vps_docker_supported_major_versions }}"
+      compose_version: "{{ solo_vps_docker_compose_version.stdout | trim }}"
+      logging_driver: "{{ solo_vps_docker_effective_log_driver.stdout | trim }}"
+      live_restore: "{{ solo_vps_docker_daemon_config.get('live-restore') }}"
+      admin_docker_access: true
+      daemon_tcp_listener_configured: false
+      container_smoke_test: not-run-read-only-verification-does-not-pull-images

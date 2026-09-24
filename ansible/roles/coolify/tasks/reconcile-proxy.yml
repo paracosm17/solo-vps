@@ -1,0 +1,71 @@
+---
+- name: Prepare the persistent proxy port policy
+  ansible.builtin.import_tasks: prepare-proxy-policy.yml
+
+- name: Inspect the existing proxy before deciding whether to recreate it
+  ansible.builtin.script:
+    cmd: "{{ (role_path ~ '/../../../scripts/inspect_coolify_proxy.py') | quote }} --docker {{ solo_vps_coolify_docker_binary | quote }}"
+    executable: /usr/bin/python3
+  changed_when: false
+  register: solo_vps_proxy_before_raw
+
+- name: Derive the proxy repair decision
+  ansible.builtin.set_fact:
+    solo_vps_proxy_before: "{{ solo_vps_proxy_before_raw.stdout | from_json }}"
+
+- name: Read the effective proxy Compose model before recreating a container
+  ansible.builtin.command:
+    argv: ["{{ solo_vps_coolify_docker_binary }}", compose, config, --format, json]
+    chdir: "{{ solo_vps_coolify_data_root }}/proxy"
+  become: true
+  become_user: "{{ admin.user }}"
+  changed_when: false
+  no_log: true
+  register: solo_vps_proxy_compose_raw
+  when: solo_vps_proxy_before.running and not solo_vps_proxy_before.ports_safe
+
+- name: Inspect the current proxy image and attached networks before recreation
+  ansible.builtin.command:
+    argv: ["{{ solo_vps_coolify_docker_binary }}", container, inspect, coolify-proxy]
+  changed_when: false
+  no_log: true
+  register: solo_vps_proxy_repair_container_raw
+  when: solo_vps_proxy_before.running and not solo_vps_proxy_before.ports_safe
+
+- name: Refuse proxy recreation that would change its image or lose attached application networks
+  ansible.builtin.assert:
+    that:
+      - >-
+        (solo_vps_proxy_compose_raw.stdout | from_json).services.traefik.image
+        == (solo_vps_proxy_repair_container_raw.stdout | from_json)[0].Config.Image
+      - >-
+        (solo_vps_proxy_repair_container_raw.stdout | from_json)[0].NetworkSettings.Networks.keys() | list
+        | difference((solo_vps_proxy_compose_raw.stdout | from_json).networks.values() | map(attribute='name') | list)
+        | length == 0
+    fail_msg: >-
+      Proxy recreation would change its configured image or drop extra application networks.
+      The port override is installed; review the proxy configuration and restart through Coolify's proxy UI,
+      which reconnects resource networks. Then rerun make platform, make verify and make audit.
+  when: solo_vps_proxy_before.running and not solo_vps_proxy_before.ports_safe
+
+- name: Recreate only an already-running proxy whose publications violate the TCP edge policy
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - compose
+      - up
+      - -d
+      - --no-deps
+      - --no-build
+      - --pull
+      - never
+      - --force-recreate
+      - --wait
+      - --wait-timeout
+      - "120"
+      - traefik
+    chdir: "{{ solo_vps_coolify_data_root }}/proxy"
+  become: true
+  become_user: "{{ admin.user }}"
+  changed_when: true
+  when: solo_vps_proxy_before.running and not solo_vps_proxy_before.ports_safe

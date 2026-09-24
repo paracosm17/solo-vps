@@ -1,0 +1,13 @@
+---
+- name: Run target preflight before the reviewed Coolify upgrade
+  ansible.builtin.import_playbook: preflight.yml
+
+- name: Apply only the exact supported Coolify previous-to-current lifecycle transition
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Run safety-gated Coolify upgrade lifecycle
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: upgrade

@@ -1,0 +1,42 @@
+---
+- name: Read the persistent proxy port policy without changing it
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_coolify_data_root }}/proxy/docker-compose.override.yml"
+  register: solo_vps_proxy_policy_raw
+  no_log: true
+
+- name: Require the managed proxy port policy for future Coolify proxy starts
+  ansible.builtin.assert:
+    that:
+      - >-
+        (solo_vps_proxy_policy_raw.content | b64decode)
+        == lookup('ansible.builtin.template', 'docker-compose.proxy-override.yml.j2')
+    fail_msg: "Proxy port policy is missing or drifted. Run make platform to reconcile it; do not weaken make audit."
+
+- name: Inspect proxy health and actual publications without printing its environment
+  ansible.builtin.script:
+    cmd: "{{ (role_path ~ '/../../../scripts/inspect_coolify_proxy.py') | quote }} --docker {{ solo_vps_coolify_docker_binary | quote }}"
+    executable: /usr/bin/python3
+  changed_when: false
+  register: solo_vps_proxy_verify_raw
+  retries: 24
+  delay: 5
+  until: >-
+    solo_vps_proxy_verify_raw.rc != 0
+    or not (solo_vps_proxy_verify_raw.stdout | from_json).present
+    or not (solo_vps_proxy_verify_raw.stdout | from_json).ports_safe
+    or not (solo_vps_proxy_verify_raw.stdout | from_json).running
+    or (solo_vps_proxy_verify_raw.stdout | from_json).healthy
+
+- name: Verify an activated proxy is healthy and publishes only TCP 80 and 443
+  ansible.builtin.assert:
+    that:
+      - >-
+        not (solo_vps_proxy_verify_raw.stdout | from_json).present
+        or ((solo_vps_proxy_verify_raw.stdout | from_json).ports_safe
+        and (solo_vps_proxy_verify_raw.stdout | from_json).running
+        and (solo_vps_proxy_verify_raw.stdout | from_json).healthy)
+    fail_msg: >-
+      The Coolify proxy must be healthy with only public TCP 80/443.
+      Run make platform to repair port publications. If deliberately stopped, start it from Coolify and retry.
+      UDP 443 and host port 8080 are not part of the core profile.

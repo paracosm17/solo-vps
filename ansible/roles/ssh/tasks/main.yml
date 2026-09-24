@@ -1,0 +1,152 @@
+---
+- name: Validate SSH hardening inputs
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Require explicit recovery acknowledgement inside the role
+  ansible.builtin.assert:
+    that:
+      - solo_vps_ssh_hardening_confirm == solo_vps_ssh_hardening_confirm_required
+      - solo_vps_ssh_human_login_confirm == solo_vps_ssh_human_login_confirm_required
+    fail_msg: >-
+      SSH hardening is access-critical. Invoke it through the documented
+      activation workflow and explicitly acknowledge verified provider
+      console/recovery access and a fresh login from the normal human workstation
+      before any daemon-policy change.
+
+- name: Confirm the current SSH connection already uses the managed admin
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/id
+      - -un
+  become: false
+  changed_when: false
+  register: solo_vps_ssh_connection_user
+
+- name: Refuse SSH hardening through the old bootstrap identity
+  ansible.builtin.assert:
+    that:
+      - solo_vps_ssh_connection_user.stdout | trim == admin.user
+    fail_msg: >-
+      SSH hardening must be executed through a proven connection as
+      '{{ admin.user }}'. Update the local inventory to use the managed admin,
+      prove that login works, and keep provider recovery access available.
+
+- name: Inspect the supported OpenSSH layout
+  ansible.builtin.import_tasks: inspect-platform.yml
+
+- name: Ensure the Ubuntu OpenSSH drop-in directory exists
+  ansible.builtin.file:
+    path: "{{ solo_vps_sshd_dropin_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Activate the managed SSH hardening policy with rollback metadata
+  block:
+    - name: Install the managed SSH hardening drop-in
+      ansible.builtin.template:
+        src: 00-solo-vps-hardening.conf.j2
+        dest: "{{ solo_vps_sshd_hardening_path }}"
+        owner: root
+        group: root
+        mode: "0644"
+        backup: true
+        validate: "{{ solo_vps_sshd_binary }} -t -f %s"
+      register: solo_vps_sshd_hardening_install
+      notify: Reload Solo VPS OpenSSH
+
+    - name: Validate syntax and effective policy before any SSH reload
+      ansible.builtin.import_tasks: effective-policy.yml
+
+    - name: Flush the OpenSSH reload handler only after successful validation
+      ansible.builtin.meta: flush_handlers
+
+    - name: Drop the existing Ansible SSH control connection after validation
+      ansible.builtin.meta: reset_connection
+
+    - name: Prove the daemon accepts a fresh SSH connection as configured
+      ansible.builtin.wait_for_connection:
+        timeout: "{{ solo_vps_sshd_reconnect_timeout }}"
+      become: false
+
+    - name: Confirm the fresh connection still uses the managed admin
+      ansible.builtin.command:
+        argv:
+          - /usr/bin/id
+          - -un
+      become: false
+      changed_when: false
+      register: solo_vps_sshd_post_reload_user
+
+    - name: Confirm the fresh admin access proof succeeded
+      ansible.builtin.assert:
+        that:
+          - solo_vps_sshd_post_reload_user.stdout | trim == admin.user
+        fail_msg: >-
+          The fresh Ansible connection is not using the expected admin
+          identity. Use the preserved provider recovery path before retrying.
+
+    - name: Remove the temporary backup after successful reconnect proof
+      ansible.builtin.file:
+        path: "{{ solo_vps_sshd_hardening_install.backup_file }}"
+        state: absent
+      when:
+        - solo_vps_sshd_hardening_install.changed
+        - solo_vps_sshd_hardening_install.backup_file is defined
+
+  rescue:
+    - name: Restore the previous managed hardening drop-in when a backup exists
+      ansible.builtin.copy:
+        src: "{{ solo_vps_sshd_hardening_install.backup_file }}"
+        dest: "{{ solo_vps_sshd_hardening_path }}"
+        remote_src: true
+        mode: preserve
+      when:
+        - solo_vps_sshd_hardening_install is defined
+        - solo_vps_sshd_hardening_install.changed | default(false)
+        - solo_vps_sshd_hardening_install.backup_file is defined
+      notify: Reload Solo VPS OpenSSH
+
+    - name: Remove a newly-created hardening drop-in when no backup exists
+      ansible.builtin.file:
+        path: "{{ solo_vps_sshd_hardening_path }}"
+        state: absent
+      when:
+        - solo_vps_sshd_hardening_install is defined
+        - solo_vps_sshd_hardening_install.changed | default(false)
+        - solo_vps_sshd_hardening_install.backup_file is not defined
+      notify: Reload Solo VPS OpenSSH
+
+    - name: Validate the recovered OpenSSH configuration
+      ansible.builtin.command:
+        argv:
+          - "{{ solo_vps_sshd_binary }}"
+          - -t
+      changed_when: false
+
+    - name: Flush any recovery reload after the recovered config validates
+      ansible.builtin.meta: flush_handlers
+
+    - name: Stop after rolling back the failed SSH hardening activation
+      ansible.builtin.fail:
+        msg: >-
+          SSH hardening activation failed and Solo VPS restored the prior
+          managed drop-in state where the connection still allowed recovery.
+          Inspect the preceding failure before retrying.
+
+- name: Ensure the root-owned lifecycle state directory exists
+  ansible.builtin.file:
+    path: "{{ solo_vps_sshd_hardened_marker | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Remember completed SSH hardening independently of the drop-in
+  ansible.builtin.copy:
+    dest: "{{ solo_vps_sshd_hardened_marker }}"
+    content: "managed_by=solo-vps\nssh_hardening=verified\n"
+    owner: root
+    group: root
+    mode: "0600"

@@ -1,0 +1,108 @@
+---
+- name: Verify pinned restic tooling before installing backup runtime
+  ansible.builtin.import_tasks: verify-tooling.yml
+
+- name: Validate public repository metadata before installing backup runtime
+  ansible.builtin.import_tasks: assert-policy.yml
+
+- name: Create the root-owned Solo VPS runtime helper directory
+  ansible.builtin.file:
+    path: "{{ solo_vps_backup_runtime_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install the strict backup credential schema module beside the runtime
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../scripts/backup_credentials_common.py"
+    dest: "{{ solo_vps_backup_runtime_dir }}/backup_credentials_common.py"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install the Solo VPS restic operational runtime
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../scripts/restic_runtime.py"
+    dest: "{{ solo_vps_backup_runtime_dir }}/restic-runtime"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Ensure the backup runtime configuration directory exists
+  ansible.builtin.file:
+    path: "{{ solo_vps_backup_runtime_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Materialize non-secret backup runtime policy
+  ansible.builtin.copy:
+    dest: "{{ solo_vps_backup_runtime_path }}"
+    owner: root
+    group: root
+    mode: "0600"
+    content: >-
+      {{
+        {
+          'version': 1,
+          'repository': 's3:' ~ (backup.repository.endpoint | regex_replace('/$', '')) ~ '/' ~ backup.repository.bucket ~ '/' ~ backup.repository.prefix ~ '/' ~ server.hostname,
+          'region': backup.repository.region,
+          'host': server.hostname,
+          'sources': solo_vps_backup_sources,
+          'excludes': solo_vps_backup_excludes,
+          'tag': solo_vps_backup_snapshot_tag,
+          'group_by': solo_vps_backup_group_by,
+          'retention': solo_vps_backup_retention,
+          'freshness_hours': solo_vps_backup_freshness_hours,
+          'cache_dir': solo_vps_backup_cache_dir
+        } | to_nice_json
+      }}
+
+- name: Create the root-only restic cache directory
+  ansible.builtin.file:
+    path: "{{ solo_vps_backup_cache_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Install the daily Solo VPS backup service
+  ansible.builtin.template:
+    src: solo-vps-backup.service.j2
+    dest: /etc/systemd/system/solo-vps-backup.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd for Solo VPS backup runtime
+
+- name: Install the daily Solo VPS backup timer
+  ansible.builtin.template:
+    src: solo-vps-backup.timer.j2
+    dest: /etc/systemd/system/solo-vps-backup.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd for Solo VPS backup runtime
+
+- name: Install the weekly Solo VPS backup maintenance service
+  ansible.builtin.template:
+    src: solo-vps-backup-maintenance.service.j2
+    dest: /etc/systemd/system/solo-vps-backup-maintenance.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd for Solo VPS backup runtime
+
+- name: Install the weekly Solo VPS backup maintenance timer
+  ansible.builtin.template:
+    src: solo-vps-backup-maintenance.timer.j2
+    dest: /etc/systemd/system/solo-vps-backup-maintenance.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd for Solo VPS backup runtime
+
+- name: Flush backup runtime unit handlers before verification
+  ansible.builtin.meta: flush_handlers

@@ -1,0 +1,10 @@
+---
+- name: Diagnose the Coolify application-log drain runtime without mutation
+  hosts: all
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Run the sanitized Coolify log-drain runtime diagnosis
+      ansible.builtin.import_role:
+        name: observability
+        tasks_from: diagnose-log-drain

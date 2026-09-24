@@ -1,0 +1,43 @@
+---
+- name: Validate base system configuration
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Install the Solo VPS base package baseline
+  ansible.builtin.apt:
+    name: "{{ solo_vps_base_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: "{{ solo_vps_apt_cache_valid_time }}"
+
+- name: Set the persistent system hostname
+  ansible.builtin.hostname:
+    name: "{{ server.hostname }}"
+
+- name: Check configured timezone data exists
+  ansible.builtin.stat:
+    path: "/usr/share/zoneinfo/{{ server.timezone }}"
+  register: solo_vps_timezone_data
+
+- name: Reject an unknown timezone on the target
+  ansible.builtin.assert:
+    that:
+      - solo_vps_timezone_data.stat.exists
+      - not solo_vps_timezone_data.stat.isdir
+    fail_msg: >-
+      Unsupported timezone '{{ server.timezone }}': no matching zoneinfo entry
+      exists under /usr/share/zoneinfo on the target.
+
+- name: Point /etc/localtime at the configured timezone
+  ansible.builtin.file:
+    src: "/usr/share/zoneinfo/{{ server.timezone }}"
+    dest: /etc/localtime
+    state: link
+    force: true
+
+- name: Persist the configured timezone name
+  ansible.builtin.copy:
+    content: "{{ server.timezone }}\n"
+    dest: /etc/timezone
+    owner: root
+    group: root
+    mode: "0644"

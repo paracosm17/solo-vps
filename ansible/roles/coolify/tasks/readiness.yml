@@ -1,0 +1,150 @@
+---
+- name: Validate Coolify integration contract inputs
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Read Docker Engine server version
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - version
+      - --format
+      - "{{ '{{.Server.Version}}' }}"
+  changed_when: false
+  register: solo_vps_coolify_docker_version
+
+- name: Read Docker Compose plugin version
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - compose
+      - version
+      - --short
+  changed_when: false
+  register: solo_vps_coolify_compose_version
+
+- name: Inspect the Ansible-owned Docker daemon configuration
+  ansible.builtin.stat:
+    path: "{{ solo_vps_coolify_docker_daemon_config_path }}"
+  register: solo_vps_coolify_docker_config_state
+
+- name: Read the Ansible-owned Docker daemon configuration
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_coolify_docker_daemon_config_path }}"
+  register: solo_vps_coolify_docker_config_raw
+  when: solo_vps_coolify_docker_config_state.stat.exists
+
+- name: Read free space on the root filesystem
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_df_binary }}"
+      - --block-size=1
+      - --output=avail
+      - /
+  changed_when: false
+  register: solo_vps_coolify_root_df
+
+- name: Check that Coolify management ports are unused before installation
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_ss_binary }}"
+      - -H
+      - -ltn
+      - sport
+      - "="
+      - ":{{ item }}"
+  changed_when: false
+  loop: "{{ solo_vps_coolify_management_ports }}"
+  register: solo_vps_coolify_port_probes
+
+- name: Inspect the Coolify data root
+  ansible.builtin.stat:
+    path: "{{ solo_vps_coolify_data_root }}"
+  register: solo_vps_coolify_data_root_state
+
+- name: Inspect an existing Coolify data root without changing it
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_find_binary }}"
+      - "{{ solo_vps_coolify_data_root }}"
+      - -mindepth
+      - "1"
+      - -maxdepth
+      - "1"
+      - -print
+      - -quit
+  changed_when: false
+  register: solo_vps_coolify_data_root_probe
+  when: solo_vps_coolify_data_root_state.stat.exists
+
+- name: Detect an existing Coolify application container
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - container
+      - inspect
+      - coolify
+  changed_when: false
+  failed_when: false
+  register: solo_vps_coolify_container_probe
+
+- name: Derive Coolify readiness evidence
+  ansible.builtin.set_fact:
+    solo_vps_coolify_docker_major: >-
+      {{ (solo_vps_coolify_docker_version.stdout | trim).split('.')[0] | int }}
+    solo_vps_coolify_root_free_bytes: >-
+      {{ solo_vps_coolify_root_df.stdout_lines[-1] | trim | int }}
+    solo_vps_coolify_docker_config: >-
+      {{ (solo_vps_coolify_docker_config_raw.content | b64decode | from_json)
+         if solo_vps_coolify_docker_config_state.stat.exists else {} }}
+    solo_vps_coolify_busy_management_ports: >-
+      {{ solo_vps_coolify_port_probes.results
+         | selectattr('stdout', 'defined')
+         | rejectattr('stdout', 'equalto', '')
+         | map(attribute='item')
+         | list }}
+    solo_vps_coolify_existing_data: >-
+      {{ (solo_vps_coolify_data_root_probe.stdout | default('') | trim | length) > 0 }}
+
+- name: Confirm the prepared host is safe for a first Coolify installation
+  ansible.builtin.assert:
+    that:
+      - solo_vps_coolify_docker_major in solo_vps_coolify_supported_docker_majors
+      - solo_vps_coolify_compose_version.stdout | trim | length > 0
+      - (solo_vps_coolify_compose_version.stdout | trim | regex_replace('^v', '')) is version(solo_vps_coolify_minimum_compose_version, '>=')
+      - solo_vps_coolify_docker_config_state.stat.exists
+      - solo_vps_coolify_docker_config == solo_vps_coolify_expected_docker_config
+      - ansible_facts.get('processor_vcpus', 0) | int >= solo_vps_coolify_minimum_cpu_count
+      - ansible_facts.get('memtotal_mb', 0) | int >= solo_vps_coolify_minimum_memory_mb
+      - solo_vps_coolify_root_free_bytes | int >= solo_vps_coolify_minimum_free_disk_bytes
+      - solo_vps_coolify_busy_management_ports | length == 0
+      - not solo_vps_coolify_existing_data
+      - solo_vps_coolify_container_probe.rc != 0
+    fail_msg: >-
+      Coolify first-install readiness failed. Required state: Docker Engine 29.x and
+      Docker Compose >= 2.24.4 from M7, the exact Ansible-owned daemon.json baseline with no
+      Coolify drift, at least 2 vCPU / 2 GiB RAM / 30 GiB free root filesystem,
+      free management ports 8000/6001/6002, and no pre-existing /data/coolify
+      or 'coolify' container. Existing Coolify hosts require a separate
+      reconciliation/upgrade path and are intentionally not adopted implicitly. If this
+      is a known interrupted Solo VPS first install, use the documented make coolify-recover
+      path rather than deleting /data/coolify.
+
+- name: Report read-only Coolify installation readiness
+  ansible.builtin.debug:
+    msg:
+      release: "{{ solo_vps_coolify_version }}"
+      release_tag: "{{ solo_vps_coolify_release_tag }}"
+      install_backend: manual-pinned-artifacts-accepted
+      initial_access: "{{ solo_vps_coolify_initial_access_mode }}"
+      remote_admin_user: "{{ ansible_user }}"
+      docker_version: "{{ solo_vps_coolify_docker_version.stdout | trim }}"
+      compose_version: "{{ solo_vps_coolify_compose_version.stdout | trim }}"
+      minimum_compose_version: "{{ solo_vps_coolify_minimum_compose_version }}"
+      management_bind_address: "{{ solo_vps_coolify_management_bind_address }}"
+      compose_override: "{{ solo_vps_coolify_compose_override_filename }}"
+      cpu_count: "{{ ansible_facts.get('processor_vcpus', 'unknown') }}"
+      memory_mb: "{{ ansible_facts.get('memtotal_mb', 'unknown') }}"
+      root_free_bytes: "{{ solo_vps_coolify_root_free_bytes }}"
+      management_ports_free: "{{ solo_vps_coolify_management_ports }}"
+      docker_daemon_owner: ansible-m7
+      coolify_data_root: "{{ solo_vps_coolify_data_root }}"

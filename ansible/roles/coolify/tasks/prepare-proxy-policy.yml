@@ -1,0 +1,34 @@
+---
+- name: Inspect any existing proxy Compose override before writing the managed policy
+  ansible.builtin.stat:
+    path: "{{ solo_vps_coolify_data_root }}/proxy/docker-compose.override.yml"
+  register: solo_vps_proxy_override_state
+
+- name: Refuse a non-regular proxy override
+  ansible.builtin.assert:
+    that:
+      - not solo_vps_proxy_override_state.stat.exists or solo_vps_proxy_override_state.stat.isreg | default(false)
+    fail_msg: "Proxy override is not a regular file; inspect it before running make platform."
+
+- name: Read the existing proxy override without logging operator configuration
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_coolify_data_root }}/proxy/docker-compose.override.yml"
+  register: solo_vps_proxy_override_raw
+  no_log: true
+  when: solo_vps_proxy_override_state.stat.exists
+
+- name: Preserve an unrecognized operator proxy override
+  ansible.builtin.assert:
+    that:
+      - >-
+        not solo_vps_proxy_override_state.stat.exists
+        or (solo_vps_proxy_override_raw.content | b64decode).startswith('# Managed by Solo VPS: proxy TCP edge policy v1.')
+    fail_msg: "An operator proxy override already exists. Review and merge its settings with the Solo VPS port policy before continuing."
+
+- name: Install the persistent proxy TCP edge override before Coolify can start its proxy
+  ansible.builtin.template:
+    src: docker-compose.proxy-override.yml.j2
+    dest: "{{ solo_vps_coolify_data_root }}/proxy/docker-compose.override.yml"
+    owner: "{{ admin.user }}"
+    group: "{{ solo_vps_coolify_admin_gid }}"
+    mode: "0600"

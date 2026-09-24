@@ -1,0 +1,15 @@
+---
+- name: Audit the Solo VPS M24 Docker API confidentiality boundary
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Verify the retained-log runtime before confidentiality probes
+      ansible.builtin.import_role:
+        name: observability
+        tasks_from: verify-runtime.yml
+
+    - name: Audit CRIT-005 without reading Docker inspect or log payloads
+      ansible.builtin.import_role:
+        name: observability
+        tasks_from: audit-confidentiality.yml

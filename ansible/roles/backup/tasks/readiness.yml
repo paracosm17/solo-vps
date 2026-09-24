@@ -1,0 +1,44 @@
+---
+- name: Verify pinned restic tooling before backup readiness checks
+  ansible.builtin.import_tasks: verify-tooling.yml
+
+- name: Validate non-secret backup policy and repository metadata
+  ansible.builtin.import_tasks: assert-policy.yml
+
+- name: Inspect reviewed backup source paths
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ solo_vps_backup_sources }}"
+  register: solo_vps_backup_source_states
+
+- name: Require the current Coolify control-plane source to exist
+  ansible.builtin.assert:
+    that:
+      - >-
+        solo_vps_backup_source_states.results
+        | selectattr('stat.exists', 'equalto', true)
+        | selectattr('stat.isdir', 'equalto', true)
+        | list
+        | length == (solo_vps_backup_sources | length)
+    fail_msg: >-
+      M14 backup readiness requires the reviewed source /data/coolify to exist
+      as a directory. This check does not create it and does not inspect any
+      repository credentials. Complete the Coolify installation path first.
+
+- name: Report non-secret backup readiness contract
+  ansible.builtin.debug:
+    msg:
+      repository: >-
+        s3:{{ backup.repository.endpoint | regex_replace('/$', '') }}/{{ backup.repository.bucket }}/{{ backup.repository.prefix }}/{{ server.hostname }}
+      repository_region: "{{ backup.repository.region }}"
+      source_paths: "{{ solo_vps_backup_sources }}"
+      exclude_paths: "{{ solo_vps_backup_excludes }}"
+      snapshot_tag: "{{ solo_vps_backup_snapshot_tag }}"
+      snapshot_group_by: "{{ solo_vps_backup_group_by }}"
+      retention: "{{ solo_vps_backup_retention }}"
+      credentials_checked: false
+      repository_contacted: false
+      repository_initialized: false
+      backup_scheduled: false
+      snapshot_verified: false
+      restore_verified: false

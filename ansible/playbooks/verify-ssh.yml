@@ -1,0 +1,16 @@
+---
+- name: Run target preflight before SSH verification
+  ansible.builtin.import_playbook: preflight.yml
+- name: Verify managed admin identity before SSH verification
+  ansible.builtin.import_playbook: verify-users.yml
+
+- name: Verify Solo VPS OpenSSH hardening
+  hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Run SSH role verification tasks
+      ansible.builtin.import_role:
+        name: ssh
+        tasks_from: verify

@@ -1,0 +1,108 @@
+---
+- name: Validate Grafana Alloy host tooling inputs
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Inspect existing Grafana Alloy tooling before mutation
+  ansible.builtin.import_tasks: inspect-existing.yml
+
+- name: Install pinned Grafana Alloy binary when the managed path is absent
+  when: not solo_vps_alloy_managed_path_state.stat.exists
+  block:
+    - name: Confirm dpkg-deb is available for safe package extraction
+      ansible.builtin.stat:
+        path: "{{ solo_vps_alloy_dpkg_deb_binary }}"
+      register: solo_vps_alloy_dpkg_deb_state
+
+    - name: Refuse installation without dpkg-deb
+      ansible.builtin.assert:
+        that:
+          - solo_vps_alloy_dpkg_deb_state.stat.exists
+          - solo_vps_alloy_dpkg_deb_state.stat.executable | default(false)
+        fail_msg: >-
+          /usr/bin/dpkg-deb is required to extract the checksum-verified
+          official Alloy package without running package maintainer scripts.
+
+    - name: Download the pinned official Grafana Alloy package with checksum verification
+      ansible.builtin.get_url:
+        url: "{{ solo_vps_alloy_artifacts[ansible_facts.architecture].url }}"
+        dest: "{{ solo_vps_alloy_stage_dir }}/solo-vps-alloy-{{ solo_vps_alloy_version }}.deb"
+        checksum: "sha256:{{ solo_vps_alloy_artifacts[ansible_facts.architecture].sha256 }}"
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Create temporary Grafana Alloy extraction directory
+      ansible.builtin.file:
+        path: "{{ solo_vps_alloy_stage_dir }}/solo-vps-alloy-{{ solo_vps_alloy_version }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Extract the verified Alloy package without installing or starting a service
+      ansible.builtin.command:
+        argv:
+          - "{{ solo_vps_alloy_dpkg_deb_binary }}"
+          - --extract
+          - "{{ solo_vps_alloy_stage_dir }}/solo-vps-alloy-{{ solo_vps_alloy_version }}.deb"
+          - "{{ solo_vps_alloy_stage_dir }}/solo-vps-alloy-{{ solo_vps_alloy_version }}"
+      changed_when: true
+
+    - name: Inspect the staged Alloy binary
+      ansible.builtin.stat:
+        path: "{{ solo_vps_alloy_stage_dir }}/solo-vps-alloy-{{ solo_vps_alloy_version }}/usr/bin/alloy"
+        follow: false
+      register: solo_vps_alloy_staged_binary_state
+
+    - name: Refuse an unexpected package layout
+      ansible.builtin.assert:
+        that:
+          - solo_vps_alloy_staged_binary_state.stat.exists
+          - solo_vps_alloy_staged_binary_state.stat.isreg | default(false)
+          - not (solo_vps_alloy_staged_binary_state.stat.islnk | default(false))
+        fail_msg: >-
+          The checksum-verified official Alloy package did not contain the
+          expected regular /usr/bin/alloy binary. Refusing installation.
+
+    - name: Mark the staged Alloy binary executable for validation
+      ansible.builtin.file:
+        path: "{{ solo_vps_alloy_stage_dir }}/solo-vps-alloy-{{ solo_vps_alloy_version }}/usr/bin/alloy"
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Validate the staged Grafana Alloy version before installation
+      ansible.builtin.command:
+        argv:
+          - "{{ solo_vps_alloy_stage_dir }}/solo-vps-alloy-{{ solo_vps_alloy_version }}/usr/bin/alloy"
+          - --version
+      changed_when: false
+      register: solo_vps_alloy_staged_version
+
+    - name: Reject a staged Alloy binary with an unexpected version
+      ansible.builtin.assert:
+        that:
+          - solo_vps_alloy_staged_version.stdout is match('^alloy, version v' ~ solo_vps_alloy_version ~ '( |$)')
+        fail_msg: >-
+          The checksum-verified Alloy artifact did not report the expected
+          version. Refusing to install it into the managed system path.
+
+    - name: Install the validated Grafana Alloy binary atomically
+      ansible.builtin.copy:
+        src: "{{ solo_vps_alloy_stage_dir }}/solo-vps-alloy-{{ solo_vps_alloy_version }}/usr/bin/alloy"
+        dest: "{{ solo_vps_alloy_install_path }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0755"
+  always:
+    - name: Remove temporary Grafana Alloy release files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ solo_vps_alloy_stage_dir }}/solo-vps-alloy-{{ solo_vps_alloy_version }}.deb"
+        - "{{ solo_vps_alloy_stage_dir }}/solo-vps-alloy-{{ solo_vps_alloy_version }}"
+
+- name: Verify pinned Grafana Alloy host tooling
+  ansible.builtin.import_tasks: verify-tooling.yml

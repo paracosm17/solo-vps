@@ -1,0 +1,334 @@
+---
+- name: Inspect the Coolify-managed log-drain container by name
+  ansible.builtin.command:
+    argv:
+      - docker
+      - inspect
+      - coolify-log-drain
+  register: solo_vps_log_drain_collector_raw
+  changed_when: false
+  failed_when: false
+
+- name: Decode the Coolify-managed log-drain container state when present
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_collector: >-
+      {{
+        (solo_vps_log_drain_collector_raw.stdout | from_json)
+        if solo_vps_log_drain_collector_raw.rc == 0
+        else []
+      }}
+  changed_when: false
+
+- name: Require the Coolify-managed log-drain collector to exist and be running
+  ansible.builtin.assert:
+    that:
+      - solo_vps_log_drain_collector | length == 1
+      - solo_vps_log_drain_collector[0].State.Running | bool
+    fail_msg: >-
+      Coolify Custom FluentBit is not represented by one running coolify-log-drain container.
+      Use Coolify Server > Configuration > Log Drains to enable the managed Custom FluentBit drain;
+      do not create or patch a replacement collector by hand.
+    success_msg: Coolify-managed log-drain collector exists and is running.
+
+- name: Read recent Coolify log-drain diagnostics without printing provider configuration
+  ansible.builtin.command:
+    argv:
+      - docker
+      - logs
+      - --tail
+      - "120"
+      - coolify-log-drain
+  register: solo_vps_log_drain_recent_logs
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: Classify recent collector errors without exposing log payloads or credentials
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_recent_text: "{{ (solo_vps_log_drain_recent_logs.stdout | default('')) ~ '\n' ~ (solo_vps_log_drain_recent_logs.stderr | default('')) }}"
+    solo_vps_log_drain_recent_error_count: >-
+      {{
+        (((solo_vps_log_drain_recent_logs.stdout | default('')) ~ '\n' ~ (solo_vps_log_drain_recent_logs.stderr | default('')))
+        | regex_findall('(?im)(?:\\[error\\]|\\berror\\b|HTTP status=(?:4|5)[0-9]{2}|failed to flush|failed initialize)')
+        | length)
+      }}
+    solo_vps_log_drain_auth_failure: >-
+      {{
+        (((solo_vps_log_drain_recent_logs.stdout | default('')) ~ '\n' ~ (solo_vps_log_drain_recent_logs.stderr | default('')))
+        is search('(?i)HTTP status=(401|403)'))
+      }}
+    solo_vps_log_drain_bad_request: >-
+      {{
+        (((solo_vps_log_drain_recent_logs.stdout | default('')) ~ '\n' ~ (solo_vps_log_drain_recent_logs.stderr | default('')))
+        is search('(?i)HTTP status=400'))
+      }}
+    solo_vps_log_drain_config_failure: >-
+      {{
+        (((solo_vps_log_drain_recent_logs.stdout | default('')) ~ '\n' ~ (solo_vps_log_drain_recent_logs.stderr | default('')))
+        is search('(?i)(invalid config|failed initialize|configuration error|could not load|unknown configuration property)'))
+      }}
+  changed_when: false
+  no_log: true
+
+- name: Read running Docker container IDs for opted-in resource verification
+  ansible.builtin.command:
+    argv:
+      - docker
+      - ps
+      - -q
+  register: solo_vps_log_drain_container_ids
+  changed_when: false
+
+- name: Require running containers before log-drain verification
+  ansible.builtin.assert:
+    that:
+      - solo_vps_log_drain_container_ids.stdout_lines | length > 0
+    fail_msg: Coolify log-drain verification requires at least one running Docker container.
+
+- name: Read structured running-container state
+  ansible.builtin.command:
+    argv: "{{ ['docker', 'inspect'] + solo_vps_log_drain_container_ids.stdout_lines }}"
+  register: solo_vps_log_drain_inspect_raw
+  changed_when: false
+
+- name: Decode structured running-container state
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_inspect: "{{ solo_vps_log_drain_inspect_raw.stdout | from_json }}"
+    solo_vps_log_drain_resources: []
+    solo_vps_log_drain_resources_with_app_name: []
+    solo_vps_log_drain_resources_forwarding_app_name: []
+  changed_when: false
+
+- name: Find opted-in resources using the Coolify Fluentd log path
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_resources: "{{ solo_vps_log_drain_resources + [item.Name | regex_replace('^/', '')] }}"
+  loop: "{{ solo_vps_log_drain_inspect }}"
+  when:
+    - item.Name != '/coolify-log-drain'
+    - item.HostConfig.LogConfig.Type == 'fluentd'
+    - (item.HostConfig.LogConfig.Config | default({})).get('fluentd-address', '') in ['127.0.0.1:24224', 'tcp://127.0.0.1:24224']
+  changed_when: false
+  no_log: true
+
+- name: Confirm a stable COOLIFY_APP_NAME exists on opted-in resources
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_resources_with_app_name: "{{ solo_vps_log_drain_resources_with_app_name + [item.Name | regex_replace('^/', '')] }}"
+  loop: "{{ solo_vps_log_drain_inspect }}"
+  vars:
+    solo_vps_log_drain_env: "{{ item.Config.Env | default([]) }}"
+  when:
+    - (item.Name | regex_replace('^/', '')) in solo_vps_log_drain_resources
+    - solo_vps_log_drain_env | select('match', '^COOLIFY_APP_NAME=.+') | list | length == 1
+  changed_when: false
+  no_log: true
+
+- name: Confirm Docker forwards COOLIFY_APP_NAME metadata through the Fluentd driver
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_resources_forwarding_app_name: "{{ solo_vps_log_drain_resources_forwarding_app_name + [item.Name | regex_replace('^/', '')] }}"
+  loop: "{{ solo_vps_log_drain_inspect }}"
+  vars:
+    solo_vps_log_drain_driver_env: "{{ (item.HostConfig.LogConfig.Config | default({})).get('env', '') }}"
+  when:
+    - (item.Name | regex_replace('^/', '')) in solo_vps_log_drain_resources
+    - "'COOLIFY_APP_NAME' in solo_vps_log_drain_driver_env.split(',')"
+  changed_when: false
+  no_log: true
+
+- name: Check the Coolify-generated log-drain compose contract without printing sensitive configuration
+  ansible.builtin.command:
+    argv:
+      - grep
+      - -Fq
+      - 127.0.0.1:24224:24224
+      - /data/coolify/log-drains/docker-compose.yml
+  register: solo_vps_log_drain_compose_port
+  changed_when: false
+  failed_when: false
+
+- name: Check the active Fluent Bit listen-address contract without printing provider credentials
+  ansible.builtin.command:
+    argv:
+      - grep
+      - -Eq
+      - '^[[:space:]]*Listen[[:space:]]+0\.0\.0\.0[[:space:]]*$'
+      - /data/coolify/log-drains/fluent-bit.conf
+  register: solo_vps_log_drain_config_listen
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: Check the active Fluent Bit listen-port contract without printing provider credentials
+  ansible.builtin.command:
+    argv:
+      - grep
+      - -Eq
+      - '^[[:space:]]*Port[[:space:]]+24224[[:space:]]*$'
+      - /data/coolify/log-drains/fluent-bit.conf
+  register: solo_vps_log_drain_config_port
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: Derive the running collector loopback publication from Docker inspect
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_host_port_bindings: >-
+      {{
+        (solo_vps_log_drain_collector[0].HostConfig.PortBindings | default({}, true)).get('24224/tcp', [])
+        if solo_vps_log_drain_collector | length == 1
+        else []
+      }}
+    solo_vps_log_drain_runtime_ports: >-
+      {{
+        (solo_vps_log_drain_collector[0].NetworkSettings.Ports | default({}, true)).get('24224/tcp', [])
+        if solo_vps_log_drain_collector | length == 1
+        else []
+      }}
+  changed_when: false
+
+- name: Read host TCP listeners for the log-drain publication
+  ansible.builtin.command:
+    argv:
+      - ss
+      - -H
+      - -lnt
+  register: solo_vps_log_drain_host_listeners
+  changed_when: false
+
+- name: Probe the host-loopback Fluent Bit receiver without sending a log record
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - >-
+        import socket,sys; s=socket.socket(); s.settimeout(1);
+        rc=s.connect_ex(('127.0.0.1',24224)); s.close();
+        sys.exit(0 if rc == 0 else 1)
+  register: solo_vps_log_drain_tcp_probe
+  changed_when: false
+  failed_when: false
+
+- name: Derive sanitized local log-drain transport evidence
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_expected_binding_present: >-
+      {{
+        solo_vps_log_drain_host_port_bindings
+        | selectattr('HostIp', 'equalto', '127.0.0.1')
+        | selectattr('HostPort', 'equalto', '24224')
+        | list
+        | length == 1
+      }}
+    solo_vps_log_drain_runtime_binding_present: >-
+      {{
+        solo_vps_log_drain_runtime_ports
+        | selectattr('HostIp', 'equalto', '127.0.0.1')
+        | selectattr('HostPort', 'equalto', '24224')
+        | list
+        | length == 1
+      }}
+    solo_vps_log_drain_host_listener_present: >-
+      {{ solo_vps_log_drain_host_listeners.stdout is search('(?m)(?:^|\s)127\.0\.0\.1:24224(?:\s|$)') }}
+  changed_when: false
+
+- name: Report sanitized Coolify log-drain transport diagnostics
+  ansible.builtin.debug:
+    msg:
+      generated_compose_loopback_publication: "{{ solo_vps_log_drain_compose_port.rc == 0 }}"
+      generated_fluent_bit_listen_0_0_0_0: "{{ solo_vps_log_drain_config_listen.rc == 0 }}"
+      generated_fluent_bit_port_24224: "{{ solo_vps_log_drain_config_port.rc == 0 }}"
+      docker_hostconfig_loopback_binding: "{{ solo_vps_log_drain_expected_binding_present | bool }}"
+      docker_networksettings_loopback_binding: "{{ solo_vps_log_drain_runtime_binding_present | bool }}"
+      host_loopback_listener_24224: "{{ solo_vps_log_drain_host_listener_present | bool }}"
+      host_loopback_tcp_connect: "{{ solo_vps_log_drain_tcp_probe.rc == 0 }}"
+      provider_credentials: already proven separately by make test-observability-loki
+      sensitive_configuration_printed: false
+
+- name: Require the Coolify-generated loopback publication contract
+  ansible.builtin.assert:
+    that:
+      - solo_vps_log_drain_compose_port.rc == 0
+      - solo_vps_log_drain_config_listen.rc == 0
+      - solo_vps_log_drain_config_port.rc == 0
+    fail_msg: >-
+      Coolify-generated log-drain files do not contain the reviewed v4.1.2 loopback receiver contract.
+      Do not hand-edit /data/coolify/log-drains. In Coolify, turn the Custom FluentBit Enabled checkbox off, wait for the UI operation to finish, run
+      make verify-observability-log-drain-disabled, then turn Enabled on again so Coolify regenerates its own runtime.
+    success_msg: Coolify-generated log-drain files contain the reviewed loopback receiver contract.
+
+- name: Require the running collector to publish the reviewed loopback port
+  ansible.builtin.assert:
+    that:
+      - solo_vps_log_drain_expected_binding_present | bool
+      - solo_vps_log_drain_runtime_binding_present | bool
+      - solo_vps_log_drain_host_listener_present | bool
+      - solo_vps_log_drain_tcp_probe.rc == 0
+    fail_msg: >-
+      Coolify log-drain runtime drift detected: the opted-in application uses tcp://127.0.0.1:24224, but the running
+      coolify-log-drain container is not exposing a reachable host-loopback receiver there. Grafana credentials are
+      already proven separately. Use the Coolify UI only: turn the Custom FluentBit Enabled checkbox off, wait for the operation to finish,
+      prove the stopped state with make verify-observability-log-drain-disabled, then turn Enabled on again to force
+      Coolify to recreate its managed collector. Do not
+      patch the generated compose file manually.
+    success_msg: Coolify log-drain host-loopback publication is present and TCP-reachable.
+
+- name: Confirm Docker local log readability for one opted-in resource
+  ansible.builtin.command:
+    argv:
+      - docker
+      - logs
+      - --tail
+      - "1"
+      - "{{ solo_vps_log_drain_resources[0] }}"
+  register: solo_vps_log_drain_dual_log_probe
+  changed_when: false
+  failed_when: false
+  when: solo_vps_log_drain_resources | length > 0
+  no_log: true
+
+- name: Verify the Coolify-native application-log drain state
+  ansible.builtin.assert:
+    that:
+      - solo_vps_log_drain_collector | length == 1
+      - solo_vps_log_drain_collector[0].State.Running | bool
+      - solo_vps_log_drain_resources | length > 0
+      - solo_vps_log_drain_resources_with_app_name | length == solo_vps_log_drain_resources | length
+      - solo_vps_log_drain_resources_forwarding_app_name | length == solo_vps_log_drain_resources | length
+      - >-
+        solo_vps_log_drain_collector[0].Mounts
+        | selectattr('Source', 'equalto', '/var/run/docker.sock')
+        | list
+        | length == 0
+      - solo_vps_log_drain_dual_log_probe.rc | default(1) == 0
+      - not solo_vps_log_drain_auth_failure | bool
+      - not solo_vps_log_drain_bad_request | bool
+      - not solo_vps_log_drain_config_failure | bool
+    fail_msg: >-
+      Coolify application-log drain verification failed. Confirm Custom FluentBit is enabled, the resource has
+      COOLIFY_APP_NAME and Drain Logs enabled, and the resource was restarted/redeployed. If Grafana is empty,
+      run make test-observability-loki to isolate provider credentials from the Coolify/Fluent Bit path.
+    success_msg: Coolify application-log drain is running on loopback and at least one resource is opted in.
+
+- name: Report the read-only application-log drain boundary
+  ansible.builtin.debug:
+    msg:
+      transport: Coolify resource Docker logging driver -> Coolify-managed Fluent Bit -> remote Grafana/Loki
+      collector: coolify-log-drain
+      collector_running: true
+      collector_restart_count: "{{ solo_vps_log_drain_collector[0].RestartCount | default(0) }}"
+      collector_recent_error_markers: "{{ solo_vps_log_drain_recent_error_count }}"
+      collector_auth_failure_401_403: "{{ solo_vps_log_drain_auth_failure | bool }}"
+      collector_bad_request_400: "{{ solo_vps_log_drain_bad_request | bool }}"
+      collector_config_failure: "{{ solo_vps_log_drain_config_failure | bool }}"
+      generated_compose_loopback_publication: present
+      docker_host_port_binding: 127.0.0.1:24224 -> 24224/tcp
+      host_loopback_listener: present
+      host_loopback_tcp_probe: PASS
+      local_forward_listener: 127.0.0.1:24224
+      public_listener: none
+      opted_in_resources: "{{ solo_vps_log_drain_resources | length }}"
+      stable_app_name_metadata: present
+      fluentd_env_forwarding: COOLIFY_APP_NAME present
+      Docker socket access: not required
+      local_docker_logs: readable through Docker dual-log cache
+      Coolify live-log UI: confirm in browser after resource recreation
+      Grafana delivery: verify separately; use make test-observability-loki for one explicit synthetic provider smoke entry
+      changed: false

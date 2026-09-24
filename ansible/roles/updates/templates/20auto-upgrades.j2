@@ -1,0 +1,5 @@
+// Managed by Solo VPS. Local edits will be replaced by Ansible.
+// Refresh package metadata daily and run unattended-upgrades daily.
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "7";

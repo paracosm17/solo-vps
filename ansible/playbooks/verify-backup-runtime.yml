@@ -1,0 +1,13 @@
+---
+- name: Run target preflight before backup runtime verification
+  ansible.builtin.import_playbook: preflight.yml
+
+- name: Verify the installed Solo VPS M14 restic runtime without contacting storage
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Verify backup runtime files and timer state
+      ansible.builtin.import_role:
+        name: backup
+        tasks_from: verify-runtime

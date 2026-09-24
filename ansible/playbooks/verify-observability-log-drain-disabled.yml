@@ -1,0 +1,10 @@
+---
+- name: Verify the Coolify application-log drain is fully stopped before managed recreation
+  hosts: all
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Verify the disabled Coolify log-drain recovery state
+      ansible.builtin.import_role:
+        name: observability
+        tasks_from: verify-log-drain-disabled

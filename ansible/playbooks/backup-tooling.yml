@@ -1,0 +1,7 @@
+---
+- name: Apply the Solo VPS pinned restic host tooling baseline
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - role: backup

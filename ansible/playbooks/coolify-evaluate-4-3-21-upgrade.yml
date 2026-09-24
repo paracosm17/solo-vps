@@ -1,0 +1,47 @@
+---
+- name: Run target preflight before disposable Coolify candidate mutation
+  ansible.builtin.import_playbook: preflight.yml
+
+- name: Evaluate the exact Coolify 4.1.2 to 4.3.21 transition
+  hosts: all
+  become: true
+  gather_facts: true
+  vars_files:
+    - coolify-4.3.21-evaluation-vars.yml
+  vars:
+    solo_vps_coolify_upgrade_test_interrupt_after_marker: >-
+      {{ solo_vps_coolify_evaluation_interrupt_after_marker | default(false) | bool }}
+  tasks:
+    - name: Require explicit disposable-target confirmation
+      ansible.builtin.assert:
+        that:
+          - solo_vps_coolify_evaluation_confirm | default('') == 'I_HAVE_VERIFIED_A_DISPOSABLE_COOLIFY_4_3_21_TARGET'
+        fail_msg: >-
+          Candidate evaluation mutates Coolify and is allowed only on the reviewed
+          disposable target. Do not use this confirmation on the maintained VPS.
+
+    - name: Verify evaluation-only Sentinel prerequisites
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: evaluation-preflight
+
+    - name: Create candidate-only Coolify data directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "9999"
+        group: "0"
+        mode: "0700"
+      loop: "{{ solo_vps_coolify_evaluation_required_directories }}"
+
+    - name: Run the safety-gated candidate upgrade lifecycle
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: upgrade
+
+    - name: Verify the exact candidate Sentinel runtime
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: evaluate-sentinel
+      vars:
+        solo_vps_coolify_sentinel_expect_candidate: true

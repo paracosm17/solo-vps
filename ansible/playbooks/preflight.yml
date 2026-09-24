@@ -1,0 +1,8 @@
+---
+- name: Preflight Solo VPS target
+  hosts: all
+  gather_facts: false
+  become: false
+
+  roles:
+    - role: preflight

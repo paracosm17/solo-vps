@@ -1,0 +1,128 @@
+---
+- name: Validate requested backup operation
+  ansible.builtin.assert:
+    that:
+      - solo_vps_backup_operation is defined
+      - solo_vps_backup_operation in solo_vps_backup_supported_operations
+    fail_msg: "Unsupported Solo VPS backup operation."
+
+- name: Verify installed backup runtime before repository operation
+  ansible.builtin.import_tasks: verify-runtime.yml
+
+- name: Require explicit reviewed retention confirmation before deletion/prune
+  ansible.builtin.assert:
+    that:
+      - solo_vps_backup_retention_confirm | default('') == solo_vps_backup_retention_confirm_required
+    fail_msg: >-
+      Retention apply is destructive. Run the dry-run plan first, then pass the
+      exact reviewed-plan acknowledgement.
+  when: solo_vps_backup_operation in ['retention-apply', 'maintenance-schedule-enable']
+
+- name: Validate explicit disaster-recovery staging request
+  ansible.builtin.assert:
+    that:
+      - solo_vps_backup_recovery_staging_target | default('') is match('^/var/tmp/solo-vps-disaster-recovery/[A-Za-z0-9][A-Za-z0-9._-]{0,63}$')
+      - solo_vps_backup_recovery_staging_confirm | default('') == solo_vps_backup_recovery_staging_confirm_required
+    fail_msg: >-
+      Recovery staging is retained private data. Use one direct child of
+      /var/tmp/solo-vps-disaster-recovery and pass the exact staging
+      acknowledgement.
+  when: solo_vps_backup_operation == 'restore-staging'
+
+- name: Ensure the private disaster-recovery staging parent exists
+  ansible.builtin.file:
+    path: "{{ solo_vps_backup_recovery_staging_parent }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  when: solo_vps_backup_operation == 'restore-staging'
+
+- name: Refuse an existing recovery staging leaf before restore
+  ansible.builtin.stat:
+    path: "{{ solo_vps_backup_recovery_staging_target }}"
+    follow: false
+  register: solo_vps_backup_recovery_staging_leaf
+  when: solo_vps_backup_operation == 'restore-staging'
+
+- name: Require a new recovery staging leaf
+  ansible.builtin.assert:
+    that:
+      - not solo_vps_backup_recovery_staging_leaf.stat.exists
+    fail_msg: >-
+      Refusing an existing disaster-recovery staging path. Choose a new leaf
+      so old or partially restored material can never be overwritten silently.
+  when: solo_vps_backup_operation == 'restore-staging'
+
+- name: Create the empty private recovery staging leaf
+  ansible.builtin.file:
+    path: "{{ solo_vps_backup_recovery_staging_target }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  when: solo_vps_backup_operation == 'restore-staging'
+
+- name: Check repository health and freshness before enabling the daily timer
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_backup_runtime_dir }}/restic-runtime"
+      - check
+  register: solo_vps_backup_schedule_preflight
+  changed_when: false
+  when: solo_vps_backup_operation == 'schedule-enable'
+
+- name: Enable and start the daily backup timer after a fresh snapshot exists
+  ansible.builtin.systemd_service:
+    name: solo-vps-backup.timer
+    enabled: true
+    state: started
+  when: solo_vps_backup_operation == 'schedule-enable'
+
+- name: Run the reviewed retention dry-run before enabling maintenance schedule
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_backup_runtime_dir }}/restic-runtime"
+      - retention-plan
+  register: solo_vps_backup_maintenance_plan
+  changed_when: false
+  when: solo_vps_backup_operation == 'maintenance-schedule-enable'
+
+- name: Enable and start weekly backup retention maintenance after explicit review
+  ansible.builtin.systemd_service:
+    name: solo-vps-backup-maintenance.timer
+    enabled: true
+    state: started
+  when: solo_vps_backup_operation == 'maintenance-schedule-enable'
+
+- name: Run requested restic repository operation
+  ansible.builtin.command:
+    argv: >-
+      {{
+        [solo_vps_backup_runtime_dir ~ '/restic-runtime', solo_vps_backup_operation]
+        + (['--confirm', solo_vps_backup_retention_confirm_required] if solo_vps_backup_operation == 'retention-apply' else [])
+        + (
+          ['--target', solo_vps_backup_recovery_staging_target, '--confirm', solo_vps_backup_recovery_staging_confirm_required]
+          if solo_vps_backup_operation == 'restore-staging'
+          else []
+        )
+      }}
+  register: solo_vps_backup_operation_result
+  changed_when: solo_vps_backup_operation in ['repository-init', 'backup', 'retention-apply', 'restore-staging']
+  when: solo_vps_backup_operation not in ['schedule-enable', 'maintenance-schedule-enable']
+
+- name: Report sanitized backup operation result
+  ansible.builtin.debug:
+    msg: >-
+      {{
+        solo_vps_backup_operation_result.stdout_lines
+        if solo_vps_backup_operation not in ['schedule-enable', 'maintenance-schedule-enable']
+        else (
+          ['PASS Solo VPS daily backup schedule enabled', 'timer: solo-vps-backup.timer']
+          if solo_vps_backup_operation == 'schedule-enable'
+          else [
+            'PASS Solo VPS weekly retention maintenance schedule enabled',
+            'timer: solo-vps-backup-maintenance.timer',
+          ]
+        )
+      }}

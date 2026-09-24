@@ -1,0 +1,100 @@
+---
+- name: Read systemd service state for the platform summary
+  ansible.builtin.service_facts:
+
+- name: Read listening TCP sockets for the platform summary
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_verify_ss_binary }}"
+      - -H
+      - -lnt
+  changed_when: false
+  register: solo_vps_verify_tcp_listeners
+
+- name: Read listening UDP sockets for the platform summary
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_verify_ss_binary }}"
+      - -H
+      - -lnu
+  changed_when: false
+  register: solo_vps_verify_udp_listeners
+
+- name: Read root filesystem usage without changing host state
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_verify_df_binary }}"
+      - -B1
+      - --output=source,fstype,size,used,avail,pcent,target
+      - /
+  changed_when: false
+  register: solo_vps_verify_root_filesystem
+
+- name: Read failed systemd units without changing host state
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_verify_systemctl_binary }}"
+      - --failed
+      - --no-legend
+      - --plain
+  changed_when: false
+  failed_when: false
+  register: solo_vps_verify_failed_units
+
+- name: Read Docker container inventory without changing runtime state
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_verify_docker_binary }}"
+      - ps
+      - --all
+      - --format
+      - "{{ '{{.ID}}|{{.Status}}' }}"
+  changed_when: false
+  register: solo_vps_verify_containers
+
+- name: Refuse a healthy host summary when systemd has failed units
+  ansible.builtin.assert:
+    that:
+      - solo_vps_verify_failed_units.rc == 0
+      - solo_vps_verify_failed_units.stdout | trim | length == 0
+    fail_msg: >-
+      The host has failed systemd units or systemd could not be queried.
+      Run make ops-status and inspect systemctl --failed plus journalctl -u <unit>.
+
+- name: Inspect reboot-required marker for the platform summary
+  ansible.builtin.stat:
+    path: "{{ solo_vps_verify_reboot_required_path }}"
+  register: solo_vps_verify_reboot_required
+
+- name: Derive read-only platform summary evidence
+  ansible.builtin.set_fact:
+    solo_vps_verify_running_container_count: >-
+      {{ solo_vps_verify_containers.stdout_lines
+         | select('search', '\\|Up ')
+         | list
+         | length }}
+    solo_vps_verify_total_container_count: "{{ solo_vps_verify_containers.stdout_lines | length }}"
+
+- name: Report current platform state and explicit evidence boundaries
+  ansible.builtin.debug:
+    msg:
+      host:
+        hostname: "{{ ansible_facts.hostname }}"
+        distribution: "{{ ansible_facts.distribution }} {{ ansible_facts.distribution_version }}"
+        architecture: "{{ ansible_facts.architecture }}"
+        kernel: "{{ ansible_facts.kernel }}"
+      managed_services:
+        ssh: "{{ ansible_facts.get('services', {}).get('ssh.service', {}).get('state', 'missing') }}"
+        docker: "{{ ansible_facts.get('services', {}).get('docker.service', {}).get('state', 'missing') }}"
+        containerd: "{{ ansible_facts.get('services', {}).get('containerd.service', {}).get('state', 'missing') }}"
+      exposure:
+        tcp_listeners: "{{ solo_vps_verify_tcp_listeners.stdout_lines }}"
+        udp_listeners: "{{ solo_vps_verify_udp_listeners.stdout_lines }}"
+      system:
+        root_filesystem: "{{ solo_vps_verify_root_filesystem.stdout_lines }}"
+        failed_systemd_units: "{{ solo_vps_verify_failed_units.stdout_lines }}"
+        reboot_required: "{{ solo_vps_verify_reboot_required.stat.exists | default(false) }}"
+      containers:
+        total: "{{ solo_vps_verify_total_container_count }}"
+        running: "{{ solo_vps_verify_running_container_count }}"
+      evidence_boundaries: "{{ solo_vps_verify_evidence_boundaries }}"

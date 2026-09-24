@@ -1,0 +1,25 @@
+---
+- name: Validate the complete OpenSSH daemon configuration
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_sshd_binary }}"
+      - -t
+  changed_when: false
+  register: solo_vps_sshd_syntax_check
+
+- name: Read the effective OpenSSH daemon configuration
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_sshd_binary }}"
+      - -T
+  changed_when: false
+  register: solo_vps_sshd_effective_config
+
+- name: Confirm the effective SSH policy matches the managed baseline
+  ansible.builtin.assert:
+    that:
+      - item in solo_vps_sshd_effective_config.stdout_lines
+    fail_msg: >-
+      Effective sshd policy does not contain '{{ item }}'. Another earlier
+      configuration source may be taking precedence. Refusing to reload SSH.
+  loop: "{{ solo_vps_sshd_expected_effective_options }}"

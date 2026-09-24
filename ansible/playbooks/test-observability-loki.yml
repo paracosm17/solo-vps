@@ -1,0 +1,10 @@
+---
+- name: Send one synthetic Solo VPS log entry to Grafana Cloud Loki
+  hosts: all
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Run the explicit Grafana Cloud Loki delivery smoke test
+      ansible.builtin.import_role:
+        name: observability
+        tasks_from: test-loki-delivery

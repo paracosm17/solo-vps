@@ -1,0 +1,62 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# SOPS / encrypted infrastructure secrets
+# Plaintext below secrets/ is ignored by default; only encrypted sources,
+# the public placeholder recipient, and the policy README are allowed back in.
+secrets/**
+!secrets/**/
+!secrets/**/*.enc.yaml
+!secrets/README.md
+!secrets/recipients/production.example.txt
+
+
+# Legacy PRE-ALPHA checkout-local SOPS state. New helpers store this outside the checkout;
+# keep ignores as a migration safety net so old operator files cannot be committed accidentally.
+/.sops.yaml
+/secrets/recipients/production.txt
+
+# Local decrypted/transient material and private age identities.
+secrets.dec.*
+*.dec.yml
+*.dec.yaml
+*.agekey
+**/.config/sops/age/keys.txt
+**/sops/age/keys.txt
+
+# Ansible
+*.retry
+.ansible/
+ansible/.cache/
+
+# Python
+__pycache__/
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Legacy PRE-ALPHA checkout-local operator state. `make init` now uses the external data root.
+config/config.yml
+inventory.yml
+
+# Legacy/generated temporary paths; current default workflows keep mutable state outside source.
+tmp/
+ansible/inventories/local/
+
+# Local source export; release/test archives are generated from committed revisions.
+/solo-vps.zip
+
+# Documentation build
+.venv-docs/
+site/

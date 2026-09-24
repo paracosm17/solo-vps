@@ -1,0 +1,2 @@
+# Minimal controller runtime. Keep the ansible-core pin aligned with qa-requirements.txt.
+ansible-core==2.21.3

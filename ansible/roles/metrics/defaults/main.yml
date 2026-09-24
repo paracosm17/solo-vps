@@ -1,0 +1,12 @@
+---
+solo_vps_metrics_credentials_path: /etc/solo-vps/metrics/grafana-cloud.json
+solo_vps_metrics_runtime_env_path: /etc/solo-vps/metrics/alloy.env
+solo_vps_metrics_config_dir: /etc/solo-vps-metrics
+solo_vps_metrics_config_path: /etc/solo-vps-metrics/config.alloy
+solo_vps_metrics_service_name: solo-vps-metrics.service
+solo_vps_metrics_user: solo-vps-metrics
+solo_vps_metrics_group: solo-vps-metrics
+solo_vps_metrics_state_dir: /var/lib/solo-vps-metrics
+solo_vps_metrics_http_host: 127.0.0.1
+solo_vps_metrics_http_port: 12346
+solo_vps_metrics_scrape_interval: 60s

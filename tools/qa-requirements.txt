@@ -1,0 +1,5 @@
+# M20 reference controller QA toolchain.
+# Update as one reviewed change set; do not replace exact pins with ranges.
+ansible-core==2.21.3
+ansible-lint==26.6.0
+yamllint==1.38.0

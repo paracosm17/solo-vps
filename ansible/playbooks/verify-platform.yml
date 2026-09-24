@@ -1,0 +1,10 @@
+---
+- name: Report Solo VPS read-only platform verification summary
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Run platform verification summary tasks
+      ansible.builtin.import_role:
+        name: platform_verify

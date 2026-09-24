@@ -1,0 +1,167 @@
+---
+- name: Inspect the Coolify-managed log-drain container for runtime diagnosis
+  ansible.builtin.command:
+    argv:
+      - docker
+      - inspect
+      - coolify-log-drain
+  register: solo_vps_log_drain_diag_collector_raw
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: Decode the Coolify-managed log-drain container for runtime diagnosis
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_diag_collector: >-
+      {{
+        (solo_vps_log_drain_diag_collector_raw.stdout | from_json)
+        if solo_vps_log_drain_diag_collector_raw.rc == 0
+        else []
+      }}
+  changed_when: false
+  no_log: true
+
+- name: Require one running Coolify-managed log-drain collector for diagnosis
+  ansible.builtin.assert:
+    that:
+      - solo_vps_log_drain_diag_collector | length == 1
+      - solo_vps_log_drain_diag_collector[0].State.Running | bool
+    fail_msg: >-
+      Runtime diagnosis requires one running coolify-log-drain container. Enable Custom FluentBit in the Coolify UI first.
+    success_msg: Coolify-managed log-drain collector exists and is running.
+
+- name: Read Docker Engine server version for runtime diagnosis
+  ansible.builtin.command:
+    argv:
+      - docker
+      - version
+      - --format
+      - '{{ "{{" }}.Server.Version{{ "}}" }}'
+  register: solo_vps_log_drain_diag_docker_version
+  changed_when: false
+
+- name: Read Docker Compose version for runtime diagnosis
+  ansible.builtin.command:
+    argv:
+      - docker
+      - compose
+      - version
+      - --short
+  register: solo_vps_log_drain_diag_compose_version
+  changed_when: false
+  failed_when: false
+
+- name: Derive collector network and port state without printing runtime identifiers
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_diag_network_names: "{{ solo_vps_log_drain_diag_collector[0].NetworkSettings.Networks.keys() | list }}"
+    solo_vps_log_drain_diag_compose_project: "{{ (solo_vps_log_drain_diag_collector[0].Config.Labels | default({}, true)).get('com.docker.compose.project', '') }}"
+    solo_vps_log_drain_diag_host_bindings: >-
+      {{ (solo_vps_log_drain_diag_collector[0].HostConfig.PortBindings | default({}, true)).get('24224/tcp', []) }}
+    solo_vps_log_drain_diag_runtime_bindings: >-
+      {{ (solo_vps_log_drain_diag_collector[0].NetworkSettings.Ports | default({}, true)).get('24224/tcp', []) }}
+    solo_vps_log_drain_diag_exposed_port: >-
+      {{ '24224/tcp' in (solo_vps_log_drain_diag_collector[0].Config.ExposedPorts | default({}, true)) }}
+  changed_when: false
+  no_log: true
+
+- name: Inspect collector-attached Docker networks without printing their names
+  ansible.builtin.command:
+    argv:
+      - docker
+      - network
+      - inspect
+      - "{{ item }}"
+  loop: "{{ solo_vps_log_drain_diag_network_names }}"
+  register: solo_vps_log_drain_diag_network_inspects
+  changed_when: false
+  no_log: true
+
+- name: Initialize sanitized collector network counters
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_diag_compose_network_count: 0
+  changed_when: false
+
+- name: Count collector networks owned by the collector Compose project
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_diag_compose_network_count: "{{ (solo_vps_log_drain_diag_compose_network_count | int) + 1 }}"
+  loop: "{{ solo_vps_log_drain_diag_network_inspects.results | default([]) }}"
+  vars:
+    solo_vps_log_drain_diag_network: "{{ (item.stdout | from_json)[0] }}"
+    solo_vps_log_drain_diag_network_labels: "{{ solo_vps_log_drain_diag_network.Labels | default({}, true) }}"
+  when:
+    - solo_vps_log_drain_diag_compose_project | length > 0
+    - solo_vps_log_drain_diag_network_labels.get('com.docker.compose.project', '') == solo_vps_log_drain_diag_compose_project
+  changed_when: false
+  no_log: true
+
+- name: Read host TCP listeners for the collector diagnosis
+  ansible.builtin.command:
+    argv:
+      - ss
+      - -H
+      - -lnt
+  register: solo_vps_log_drain_diag_host_listeners
+  changed_when: false
+
+- name: Probe the host-loopback collector for runtime diagnosis without sending data
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - >-
+        import socket,sys; s=socket.socket(); s.settimeout(1);
+        rc=s.connect_ex(('127.0.0.1',24224)); s.close();
+        sys.exit(0 if rc == 0 else 1)
+  register: solo_vps_log_drain_diag_tcp_probe
+  changed_when: false
+  failed_when: false
+
+- name: Derive sanitized Coolify log-drain runtime diagnosis
+  ansible.builtin.set_fact:
+    solo_vps_log_drain_diag_network_count: "{{ solo_vps_log_drain_diag_network_names | length }}"
+    solo_vps_log_drain_diag_extra_network_count: >-
+      {{ (solo_vps_log_drain_diag_network_names | length) - (solo_vps_log_drain_diag_compose_network_count | int) }}
+    solo_vps_log_drain_diag_hostconfig_binding: >-
+      {{
+        solo_vps_log_drain_diag_host_bindings
+        | selectattr('HostIp', 'equalto', '127.0.0.1')
+        | selectattr('HostPort', 'equalto', '24224')
+        | list
+        | length == 1
+      }}
+    solo_vps_log_drain_diag_networksettings_binding: >-
+      {{
+        solo_vps_log_drain_diag_runtime_bindings
+        | selectattr('HostIp', 'equalto', '127.0.0.1')
+        | selectattr('HostPort', 'equalto', '24224')
+        | list
+        | length == 1
+      }}
+    solo_vps_log_drain_diag_host_listener: >-
+      {{ solo_vps_log_drain_diag_host_listeners.stdout is search('(?m)(?:^|\\s)127\\.0\\.0\\.1:24224(?:\\s|$)') }}
+  changed_when: false
+
+- name: Report sanitized Coolify log-drain runtime diagnosis
+  ansible.builtin.debug:
+    msg:
+      docker_server_version: "{{ solo_vps_log_drain_diag_docker_version.stdout | trim }}"
+      docker_compose_version: "{{ solo_vps_log_drain_diag_compose_version.stdout | trim if solo_vps_log_drain_diag_compose_version.rc == 0 else 'unavailable' }}"
+      collector_running: true
+      collector_restart_count: "{{ solo_vps_log_drain_diag_collector[0].RestartCount | default(0) }}"
+      collector_compose_project_label_present: "{{ solo_vps_log_drain_diag_compose_project | length > 0 }}"
+      collector_exposes_24224_tcp: "{{ solo_vps_log_drain_diag_exposed_port | bool }}"
+      collector_network_count: "{{ solo_vps_log_drain_diag_network_count | int }}"
+      collector_compose_network_count: "{{ solo_vps_log_drain_diag_compose_network_count | int }}"
+      collector_extra_network_count: "{{ solo_vps_log_drain_diag_extra_network_count | int }}"
+      collector_extra_networks_attached: "{{ (solo_vps_log_drain_diag_extra_network_count | int) > 0 }}"
+      docker_hostconfig_loopback_binding: "{{ solo_vps_log_drain_diag_hostconfig_binding | bool }}"
+      docker_networksettings_loopback_binding: "{{ solo_vps_log_drain_diag_networksettings_binding | bool }}"
+      host_loopback_listener_24224: "{{ solo_vps_log_drain_diag_host_listener | bool }}"
+      host_loopback_tcp_connect: "{{ solo_vps_log_drain_diag_tcp_probe.rc == 0 }}"
+      runtime_port_mapping_missing_after_create: "{{ (solo_vps_log_drain_diag_hostconfig_binding | bool) and not (solo_vps_log_drain_diag_networksettings_binding | bool) }}"
+      diagnostic_only: true
+      docker_network_names_printed: false
+      provider_credentials_printed: false
+      next: >-
+        If collector_extra_networks_attached is true, the Coolify post-start extra-network attachment path is present and must be isolated before blaming Grafana.
+        If it is false while runtime_port_mapping_missing_after_create remains true after a clean managed recreate, stop using the native drain as the maintained default and evaluate the repository-managed collector path.

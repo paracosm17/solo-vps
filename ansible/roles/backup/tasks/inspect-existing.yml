@@ -1,0 +1,41 @@
+---
+- name: Inspect the managed restic path
+  ansible.builtin.stat:
+    path: "{{ solo_vps_restic_install_path }}"
+  register: solo_vps_restic_managed_path_state
+
+- name: Inspect common conflicting restic paths
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ solo_vps_restic_conflicting_paths }}"
+  register: solo_vps_restic_conflicting_path_states
+
+- name: Read existing managed restic version when present
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_restic_install_path }}"
+      - version
+  changed_when: false
+  failed_when: false
+  register: solo_vps_restic_existing_version
+  when: solo_vps_restic_managed_path_state.stat.exists
+
+- name: Refuse implicit migration or replacement of existing restic tooling
+  ansible.builtin.assert:
+    that:
+      - >-
+        solo_vps_restic_conflicting_path_states.results
+        | selectattr('stat.exists', 'equalto', true)
+        | list
+        | length == 0
+      - >-
+        (not solo_vps_restic_managed_path_state.stat.exists) or
+        (
+          solo_vps_restic_existing_version.rc | default(1) == 0 and
+          (solo_vps_restic_existing_version.stdout | default('')) is match('^restic ' ~ solo_vps_restic_version ~ '( |$)')
+        )
+    fail_msg: >-
+      Existing restic tooling does not match the Solo VPS M14 managed baseline.
+      The role will not silently replace a distro/snap installation or upgrade an
+      existing /usr/local/bin/restic because active backup jobs may depend on it.
+      Review the current backup ownership and migration path explicitly first.

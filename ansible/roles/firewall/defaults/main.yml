@@ -1,0 +1,21 @@
+---
+# M5 deliberately supports only the core public edge ports. Arbitrary host
+# exposure should be added as an explicit future feature, not as a generic hole.
+solo_vps_firewall_supported_public_ports:
+  - 80
+  - 443
+
+# SSH port changes are intentionally outside the current M4/M5 contract.
+solo_vps_firewall_ssh_port: 22
+solo_vps_firewall_packages:
+  - iproute2
+  - ufw
+solo_vps_firewall_ufw_binary: /usr/sbin/ufw
+solo_vps_firewall_ss_binary: /usr/bin/ss
+solo_vps_firewall_sshd_binary: /usr/sbin/sshd
+solo_vps_firewall_reconnect_timeout: 30
+
+# `ufw status numbered` has used both `ALLOW` and `ALLOW IN` for inbound
+# rows across supported/observed output shapes. Match both, but never treat
+# `ALLOW OUT` or `ALLOW FWD` as inbound exposure evidence.
+solo_vps_firewall_ufw_inbound_allow_pattern: '(?m)^\[\s*\d+\]\s+(\S+)(?:\s+\(v6\))?\s+ALLOW(?:(?:\s+IN)|(?!\s+(?:OUT|FWD)\b))\s+'

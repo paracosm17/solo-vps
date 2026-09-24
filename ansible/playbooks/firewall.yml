@@ -1,0 +1,8 @@
+---
+- name: Apply Solo VPS host firewall baseline
+  hosts: all
+  gather_facts: false
+  become: true
+
+  roles:
+    - role: firewall

@@ -1,0 +1,14 @@
+---
+solo_vps_verify_ss_binary: /usr/bin/ss
+solo_vps_verify_df_binary: /usr/bin/df
+solo_vps_verify_systemctl_binary: /usr/bin/systemctl
+solo_vps_verify_docker_binary: /usr/bin/docker
+solo_vps_verify_reboot_required_path: /var/run/reboot-required
+
+# These are evidence boundaries, not health assertions. M18 must not convert
+# staged or blocked runtime features into false PASS/FAIL results.
+solo_vps_verify_evidence_boundaries:
+  ssh_hardening: "PHASE_AWARE: aggregate verify checks effective policy after hardening"
+  coolify_runtime: "PHASE_AWARE: aggregate verify checks every managed Coolify installation"
+  backup_freshness: "UNAVAILABLE: current verification does not contact an off-site backup repository"
+  database_restore: "UNAVAILABLE: current verification has no application database restore evidence"

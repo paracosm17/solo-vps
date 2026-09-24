@@ -1,0 +1,201 @@
+---
+- name: Confirm the pinned Alloy binary exists before metrics activation
+  ansible.builtin.stat:
+    path: /usr/local/bin/alloy
+    follow: false
+  register: solo_vps_metrics_alloy_binary
+
+- name: Require Alloy tooling before metrics activation
+  ansible.builtin.assert:
+    that:
+      - solo_vps_metrics_alloy_binary.stat.isreg | default(false)
+    fail_msg: >-
+      Host metrics require the Solo VPS Alloy binary first. Run `make metrics-tooling` first or use the guided `make metrics-runtime` target.
+
+- name: Inspect root-only Grafana Cloud Metrics credentials
+  ansible.builtin.stat:
+    path: "{{ solo_vps_metrics_credentials_path }}"
+    follow: false
+  register: solo_vps_metrics_credentials
+
+- name: Require root-only Grafana Cloud Metrics credentials
+  ansible.builtin.assert:
+    that:
+      - solo_vps_metrics_credentials.stat.isreg | default(false)
+      - (solo_vps_metrics_credentials.stat.uid | default(-1)) == 0
+      - (solo_vps_metrics_credentials.stat.gid | default(-1)) == 0
+      - (solo_vps_metrics_credentials.stat.mode | default('')) == '0600'
+    fail_msg: >-
+      Grafana Cloud Metrics credentials are missing or unsafe. Deliver the chapter-7
+      metrics bundle from the workstation and run `make verify-metrics-credentials`.
+
+- name: Validate Grafana Cloud Metrics credentials without returning values
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import json, re, sys
+        from urllib.parse import urlparse
+        try:
+            with open(sys.argv[1], "r", encoding="utf-8") as handle:
+                data = json.load(handle)
+            if sorted(data) != ["GRAFANA_CLOUD_METRICS_API_KEY", "PROMETHEUS_URL", "PROMETHEUS_USERNAME"]:
+                raise ValueError("unexpected schema")
+            parsed = urlparse(str(data["PROMETHEUS_URL"]))
+            if parsed.scheme != "https" or not parsed.hostname or not parsed.path.rstrip("/").endswith("/api/prom/push"):
+                raise ValueError("invalid Prometheus remote-write URL")
+            if not re.fullmatch(r"[0-9]+", str(data["PROMETHEUS_USERNAME"])):
+                raise ValueError("invalid Metrics user ID")
+            if len(str(data["GRAFANA_CLOUD_METRICS_API_KEY"])) < 20:
+                raise ValueError("invalid access token length")
+        except Exception:
+            print("invalid Grafana Cloud Metrics runtime credential schema", file=sys.stderr)
+            raise SystemExit(2)
+      - "{{ solo_vps_metrics_credentials_path }}"
+  changed_when: false
+  no_log: true
+
+- name: Create the dedicated non-login metrics group
+  ansible.builtin.group:
+    name: "{{ solo_vps_metrics_group }}"
+    system: true
+    state: present
+
+- name: Create the dedicated non-login metrics user
+  ansible.builtin.user:
+    name: "{{ solo_vps_metrics_user }}"
+    group: "{{ solo_vps_metrics_group }}"
+    groups: ""
+    append: false
+    system: true
+    create_home: false
+    home: /nonexistent
+    shell: /usr/sbin/nologin
+    password_lock: true
+    state: present
+
+- name: Create the metrics state directory
+  ansible.builtin.file:
+    path: "{{ solo_vps_metrics_state_dir }}"
+    state: directory
+    owner: "{{ solo_vps_metrics_user }}"
+    group: "{{ solo_vps_metrics_group }}"
+    mode: "0700"
+
+- name: Create the metrics configuration directory
+  ansible.builtin.file:
+    path: "{{ solo_vps_metrics_config_dir }}"
+    state: directory
+    owner: root
+    group: "{{ solo_vps_metrics_group }}"
+    mode: "0750"
+
+- name: Materialize the root-only metrics runtime environment
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import json, os, pathlib, stat, sys, tempfile
+        source = pathlib.Path(sys.argv[1])
+        destination = pathlib.Path(sys.argv[2])
+        with source.open("r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        content = "".join(
+            f"{key}={json.dumps(str(data[key]))}\n"
+            for key in ("PROMETHEUS_URL", "PROMETHEUS_USERNAME", "GRAFANA_CLOUD_METRICS_API_KEY")
+        ).encode("utf-8")
+        current = destination.read_bytes() if destination.exists() and destination.is_file() else None
+        metadata_ok = False
+        if destination.exists() and destination.is_file() and not destination.is_symlink():
+            st = destination.stat()
+            metadata_ok = st.st_uid == 0 and st.st_gid == 0 and stat.S_IMODE(st.st_mode) == 0o600
+        if current == content and metadata_ok:
+            print("changed=no")
+            raise SystemExit(0)
+        if destination.exists() and (destination.is_symlink() or not destination.is_file()):
+            print("refusing unsafe metrics runtime environment path", file=sys.stderr)
+            raise SystemExit(2)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        fd, temporary = tempfile.mkstemp(prefix=destination.name + ".", dir=destination.parent)
+        try:
+            with os.fdopen(fd, "wb") as handle:
+                handle.write(content)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.chmod(temporary, 0o600)
+            os.chown(temporary, 0, 0)
+            os.replace(temporary, destination)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+        print("changed=yes")
+      - "{{ solo_vps_metrics_credentials_path }}"
+      - "{{ solo_vps_metrics_runtime_env_path }}"
+  register: solo_vps_metrics_runtime_env_change
+  changed_when: "'changed=yes' in solo_vps_metrics_runtime_env_change.stdout"
+  no_log: true
+
+- name: Render the non-secret host metrics pipeline
+  ansible.builtin.template:
+    src: config.alloy.j2
+    dest: "{{ solo_vps_metrics_config_path }}"
+    owner: root
+    group: "{{ solo_vps_metrics_group }}"
+    mode: "0640"
+  register: solo_vps_metrics_config_change
+
+- name: Prove the metrics identity can write only its state path
+  ansible.builtin.command:
+    argv: [/usr/bin/sudo, -n, -u, "{{ solo_vps_metrics_user }}", --, /usr/bin/test, -w, "{{ solo_vps_metrics_state_dir }}"]
+  changed_when: false
+
+- name: Prove the metrics identity can read its configuration
+  ansible.builtin.command:
+    argv: [/usr/bin/sudo, -n, -u, "{{ solo_vps_metrics_user }}", --, /usr/bin/test, -r, "{{ solo_vps_metrics_config_path }}"]
+  changed_when: false
+
+- name: Validate the host metrics Alloy configuration with target-local credentials
+  ansible.builtin.command:
+    argv:
+      - /bin/sh
+      - -c
+      - >-
+        set -a; . {{ solo_vps_metrics_runtime_env_path }}; set +a;
+        exec /usr/bin/sudo -n -u {{ solo_vps_metrics_user }} --
+        /usr/local/bin/alloy validate {{ solo_vps_metrics_config_path }}
+  changed_when: false
+  no_log: true
+
+- name: Install the hardened host metrics systemd unit
+  ansible.builtin.template:
+    src: solo-vps-metrics.service.j2
+    dest: "/etc/systemd/system/{{ solo_vps_metrics_service_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  register: solo_vps_metrics_unit_change
+
+- name: Reload systemd after metrics unit changes
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  when: solo_vps_metrics_unit_change.changed
+
+- name: Enable and start host metrics collection
+  ansible.builtin.systemd_service:
+    name: "{{ solo_vps_metrics_service_name }}"
+    enabled: true
+    state: started
+  register: solo_vps_metrics_service_start
+
+- name: Restart host metrics after managed config or credential changes
+  ansible.builtin.systemd_service:
+    name: "{{ solo_vps_metrics_service_name }}"
+    state: restarted
+  when: >-
+    (solo_vps_metrics_runtime_env_change.changed or solo_vps_metrics_config_change.changed or solo_vps_metrics_unit_change.changed)
+    and not (solo_vps_metrics_service_start.changed | default(false))
+
+- name: Verify the active host metrics runtime
+  ansible.builtin.import_tasks: verify-runtime.yml

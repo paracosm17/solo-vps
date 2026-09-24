@@ -1,0 +1,35 @@
+version: 1
+status: pre-alpha-source-contract
+
+docker:
+  supported_distribution: Ubuntu
+  supported_distribution_version: "24.04"
+  supported_major_versions:
+    - 29
+  version_floor_inclusive: "29.0.0"
+  version_ceiling_exclusive: "30.0.0"
+  fresh_install_candidate_policy: fail-closed-before-package-install
+  existing_host_policy: verify-installed-engine-inside-window
+  package_upgrade_policy: explicit-operator-action-only
+  automatic_major_upgrade: false
+
+coolify:
+  current_supported: "4.1.2"
+  previous_supported: "4.1.1"
+  automatic_updates: false
+  supported_upgrade:
+    from: "4.1.1"
+    to: "4.1.2"
+    exact_target_artifacts: true
+    require_fresh_restic_backup: false
+    require_verified_offsite_instance_database_backup: false
+    require_local_control_plane_checkpoint: true
+    require_m7_docker_ownership: true
+    require_loopback_management_ports: true
+    automatic_downgrade_on_failure: false
+    failure_recovery: explicit-forward-resume-or-m16-restore
+
+validation:
+  docker_29_maintained_host: V3
+  coolify_current_maintained_host: V3
+  coolify_previous_to_current_upgrade: pending-disposable-vps

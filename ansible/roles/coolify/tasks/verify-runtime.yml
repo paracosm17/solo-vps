@@ -1,0 +1,135 @@
+---
+- name: Re-read the Ansible-owned Docker daemon configuration
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_coolify_docker_daemon_config_path }}"
+  register: solo_vps_coolify_verify_docker_config_raw
+
+- name: Inspect the Coolify application container before health wait
+  ansible.builtin.command:
+    argv: ["{{ solo_vps_coolify_docker_binary }}", container, inspect, coolify]
+  changed_when: false
+  register: solo_vps_coolify_verify_main_initial_raw
+
+- name: Inspect the Coolify realtime container before health wait
+  ansible.builtin.command:
+    argv: ["{{ solo_vps_coolify_docker_binary }}", container, inspect, coolify-realtime]
+  changed_when: false
+  register: solo_vps_coolify_verify_realtime_initial_raw
+
+- name: Wait for the Coolify application healthcheck
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - inspect
+      - --format
+      - "{{ '{{.State.Health.Status}}' }}"
+      - coolify
+  changed_when: false
+  register: solo_vps_coolify_health
+  retries: 36
+  delay: 5
+  until: solo_vps_coolify_health.stdout | trim == 'healthy'
+
+- name: Probe the loopback Coolify health endpoint
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8000/api/health
+    method: GET
+    status_code: 200
+    return_content: false
+  register: solo_vps_coolify_health_http
+  retries: 6
+  delay: 5
+  until: solo_vps_coolify_health_http.status == 200
+
+- name: Probe the loopback Coolify realtime readiness endpoint
+  ansible.builtin.uri:
+    url: http://127.0.0.1:6001/ready
+    method: GET
+    status_code: 200
+    return_content: false
+  register: solo_vps_coolify_realtime_ready_http
+  retries: 6
+  delay: 2
+  until: solo_vps_coolify_realtime_ready_http.status == 200
+
+- name: Probe the loopback Coolify terminal readiness endpoint
+  ansible.builtin.uri:
+    url: http://127.0.0.1:6002/ready
+    method: GET
+    status_code: 200
+    return_content: false
+  register: solo_vps_coolify_terminal_ready_http
+  retries: 6
+  delay: 2
+  until: solo_vps_coolify_terminal_ready_http.status == 200
+
+- name: Re-inspect the Coolify application container after health wait
+  ansible.builtin.command:
+    argv: ["{{ solo_vps_coolify_docker_binary }}", container, inspect, coolify]
+  changed_when: false
+  register: solo_vps_coolify_verify_main_raw
+
+- name: Re-inspect the Coolify realtime container after health wait
+  ansible.builtin.command:
+    argv: ["{{ solo_vps_coolify_docker_binary }}", container, inspect, coolify-realtime]
+  changed_when: false
+  register: solo_vps_coolify_verify_realtime_raw
+
+- name: Derive runtime verification evidence
+  ansible.builtin.set_fact:
+    solo_vps_coolify_verify_docker_config: >-
+      {{ solo_vps_coolify_verify_docker_config_raw.content | b64decode | from_json }}
+    solo_vps_coolify_verify_main: "{{ (solo_vps_coolify_verify_main_raw.stdout | from_json)[0] }}"
+    solo_vps_coolify_verify_realtime: "{{ (solo_vps_coolify_verify_realtime_raw.stdout | from_json)[0] }}"
+
+- name: Report Coolify runtime evidence before enforcing it
+  ansible.builtin.debug:
+    msg:
+      main_image: "{{ solo_vps_coolify_verify_main.Config.Image }}"
+      main_health: "{{ solo_vps_coolify_verify_main.State.Health.Status }}"
+      realtime_health: "{{ solo_vps_coolify_verify_realtime.State.Health.Status }}"
+      health_endpoint_status: "{{ solo_vps_coolify_health_http.status }}"
+      realtime_ready_status: "{{ solo_vps_coolify_realtime_ready_http.status }}"
+      terminal_ready_status: "{{ solo_vps_coolify_terminal_ready_http.status }}"
+      main_publish: "{{ solo_vps_coolify_verify_main.NetworkSettings.Ports['8080/tcp'] }}"
+      realtime_6001_publish: "{{ solo_vps_coolify_verify_realtime.NetworkSettings.Ports['6001/tcp'] }}"
+      realtime_6002_publish: "{{ solo_vps_coolify_verify_realtime.NetworkSettings.Ports['6002/tcp'] }}"
+      docker_daemon_owner: ansible-m7
+
+- name: Assert pinned image, healthy runtime, loopback publishes, and M7 ownership
+  ansible.builtin.assert:
+    that:
+      - solo_vps_coolify_verify_docker_config == solo_vps_coolify_expected_docker_config
+      - solo_vps_coolify_verify_main.Config.Image == solo_vps_coolify_expected_image
+      - solo_vps_coolify_verify_main.State.Health.Status == 'healthy'
+      - solo_vps_coolify_verify_realtime.State.Health.Status == 'healthy'
+      - solo_vps_coolify_realtime_ready_http.status == 200
+      - solo_vps_coolify_terminal_ready_http.status == 200
+      - solo_vps_coolify_verify_main.NetworkSettings.Ports['8080/tcp'] | length == 1
+      - solo_vps_coolify_verify_main.NetworkSettings.Ports['8080/tcp'][0].HostIp == solo_vps_coolify_management_bind_address
+      - solo_vps_coolify_verify_main.NetworkSettings.Ports['8080/tcp'][0].HostPort == '8000'
+      - solo_vps_coolify_verify_realtime.NetworkSettings.Ports['6001/tcp'] | length == 1
+      - solo_vps_coolify_verify_realtime.NetworkSettings.Ports['6001/tcp'][0].HostIp == solo_vps_coolify_management_bind_address
+      - solo_vps_coolify_verify_realtime.NetworkSettings.Ports['6001/tcp'][0].HostPort == '6001'
+      - solo_vps_coolify_verify_realtime.NetworkSettings.Ports['6002/tcp'] | length == 1
+      - solo_vps_coolify_verify_realtime.NetworkSettings.Ports['6002/tcp'][0].HostIp == solo_vps_coolify_management_bind_address
+      - solo_vps_coolify_verify_realtime.NetworkSettings.Ports['6002/tcp'][0].HostPort == '6002'
+    fail_msg: >-
+      Coolify runtime verification failed. Do not mark this installation managed:
+      the exact image/health, realtime/terminal readiness, loopback-only 8000/6001/6002 publication, and
+      unchanged M7 Docker daemon baseline are mandatory. Review the runtime
+      evidence printed immediately before this assertion.
+
+- name: Prove Coolify management ports are unreachable from the controller
+  ansible.builtin.wait_for:
+    host: "{{ ansible_host }}"
+    port: "{{ item }}"
+    state: stopped
+    connect_timeout: 1
+    timeout: 3
+  delegate_to: localhost
+  become: false
+  loop: "{{ solo_vps_coolify_management_ports }}"
+
+- name: Verify the separate Coolify proxy edge and its persistent policy
+  ansible.builtin.import_tasks: verify-proxy.yml

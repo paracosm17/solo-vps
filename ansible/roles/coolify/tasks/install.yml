@@ -1,0 +1,297 @@
+---
+# New installs require readiness; known protocol-2 transactions may resume here.
+- name: Look up the configured administrator account
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ admin.user }}"
+
+- name: Derive administrator SSH paths
+  ansible.builtin.set_fact:
+    solo_vps_coolify_admin_gid: "{{ ansible_facts.getent_passwd[admin.user][2] }}"
+    solo_vps_coolify_admin_home: "{{ ansible_facts.getent_passwd[admin.user][4] }}"
+
+- name: Create the host-owned Coolify data parent explicitly
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_data_parent }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "{{ solo_vps_coolify_non_root_parent_mode }}"
+
+- name: Create the Coolify data root for the pinned manual installation
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_data_root }}"
+    state: directory
+    owner: "9999"
+    group: "{{ solo_vps_coolify_admin_gid }}"
+    mode: "{{ solo_vps_coolify_non_root_data_root_mode }}"
+
+- name: Record the Solo VPS first-install transaction before further mutation
+  ansible.builtin.copy:
+    dest: "{{ solo_vps_coolify_pending_marker }}"
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      managed_by=solo-vps
+      state=installing
+      install_protocol=2
+      coolify_version={{ solo_vps_coolify_version }}
+      localhost_user={{ admin.user }}
+
+- name: Create the remaining Coolify data directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "9999"
+    group: "0"
+    mode: "0700"
+  loop: "{{ solo_vps_coolify_required_directories | reject('equalto', solo_vps_coolify_data_root) | list }}"
+
+- name: Prepare Coolify resource namespace roots for non-root lifecycle control
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "9999"
+    group: "{{ solo_vps_coolify_admin_gid }}"
+    mode: "{{ solo_vps_coolify_non_root_resource_root_mode }}"
+  loop: "{{ solo_vps_coolify_non_root_resource_roots }}"
+
+- name: Download exact pinned Coolify release artifacts
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ solo_vps_coolify_source_dir }}/{{ item.name }}"
+    checksum: "{{ item.checksum }}"
+    owner: "9999"
+    group: "0"
+    mode: "0600"
+  loop: "{{ solo_vps_coolify_release_artifacts }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Install the Solo VPS loopback-only Compose override
+  ansible.builtin.template:
+    src: docker-compose.solo-vps.yml.j2
+    dest: "{{ solo_vps_coolify_source_dir }}/{{ solo_vps_coolify_compose_override_filename }}"
+    owner: "9999"
+    group: "0"
+    mode: "0600"
+
+- name: Inspect whether installation identities have already been committed
+  ansible.builtin.stat:
+    path: "{{ solo_vps_coolify_configured_marker }}"
+  register: solo_vps_coolify_configured_state
+
+- name: Inspect the existing Coolify environment before seeding
+  ansible.builtin.stat:
+    path: "{{ solo_vps_coolify_env_path }}"
+    follow: false
+  register: solo_vps_coolify_existing_env
+
+- name: Refuse to replace a configured or non-regular environment
+  ansible.builtin.assert:
+    that:
+      - not solo_vps_coolify_existing_env.stat.exists or solo_vps_coolify_existing_env.stat.isreg | default(false)
+      - not solo_vps_coolify_configured_state.stat.exists or solo_vps_coolify_existing_env.stat.exists
+    fail_msg: "Configured Coolify environment is missing or unsafe. Restore it; never regenerate existing installation secrets."
+
+- name: Seed the Coolify environment file from the pinned production template
+  ansible.builtin.copy:
+    src: "{{ solo_vps_coolify_source_dir }}/.env.production"
+    dest: "{{ solo_vps_coolify_env_path }}"
+    remote_src: true
+    force: false
+    owner: "9999"
+    group: "0"
+    mode: "0600"
+
+- name: Initialize missing Coolify secrets atomically without rotating existing values
+  ansible.builtin.script:
+    cmd: >-
+      {{ (role_path ~ '/../../../scripts/initialize_coolify_env.py') | quote }}
+      --path {{ solo_vps_coolify_env_path | quote }}
+      {{ '--require-existing' if solo_vps_coolify_configured_state.stat.exists else '' }}
+    executable: /usr/bin/python3
+  register: solo_vps_coolify_env_init
+  changed_when: (solo_vps_coolify_env_init.stdout | from_json).changed
+  no_log: true
+
+- name: Pin the Coolify image and disable unattended platform updates
+  ansible.builtin.lineinfile:
+    path: "{{ solo_vps_coolify_env_path }}"
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+    owner: "9999"
+    group: "0"
+    mode: "0600"
+  loop:
+    - key: LATEST_IMAGE
+      value: "{{ solo_vps_coolify_image_tag }}"
+    - key: AUTOUPDATE
+      value: "false"
+
+- name: Ensure the administrator SSH directory exists
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_admin_home }}/.ssh"
+    state: directory
+    owner: "{{ admin.user }}"
+    group: "{{ solo_vps_coolify_admin_gid }}"
+    mode: "0700"
+
+- name: Inspect the first-install localhost private key
+  ansible.builtin.stat:
+    path: "{{ solo_vps_coolify_localhost_key_path }}"
+  register: solo_vps_coolify_install_key_state
+
+- name: Find an existing Coolify-normalized localhost key on resume
+  ansible.builtin.find:
+    paths: "{{ solo_vps_coolify_data_root }}/ssh/keys"
+    recurse: false
+    file_type: file
+    use_regex: true
+    patterns: '^ssh_key@[^.]+$'
+  register: solo_vps_coolify_install_normalized_keys
+
+- name: Derive existing installation keys
+  ansible.builtin.set_fact:
+    solo_vps_coolify_install_key_candidates: >-
+      {{ ([solo_vps_coolify_localhost_key_path] if solo_vps_coolify_install_key_state.stat.exists else [])
+         + (solo_vps_coolify_install_normalized_keys.files | map(attribute='path') | list) }}
+
+- name: Refuse ambiguous or lost configured identities
+  ansible.builtin.assert:
+    that:
+      - solo_vps_coolify_install_key_candidates | length <= 1
+      - not solo_vps_coolify_configured_state.stat.exists or solo_vps_coolify_install_key_candidates | length == 1
+    fail_msg: "Coolify localhost identity is missing or ambiguous. Restore the existing key; do not regenerate it."
+
+- name: Select the existing or initial localhost private-key path
+  ansible.builtin.set_fact:
+    solo_vps_coolify_install_key_path: "{{ (solo_vps_coolify_install_key_candidates | first) | default(solo_vps_coolify_localhost_key_path) }}"
+
+- name: Generate the Coolify localhost SSH key for admin.user
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_ssh_keygen_binary }}"
+      - -t
+      - ed25519
+      - -a
+      - "100"
+      - -f
+      - "{{ solo_vps_coolify_install_key_path }}"
+      - -N
+      - ""
+      - -C
+      - coolify
+    creates: "{{ solo_vps_coolify_install_key_path }}"
+  no_log: true
+
+- name: Derive the localhost public key even if its transient file was removed
+  ansible.builtin.command:
+    argv: ["{{ solo_vps_coolify_ssh_keygen_binary }}", -y, -f, "{{ solo_vps_coolify_install_key_path }}"]
+  changed_when: false
+  no_log: true
+  register: solo_vps_coolify_localhost_public_key
+
+- name: Authorize Coolify localhost access for admin.user
+  ansible.builtin.lineinfile:
+    path: "{{ solo_vps_coolify_admin_home }}/.ssh/authorized_keys"
+    line: "{{ solo_vps_coolify_localhost_public_key.stdout | trim }} coolify"
+    create: true
+    owner: "{{ admin.user }}"
+    group: "{{ solo_vps_coolify_admin_gid }}"
+    mode: "0600"
+  no_log: true
+
+- name: Remove the transient Coolify public-key file
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_install_key_path }}.pub"
+    state: absent
+
+- name: Protect the Coolify localhost private key for the application UID
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_install_key_path }}"
+    state: file
+    owner: "9999"
+    group: "0"
+    mode: "0600"
+
+- name: Commit installation identities before any container can consume them
+  ansible.builtin.copy:
+    dest: "{{ solo_vps_coolify_configured_marker }}"
+    content: "managed_by=solo-vps\nidentities=committed\n"
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Check whether the Coolify Docker network already exists
+  ansible.builtin.command:
+    argv: ["{{ solo_vps_coolify_docker_binary }}", network, inspect, coolify]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_coolify_network_probe
+
+- name: Create the Coolify Docker network
+  ansible.builtin.command:
+    argv: ["{{ solo_vps_coolify_docker_binary }}", network, create, --attachable, coolify]
+  when: solo_vps_coolify_network_probe.rc != 0
+
+- name: Validate the merged pinned Compose model without exposing secrets
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - compose
+      - --env-file
+      - "{{ solo_vps_coolify_env_path }}"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/docker-compose.yml"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/docker-compose.prod.yml"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/{{ solo_vps_coolify_compose_override_filename }}"
+      - config
+      - --quiet
+  changed_when: false
+  no_log: true
+
+- name: Prepare the proxy edge policy before the first Coolify process can start
+  ansible.builtin.import_tasks: prepare-proxy-policy.yml
+
+- name: Start the pinned Coolify platform with loopback-only management ports
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - compose
+      - --env-file
+      - "{{ solo_vps_coolify_env_path }}"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/docker-compose.yml"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/docker-compose.prod.yml"
+      - -f
+      - "{{ solo_vps_coolify_source_dir }}/{{ solo_vps_coolify_compose_override_filename }}"
+      - up
+      - -d
+      - --pull
+      - always
+      - --remove-orphans
+      - --force-recreate
+
+- name: Verify the newly installed Coolify runtime before marking it managed
+  ansible.builtin.import_tasks: verify-runtime.yml
+
+- name: Record successful Solo VPS ownership of this exact Coolify installation
+  ansible.builtin.copy:
+    dest: "{{ solo_vps_coolify_managed_marker }}"
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      managed_by=solo-vps
+      coolify_version={{ solo_vps_coolify_version }}
+      localhost_user={{ admin.user }}
+
+- name: Remove the first-install transaction marker after successful ownership recording
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_pending_marker }}"
+    state: absent

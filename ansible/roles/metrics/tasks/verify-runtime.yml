@@ -1,0 +1,71 @@
+---
+- name: Inspect the host metrics service enabled state
+  ansible.builtin.command:
+    argv: [systemctl, is-enabled, "{{ solo_vps_metrics_service_name }}"]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_metrics_enabled
+
+- name: Inspect the host metrics service active state
+  ansible.builtin.command:
+    argv: [systemctl, is-active, "{{ solo_vps_metrics_service_name }}"]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_metrics_active
+
+- name: Inspect the root-only metrics runtime environment
+  ansible.builtin.stat:
+    path: "{{ solo_vps_metrics_runtime_env_path }}"
+    follow: false
+  register: solo_vps_metrics_env_stat
+
+- name: Inspect the managed metrics configuration
+  ansible.builtin.stat:
+    path: "{{ solo_vps_metrics_config_path }}"
+    follow: false
+  register: solo_vps_metrics_config_stat
+
+- name: Wait briefly for the loopback metrics Alloy listener
+  ansible.builtin.wait_for:
+    host: "{{ solo_vps_metrics_http_host }}"
+    port: "{{ solo_vps_metrics_http_port }}"
+    timeout: 15
+  changed_when: false
+  register: solo_vps_metrics_http_wait
+
+- name: Probe host metrics Alloy readiness on loopback
+  ansible.builtin.uri:
+    url: "http://{{ solo_vps_metrics_http_host }}:{{ solo_vps_metrics_http_port }}/-/ready"
+    method: GET
+    return_content: false
+    status_code: 200
+    timeout: 5
+  changed_when: false
+  register: solo_vps_metrics_ready
+
+- name: Verify the host metrics runtime contract
+  ansible.builtin.assert:
+    that:
+      - (solo_vps_metrics_enabled.stdout | default('') | trim) == 'enabled'
+      - (solo_vps_metrics_active.stdout | default('') | trim) == 'active'
+      - solo_vps_metrics_env_stat.stat.isreg | default(false)
+      - (solo_vps_metrics_env_stat.stat.uid | default(-1)) == 0
+      - (solo_vps_metrics_env_stat.stat.gid | default(-1)) == 0
+      - (solo_vps_metrics_env_stat.stat.mode | default('')) == '0600'
+      - solo_vps_metrics_config_stat.stat.isreg | default(false)
+      - (solo_vps_metrics_config_stat.stat.mode | default('')) == '0640'
+      - (solo_vps_metrics_ready.status | default(-1)) == 200
+    fail_msg: Host metrics runtime verification failed.
+
+- name: Report sanitized host metrics runtime evidence
+  ansible.builtin.debug:
+    msg:
+      service: running/enabled
+      collector: prometheus.exporter.unix
+      collectors: cpu + filesystem + loadavg + meminfo + uname
+      scrape_interval: "{{ solo_vps_metrics_scrape_interval }}"
+      remote_write: Grafana Cloud Metrics
+      alloy_http: "{{ solo_vps_metrics_http_host }}:{{ solo_vps_metrics_http_port }} only"
+      credentials_owner: root:root
+      credentials_mode: "0600"
+      token_printed: false

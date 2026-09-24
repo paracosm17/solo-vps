@@ -1,0 +1,10 @@
+---
+- name: Verify the Solo VPS Docker host baseline
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Run read-only Docker host verification
+      ansible.builtin.import_role:
+        name: docker
+        tasks_from: verify

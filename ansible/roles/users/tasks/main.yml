@@ -1,0 +1,49 @@
+---
+- name: Validate admin access configuration
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Load the desired admin public key
+  ansible.builtin.import_tasks: load-public-key.yml
+
+- name: Create the non-root administrative account
+  ansible.builtin.user:
+    name: "{{ admin.user }}"
+    state: present
+    create_home: true
+    shell: "{{ solo_vps_admin_shell }}"
+    groups:
+      - "{{ solo_vps_admin_sudo_group }}"
+    append: true
+  register: solo_vps_admin_account
+
+- name: Create the admin SSH directory without replacing existing access
+  ansible.builtin.file:
+    path: "{{ solo_vps_admin_account.home }}/.ssh"
+    state: directory
+    owner: "{{ admin.user }}"
+    group: "{{ solo_vps_admin_account.group | string }}"
+    mode: "0700"
+
+- name: Add the automation and human workstation public keys without removing existing admin keys
+  ansible.builtin.lineinfile:
+    path: "{{ solo_vps_admin_account.home }}/.ssh/authorized_keys"
+    line: "{{ item }}"
+    state: present
+    create: true
+    owner: "{{ admin.user }}"
+    group: "{{ solo_vps_admin_account.group | string }}"
+    mode: "0600"
+  loop:
+    - "{{ solo_vps_admin_authorized_key }}"
+    - "{{ solo_vps_human_admin_authorized_key }}"
+
+- name: Install explicit passwordless sudo policy for the admin
+  ansible.builtin.copy:
+    content: |
+      # Managed by Solo VPS. SSH daemon policy is managed separately.
+      {{ admin.user }} ALL=(ALL:ALL) NOPASSWD: ALL
+    dest: "{{ solo_vps_admin_sudoers_path }}"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s

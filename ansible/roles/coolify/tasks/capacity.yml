@@ -1,0 +1,17 @@
+---
+- name: Read free space before installing the platform
+  ansible.builtin.command:
+    argv: ["{{ solo_vps_coolify_df_binary }}", --block-size=1, --output=avail, /]
+  changed_when: false
+  register: solo_vps_coolify_capacity_disk
+
+- name: Check the minimum platform capacity before host mutation
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.get('processor_vcpus', 0) | int >= solo_vps_coolify_minimum_cpu_count
+      - ansible_facts.get('memtotal_mb', 0) | int >= solo_vps_coolify_minimum_memory_mb
+      - solo_vps_coolify_capacity_disk.stdout_lines[-1] | trim | int >= solo_vps_coolify_minimum_free_disk_bytes
+    fail_msg: >-
+      This VPS is too small for the supported baseline. Provision at least 2 vCPU,
+      2 GiB RAM and 30 GiB free space on /. Allow additional capacity for your apps,
+      images and databases. No host baseline changes have been made by this check.

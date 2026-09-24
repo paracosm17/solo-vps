@@ -1,0 +1,21 @@
+---
+- name: Run target preflight before the security audit
+  ansible.builtin.import_playbook: preflight.yml
+- name: Verify managed admin identity before the security audit
+  ansible.builtin.import_playbook: verify-users.yml
+- name: Verify host firewall before the security audit
+  ansible.builtin.import_playbook: verify-firewall.yml
+- name: Verify automatic updates before the security audit
+  ansible.builtin.import_playbook: verify-updates.yml
+- name: Verify Docker host baseline before the security audit
+  ansible.builtin.import_playbook: verify-docker.yml
+
+- name: Audit Solo VPS security controls and exposure
+  hosts: all
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Run read-only security audit interpretation
+      ansible.builtin.import_role:
+        name: security_audit

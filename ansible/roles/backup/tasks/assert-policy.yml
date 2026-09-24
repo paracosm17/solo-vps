@@ -1,0 +1,51 @@
+---
+- name: Require the public backup repository config shape
+  ansible.builtin.assert:
+    that:
+      - backup is defined
+      - backup is mapping
+      - backup.repository is defined
+      - backup.repository is mapping
+    fail_msg: >-
+      M14 backup readiness requires the optional public backup.repository block
+      in config/config.yml. This metadata-only block is intentionally not
+      required by unrelated host/bootstrap workflows.
+
+- name: Validate non-secret backup repository metadata
+  ansible.builtin.assert:
+    that:
+      - (backup.keys() | list | sort) == ['repository']
+      - (backup.repository.keys() | list | sort) == ['bucket', 'endpoint', 'prefix', 'region']
+      - backup.repository.endpoint is string
+      - backup.repository.endpoint is match('^https://[A-Za-z0-9.-]+(?::[0-9]{1,5})?/?$')
+      - backup.repository.bucket is match('^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$')
+      - "'..' not in backup.repository.bucket"
+      - backup.repository.prefix is match('^[a-z0-9](?:[a-z0-9._/-]*[a-z0-9])?$')
+      - "'//' not in backup.repository.prefix"
+      - "'/../' not in ('/' ~ backup.repository.prefix ~ '/')"
+      - backup.repository.region is match('^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$')
+      - (backup.repository.endpoint | regex_replace('^https://', '') | regex_replace('/$', '') | regex_replace(':[0-9]+$', '') | lower) not in ['localhost', (server.host | lower), (server.hostname | lower)]
+    fail_msg: >-
+      Invalid M14 public backup repository metadata. Use an HTTPS S3-compatible
+      endpoint that is not the target VPS, a DNS-compatible bucket, a safe
+      relative prefix, and a lowercase region. Credentials/restic passwords do
+      not belong in config/config.yml.
+
+- name: Validate reviewed M14 backup scope and retention policy
+  ansible.builtin.assert:
+    that:
+      - solo_vps_backup_sources == ['/data/coolify']
+      - solo_vps_backup_excludes == ['/data/coolify/ssh/mux', '/data/coolify/databases', '/data/coolify/backups']
+      - solo_vps_backup_forbidden_source_prefixes == ['/var/lib/docker', '/var/lib/postgresql']
+      - solo_vps_backup_snapshot_tag == 'solo-vps'
+      - solo_vps_backup_group_by == 'host,tags'
+      - solo_vps_backup_retention.keep_last == 3
+      - solo_vps_backup_retention.keep_daily == 14
+      - solo_vps_backup_retention.keep_weekly == 8
+      - solo_vps_backup_retention.keep_monthly == 12
+      - solo_vps_backup_retention.keep_yearly == 3
+    fail_msg: >-
+      M14 backup policy drifted from the reviewed recovery-material scope.
+      Coolify database resource trees/local database-backup staging plus live
+      Docker/PostgreSQL storage are intentionally excluded from raw restore and
+      must use application-aware logical backup/restore workflows.

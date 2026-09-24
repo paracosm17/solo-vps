@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Solo VPS">
+  <rect x="5" y="7" width="38" height="14" rx="4" fill="none" stroke="#58A6FF" stroke-width="3"/>
+  <rect x="5" y="27" width="38" height="14" rx="4" fill="none" stroke="#58A6FF" stroke-width="3"/>
+  <circle cx="12" cy="14" r="2" fill="#58A6FF"/>
+  <circle cx="12" cy="34" r="2" fill="#58A6FF"/>
+  <path d="M19 14h15M19 34h15" stroke="#58A6FF" stroke-width="3" stroke-linecap="round"/>
+</svg>

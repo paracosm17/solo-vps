@@ -1,0 +1,15 @@
+---
+- name: Run target preflight before bootstrap
+  ansible.builtin.import_playbook: preflight.yml
+- name: Check initial platform capacity before host mutation
+  ansible.builtin.import_playbook: capacity.yml
+- name: Apply the base system baseline
+  ansible.builtin.import_playbook: base.yml
+- name: Apply the administrative identity baseline
+  ansible.builtin.import_playbook: users.yml
+- name: Apply the host firewall baseline
+  ansible.builtin.import_playbook: firewall.yml
+- name: Apply the automatic security update baseline
+  ansible.builtin.import_playbook: updates.yml
+- name: Apply the Docker host baseline
+  ansible.builtin.import_playbook: docker.yml

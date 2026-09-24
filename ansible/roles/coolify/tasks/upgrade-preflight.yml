@@ -1,0 +1,181 @@
+---
+- name: Validate Coolify integration contract inputs
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Inspect the managed Coolify lifecycle markers
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ solo_vps_coolify_managed_marker }}"
+    - "{{ solo_vps_coolify_pending_marker }}"
+    - "{{ solo_vps_coolify_upgrade_pending_marker }}"
+  register: solo_vps_coolify_upgrade_marker_states
+
+- name: Derive Coolify lifecycle marker states
+  ansible.builtin.set_fact:
+    solo_vps_coolify_upgrade_managed_marker_state: >-
+      {{ (solo_vps_coolify_upgrade_marker_states.results
+          | selectattr('item', 'equalto', solo_vps_coolify_managed_marker)
+          | first).stat }}
+    solo_vps_coolify_install_pending_marker_state: >-
+      {{ (solo_vps_coolify_upgrade_marker_states.results
+          | selectattr('item', 'equalto', solo_vps_coolify_pending_marker)
+          | first).stat }}
+    solo_vps_coolify_upgrade_pending_marker_state: >-
+      {{ (solo_vps_coolify_upgrade_marker_states.results
+          | selectattr('item', 'equalto', solo_vps_coolify_upgrade_pending_marker)
+          | first).stat }}
+
+- name: Refuse lifecycle work on unknown or interrupted installations
+  ansible.builtin.assert:
+    that:
+      - solo_vps_coolify_upgrade_managed_marker_state.exists
+      - solo_vps_coolify_upgrade_managed_marker_state.isreg
+      - not solo_vps_coolify_install_pending_marker_state.exists
+      - not solo_vps_coolify_upgrade_pending_marker_state.exists
+    fail_msg: >-
+      Coolify lifecycle preflight requires a completed Solo VPS-managed install and no
+      pending install/upgrade transaction. If .solo-vps-upgrading exists, use the
+      explicit make coolify-upgrade-resume path or restore from the reviewed pre-upgrade
+      recovery inputs; do not delete transaction markers manually.
+
+- name: Read the managed Coolify version without exposing runtime secrets
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/grep
+      - -E
+      - ^coolify_version=[0-9]+\.[0-9]+\.[0-9]+$
+      - "{{ solo_vps_coolify_managed_marker }}"
+  changed_when: false
+  register: solo_vps_coolify_upgrade_marker_version_line
+
+- name: Read the pinned Coolify image setting
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/grep
+      - -E
+      - ^LATEST_IMAGE=[0-9]+\.[0-9]+\.[0-9]+$
+      - "{{ solo_vps_coolify_env_path }}"
+  changed_when: false
+  register: solo_vps_coolify_upgrade_image_line
+
+- name: Require unattended Coolify updates to remain disabled
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/grep
+      - -Fx
+      - AUTOUPDATE=false
+      - "{{ solo_vps_coolify_env_path }}"
+  changed_when: false
+
+- name: Read Docker Engine server version for lifecycle compatibility
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - version
+      - --format
+      - "{{ '{{.Server.Version}}' }}"
+  changed_when: false
+  register: solo_vps_coolify_upgrade_docker_version
+
+- name: Read the Ansible-owned Docker daemon configuration for lifecycle preflight
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_coolify_docker_daemon_config_path }}"
+  register: solo_vps_coolify_upgrade_docker_config_raw
+
+- name: Inspect the running Coolify application container for lifecycle preflight
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - container
+      - inspect
+      - coolify
+  changed_when: false
+  register: solo_vps_coolify_upgrade_main_raw
+
+- name: Inspect the running Coolify realtime container for lifecycle preflight
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_coolify_docker_binary }}"
+      - container
+      - inspect
+      - coolify-realtime
+  changed_when: false
+  register: solo_vps_coolify_upgrade_realtime_raw
+
+- name: Probe Coolify health before lifecycle mutation
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8000/api/health
+    method: GET
+    status_code: 200
+    return_content: false
+
+- name: Derive Coolify lifecycle preflight evidence
+  ansible.builtin.set_fact:
+    solo_vps_coolify_upgrade_from_version: >-
+      {{ (solo_vps_coolify_upgrade_marker_version_line.stdout | trim).split('=', 1)[1] }}
+    solo_vps_coolify_upgrade_env_image_version: >-
+      {{ (solo_vps_coolify_upgrade_image_line.stdout | trim).split('=', 1)[1] }}
+    solo_vps_coolify_upgrade_docker_major: >-
+      {{ (solo_vps_coolify_upgrade_docker_version.stdout | trim).split('.')[0] | int }}
+    solo_vps_coolify_upgrade_docker_config: >-
+      {{ solo_vps_coolify_upgrade_docker_config_raw.content | b64decode | from_json }}
+    solo_vps_coolify_upgrade_main: >-
+      {{ (solo_vps_coolify_upgrade_main_raw.stdout | from_json)[0] }}
+    solo_vps_coolify_upgrade_realtime: >-
+      {{ (solo_vps_coolify_upgrade_realtime_raw.stdout | from_json)[0] }}
+
+- name: Derive whether the exact supported Coolify upgrade is required
+  ansible.builtin.set_fact:
+    solo_vps_coolify_upgrade_required: >-
+      {{ solo_vps_coolify_upgrade_from_version == solo_vps_coolify_previous_supported_version }}
+
+- name: Enforce the exact previous_supported/current_supported lifecycle boundary
+  ansible.builtin.assert:
+    that:
+      - solo_vps_coolify_upgrade_from_version in [solo_vps_coolify_previous_supported_version, solo_vps_coolify_version]
+      - solo_vps_coolify_upgrade_env_image_version == solo_vps_coolify_upgrade_from_version
+      - solo_vps_coolify_upgrade_docker_major in solo_vps_coolify_supported_docker_majors
+      - solo_vps_coolify_upgrade_docker_config == solo_vps_coolify_expected_docker_config
+      - solo_vps_coolify_upgrade_main.Config.Image == 'ghcr.io/coollabsio/coolify:' ~ solo_vps_coolify_upgrade_from_version
+      - solo_vps_coolify_upgrade_main.State.Health.Status == 'healthy'
+      - solo_vps_coolify_upgrade_realtime.State.Health.Status == 'healthy'
+      - solo_vps_coolify_upgrade_main.NetworkSettings.Ports['8080/tcp'][0].HostIp == solo_vps_coolify_management_bind_address
+      - solo_vps_coolify_upgrade_main.NetworkSettings.Ports['8080/tcp'][0].HostPort == '8000'
+      - solo_vps_coolify_upgrade_realtime.NetworkSettings.Ports['6001/tcp'][0].HostIp == solo_vps_coolify_management_bind_address
+      - solo_vps_coolify_upgrade_realtime.NetworkSettings.Ports['6001/tcp'][0].HostPort == '6001'
+      - solo_vps_coolify_upgrade_realtime.NetworkSettings.Ports['6002/tcp'][0].HostIp == solo_vps_coolify_management_bind_address
+      - solo_vps_coolify_upgrade_realtime.NetworkSettings.Ports['6002/tcp'][0].HostPort == '6002'
+    fail_msg: >-
+      Coolify lifecycle preflight failed. Solo VPS only supports the exact
+      previous_supported {{ solo_vps_coolify_previous_supported_version }} ->
+      current_supported {{ solo_vps_coolify_version }} transition, or a no-op verification
+      when already current. Docker must remain inside the reviewed 29.x window, M7 must
+      still own daemon.json, AUTOUPDATE must stay false, and all management ports must
+      remain loopback-only.
+
+- name: Prove Coolify management ports remain unreachable from the controller before upgrade
+  ansible.builtin.wait_for:
+    host: "{{ ansible_host }}"
+    port: "{{ item }}"
+    state: stopped
+    connect_timeout: 1
+    timeout: 3
+  delegate_to: localhost
+  become: false
+  loop: "{{ solo_vps_coolify_management_ports }}"
+
+- name: Report read-only Coolify lifecycle preflight
+  ansible.builtin.debug:
+    msg:
+      status: PASS
+      previous_supported: "{{ solo_vps_coolify_previous_supported_version }}"
+      current_supported: "{{ solo_vps_coolify_version }}"
+      observed_version: "{{ solo_vps_coolify_upgrade_from_version }}"
+      upgrade_required: "{{ solo_vps_coolify_upgrade_required }}"
+      docker_version: "{{ solo_vps_coolify_upgrade_docker_version.stdout | trim }}"
+      docker_supported_majors: "{{ solo_vps_coolify_supported_docker_majors }}"
+      automatic_updates: disabled
+      management_ports: loopback-only
+      docker_daemon_owner: ansible-m7
+      mutation: false

@@ -1,0 +1,70 @@
+---
+- name: Verify pinned restic tooling before backup runtime verification
+  ansible.builtin.import_tasks: verify-tooling.yml
+
+- name: Inspect installed backup runtime files
+  ansible.builtin.stat:
+    path: "{{ item.path }}"
+  loop:
+    - { name: runtime_helper, path: "{{ solo_vps_backup_runtime_dir }}/restic-runtime", mode: '0755' }
+    - { name: schema_module, path: "{{ solo_vps_backup_runtime_dir }}/backup_credentials_common.py", mode: '0644' }
+    - { name: runtime_config, path: "{{ solo_vps_backup_runtime_path }}", mode: '0600' }
+    - { name: credentials, path: "{{ solo_vps_backup_credentials_path }}", mode: '0600' }
+    - { name: service_unit, path: /etc/systemd/system/solo-vps-backup.service, mode: '0644' }
+    - { name: timer_unit, path: /etc/systemd/system/solo-vps-backup.timer, mode: '0644' }
+    - { name: maintenance_service_unit, path: /etc/systemd/system/solo-vps-backup-maintenance.service, mode: '0644' }
+    - { name: maintenance_timer_unit, path: /etc/systemd/system/solo-vps-backup-maintenance.timer, mode: '0644' }
+  register: solo_vps_backup_runtime_states
+
+- name: Require exact root ownership and modes for the backup runtime boundary
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists | default(false)
+      - item.stat.isreg | default(false)
+      - item.stat.pw_name | default('') == 'root'
+      - item.stat.gr_name | default('') == 'root'
+      - item.stat.mode | default('') == item.item.mode
+    fail_msg: "M14 backup runtime file boundary failed for {{ item.item.name }}."
+  loop: "{{ solo_vps_backup_runtime_states.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+
+- name: Read backup timer enabled state
+  ansible.builtin.command:
+    argv: [systemctl, is-enabled, solo-vps-backup.timer]
+  register: solo_vps_backup_timer_enabled
+  changed_when: false
+  failed_when: solo_vps_backup_timer_enabled.rc not in [0, 1]
+
+- name: Read backup timer active state
+  ansible.builtin.command:
+    argv: [systemctl, is-active, solo-vps-backup.timer]
+  register: solo_vps_backup_timer_active
+  changed_when: false
+  failed_when: solo_vps_backup_timer_active.rc not in [0, 3]
+
+- name: Read backup maintenance timer enabled state
+  ansible.builtin.command:
+    argv: [systemctl, is-enabled, solo-vps-backup-maintenance.timer]
+  register: solo_vps_backup_maintenance_timer_enabled
+  changed_when: false
+  failed_when: solo_vps_backup_maintenance_timer_enabled.rc not in [0, 1]
+
+- name: Read backup maintenance timer active state
+  ansible.builtin.command:
+    argv: [systemctl, is-active, solo-vps-backup-maintenance.timer]
+  register: solo_vps_backup_maintenance_timer_active
+  changed_when: false
+  failed_when: solo_vps_backup_maintenance_timer_active.rc not in [0, 3]
+
+- name: Report installed backup runtime evidence
+  ansible.builtin.debug:
+    msg:
+      runtime_config_mode: "0600"
+      credentials_mode: "0600"
+      timer_enabled: "{{ solo_vps_backup_timer_enabled.stdout | trim }}"
+      timer_active: "{{ solo_vps_backup_timer_active.stdout | trim }}"
+      maintenance_timer_enabled: "{{ solo_vps_backup_maintenance_timer_enabled.stdout | trim }}"
+      maintenance_timer_active: "{{ solo_vps_backup_maintenance_timer_active.stdout | trim }}"
+      repository_contacted: false
+      snapshot_freshness_checked: false

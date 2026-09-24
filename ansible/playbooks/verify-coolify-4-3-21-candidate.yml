@@ -1,0 +1,28 @@
+---
+- name: Run target preflight before candidate verification
+  ansible.builtin.import_playbook: preflight.yml
+
+- name: Verify the disposable Coolify 4.3.21 candidate
+  hosts: all
+  become: true
+  gather_facts: true
+  vars_files:
+    - coolify-4.3.21-evaluation-vars.yml
+  tasks:
+    - name: Require the disposable evaluation identity
+      ansible.builtin.assert:
+        that:
+          - solo_vps_coolify_evaluation_candidate | bool
+          - solo_vps_coolify_evaluation_target_id | default('') is match('^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$')
+
+    - name: Verify the candidate Coolify runtime
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: verify
+
+    - name: Verify the candidate Sentinel runtime
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: evaluate-sentinel
+      vars:
+        solo_vps_coolify_sentinel_expect_candidate: true

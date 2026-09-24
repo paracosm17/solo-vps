@@ -1,0 +1,13 @@
+---
+- name: Run target preflight before Coolify recovery
+  ansible.builtin.import_playbook: preflight.yml
+
+- name: Recover an interrupted Solo VPS Coolify first install
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Recover only an exactly verified interrupted first-install transaction
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: recover

@@ -1,0 +1,78 @@
+---
+- name: Run target preflight before Coolify installation
+  ansible.builtin.import_playbook: preflight.yml
+
+- name: Install the pinned Coolify platform on a prepared clean host
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Validate Coolify integration contract inputs
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: assert-config
+
+    - name: Inspect the Solo VPS Coolify ownership marker
+      ansible.builtin.stat:
+        path: "{{ solo_vps_coolify_managed_marker }}"
+      register: solo_vps_coolify_install_marker
+
+    - name: Inspect any interrupted Coolify upgrade before installation or reconciliation
+      ansible.builtin.stat:
+        path: "{{ solo_vps_coolify_upgrade_pending_marker }}"
+      register: solo_vps_coolify_active_upgrade
+
+    - name: Require the explicit forward-resume path for interrupted upgrades
+      ansible.builtin.assert:
+        that:
+          - not solo_vps_coolify_active_upgrade.stat.exists
+        fail_msg: "An upgrade transaction is unfinished. Inspect it and use make coolify-upgrade-resume; do not run installation over it."
+
+    - name: Inspect the Solo VPS interrupted-install marker
+      ansible.builtin.stat:
+        path: "{{ solo_vps_coolify_pending_marker }}"
+      register: solo_vps_coolify_install_pending_marker
+
+    - name: Recover a known interrupted Solo VPS first install
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: resume-install
+      when:
+        - not solo_vps_coolify_install_marker.stat.exists
+        - solo_vps_coolify_install_pending_marker.stat.exists
+
+    - name: Run first-install readiness checks
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: readiness
+      when:
+        - not solo_vps_coolify_install_marker.stat.exists
+        - not solo_vps_coolify_install_pending_marker.stat.exists
+
+    - name: Perform the first pinned Coolify installation
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: install
+      when:
+        - not solo_vps_coolify_install_marker.stat.exists
+        - not solo_vps_coolify_install_pending_marker.stat.exists
+
+    - name: Reconcile non-root Coolify runtime directory access
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: reconcile-runtime-access
+
+    - name: Reconcile existing Coolify proxy publications
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: reconcile-proxy
+
+    - name: Verify the managed Coolify installation
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: verify
+
+    - name: Finish ownership recording if interrupted after the managed marker
+      ansible.builtin.file:
+        path: "{{ solo_vps_coolify_pending_marker }}"
+        state: absent

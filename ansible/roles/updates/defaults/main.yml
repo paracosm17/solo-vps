@@ -1,0 +1,22 @@
+---
+solo_vps_updates_packages:
+  - unattended-upgrades
+
+solo_vps_updates_apt_config_binary: /usr/bin/apt-config
+solo_vps_updates_periodic_config_path: /etc/apt/apt.conf.d/20auto-upgrades
+solo_vps_updates_policy_config_path: /etc/apt/apt.conf.d/99zz-solo-vps-unattended-upgrades
+solo_vps_updates_log_dir: /var/log/unattended-upgrades
+solo_vps_updates_reboot_required_path: /var/run/reboot-required
+
+# Keep the canonical Ubuntu security baseline explicit. The release pocket is
+# retained because it is part of Ubuntu's default unattended-upgrades policy;
+# -updates, -proposed, -backports, PPAs, and other third-party origins are not.
+solo_vps_updates_allowed_origins:
+  - '${distro_id}:${distro_codename}'
+  - '${distro_id}:${distro_codename}-security'
+  - '${distro_id}ESMApps:${distro_codename}-apps-security'
+  - '${distro_id}ESM:${distro_codename}-infra-security'
+
+solo_vps_updates_timers:
+  - apt-daily.timer
+  - apt-daily-upgrade.timer

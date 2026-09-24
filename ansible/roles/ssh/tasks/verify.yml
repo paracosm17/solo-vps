@@ -1,0 +1,51 @@
+---
+- name: Validate SSH hardening inputs for verification
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Confirm verification is running through the managed admin SSH identity
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/id
+      - -un
+  become: false
+  changed_when: false
+  register: solo_vps_ssh_verify_connection_user
+
+- name: Inspect the supported OpenSSH layout for verification
+  ansible.builtin.import_tasks: inspect-platform.yml
+
+- name: Inspect the managed SSH hardening drop-in
+  ansible.builtin.stat:
+    path: "{{ solo_vps_sshd_hardening_path }}"
+    follow: false
+  register: solo_vps_sshd_hardening_state
+
+- name: Read the managed SSH hardening drop-in
+  ansible.builtin.slurp:
+    src: "{{ solo_vps_sshd_hardening_path }}"
+  register: solo_vps_sshd_hardening_file
+  when: solo_vps_sshd_hardening_state.stat.isreg | default(false)
+
+- name: Validate syntax and effective SSH hardening policy
+  ansible.builtin.import_tasks: effective-policy.yml
+
+- name: Read systemd service state without changing it
+  ansible.builtin.service_facts:
+
+- name: Verify the activated SSH hardening state
+  ansible.builtin.assert:
+    that:
+      - solo_vps_ssh_verify_connection_user.stdout | trim == admin.user
+      - solo_vps_sshd_hardening_state.stat.isreg | default(false)
+      - solo_vps_sshd_hardening_state.stat.pw_name | default('') == 'root'
+      - solo_vps_sshd_hardening_state.stat.gr_name | default('') == 'root'
+      - solo_vps_sshd_hardening_state.stat.mode | default('') == '0644'
+      - "'PermitRootLogin no' in (solo_vps_sshd_hardening_file.content | default('') | b64decode).splitlines()"
+      - "'PasswordAuthentication no' in (solo_vps_sshd_hardening_file.content | default('') | b64decode).splitlines()"
+      - "'KbdInteractiveAuthentication no' in (solo_vps_sshd_hardening_file.content | default('') | b64decode).splitlines()"
+      - "'PubkeyAuthentication yes' in (solo_vps_sshd_hardening_file.content | default('') | b64decode).splitlines()"
+      - "'PermitEmptyPasswords no' in (solo_vps_sshd_hardening_file.content | default('') | b64decode).splitlines()"
+      - ansible_facts.get('services', {}).get(solo_vps_sshd_service, {}).get('state', '') == 'running'
+    fail_msg: >-
+      SSH hardening verification failed. Check the current admin connection,
+      managed drop-in, effective sshd configuration, and ssh.service state.

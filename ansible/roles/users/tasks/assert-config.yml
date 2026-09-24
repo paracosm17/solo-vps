@@ -1,0 +1,26 @@
+---
+- name: Confirm admin access configuration is safe to consume
+  ansible.builtin.assert:
+    that:
+      - admin is defined
+      - admin is mapping
+      - admin.user is defined
+      - admin.user is string
+      - admin.user | length > 0
+      - admin.user != 'root'
+      - admin.user is match('^[a-z_][a-z0-9_-]{0,31}$')
+      - admin.ssh_public_key_file is defined
+      - admin.ssh_public_key_file is string
+      - admin.ssh_public_key_file | length > 0
+      - "'CHANGE_ME' not in (admin.ssh_public_key_file | upper)"
+      - admin.ssh_public_key_file is match('^(?:/|~/)')
+      - admin.human_ssh_public_key is defined
+      - admin.human_ssh_public_key is string
+      - admin.human_ssh_public_key | length > 0
+      - "'\n' not in admin.human_ssh_public_key"
+      - "'PRIVATE KEY' not in admin.human_ssh_public_key"
+      - admin.human_ssh_public_key is match(solo_vps_ssh_public_key_regex)
+    fail_msg: >-
+      Admin access configuration is missing or unsafe. Configure both the
+      controller automation public-key file and the explicit human workstation
+      public key before bootstrap. Never copy a human private key to the VPS.

@@ -1,0 +1,25 @@
+---
+# Disposable-target evaluation only. This file does not change the supported
+# Solo VPS lifecycle pins in roles/coolify/defaults/main.yml.
+solo_vps_coolify_evaluation_candidate: true
+solo_vps_coolify_previous_supported_version: "4.1.2"
+solo_vps_coolify_version: "4.3.21"
+solo_vps_coolify_release_tag: "v4.3.21"
+solo_vps_coolify_image_tag: "4.3.21"
+solo_vps_coolify_expected_image: "ghcr.io/coollabsio/coolify:4.3.21"
+solo_vps_coolify_release_base_url: >-
+  https://raw.githubusercontent.com/coollabsio/coolify/v4.3.21
+solo_vps_coolify_release_artifacts:
+  - name: docker-compose.yml
+    url: "{{ solo_vps_coolify_release_base_url }}/docker-compose.yml"
+    checksum: sha256:0223699dfef8a421116872b050830b21cfedfc58911576a0129c2082aeaadc59
+  - name: docker-compose.prod.yml
+    url: "{{ solo_vps_coolify_release_base_url }}/docker-compose.prod.yml"
+    checksum: sha256:77f4723dfac49deeec550b412e366bde70a329ff8c66ceb44d5d10b146a24124
+  - name: .env.production
+    url: "{{ solo_vps_coolify_release_base_url }}/.env.production"
+    checksum: sha256:4a8070a010ac5c919f05919d36a67065f87e8b514a52c38b381f1b1cd7fcbe5c
+solo_vps_coolify_evaluation_sentinel_version: "1.0.1"
+solo_vps_coolify_evaluation_sentinel_image: "ghcr.io/coollabsio/sentinel:1.0.1"
+solo_vps_coolify_evaluation_required_directories:
+  - /data/coolify/images

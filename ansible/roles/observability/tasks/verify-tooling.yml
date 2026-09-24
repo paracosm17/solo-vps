@@ -1,0 +1,51 @@
+---
+- name: Validate Grafana Alloy host tooling contract
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Inspect the managed Grafana Alloy binary
+  ansible.builtin.stat:
+    path: "{{ solo_vps_alloy_install_path }}"
+    follow: false
+  register: solo_vps_alloy_verify_binary_state
+
+- name: Inspect common conflicting Grafana Alloy paths during verification
+  ansible.builtin.stat:
+    path: "{{ item }}"
+    follow: false
+  loop: "{{ solo_vps_alloy_conflicting_paths }}"
+  register: solo_vps_alloy_verify_conflicting_states
+
+- name: Read the managed Grafana Alloy version
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_alloy_install_path }}"
+      - --version
+  changed_when: false
+  register: solo_vps_alloy_verify_version
+  when: solo_vps_alloy_verify_binary_state.stat.exists
+
+- name: Verify pinned Grafana Alloy host tooling state
+  ansible.builtin.assert:
+    that:
+      - solo_vps_alloy_verify_binary_state.stat.exists
+      - solo_vps_alloy_verify_binary_state.stat.isreg | default(false)
+      - not (solo_vps_alloy_verify_binary_state.stat.islnk | default(false))
+      - solo_vps_alloy_verify_binary_state.stat.pw_name == 'root'
+      - solo_vps_alloy_verify_binary_state.stat.gr_name == 'root'
+      - solo_vps_alloy_verify_binary_state.stat.mode == '0755'
+      - solo_vps_alloy_verify_version.stdout is match('^alloy, version v' ~ solo_vps_alloy_version ~ '( |$)')
+      - (solo_vps_alloy_verify_conflicting_states.results | selectattr('stat.exists') | list | length) == 0
+    fail_msg: >-
+      Grafana Alloy host tooling does not match the pinned Solo VPS baseline.
+
+- name: Report Grafana Alloy tooling evidence and current boundary
+  ansible.builtin.debug:
+    msg:
+      alloy_version: "{{ solo_vps_alloy_verify_version.stdout_lines[0] }}"
+      install_path: "{{ solo_vps_alloy_install_path }}"
+      service_configured: false
+      service_running_claimed: false
+      docker_socket_access_configured: false
+      public_listener_configured: false
+      remote_backend_configured: false
+      telemetry_delivery_claimed: false

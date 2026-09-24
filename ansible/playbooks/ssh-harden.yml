@@ -1,0 +1,13 @@
+---
+- name: Run target preflight before SSH hardening
+  ansible.builtin.import_playbook: preflight.yml
+- name: Verify managed admin identity before SSH hardening
+  ansible.builtin.import_playbook: verify-users.yml
+
+- name: Activate Solo VPS OpenSSH hardening through the proven admin identity
+  hosts: all
+  gather_facts: false
+  become: true
+
+  roles:
+    - role: ssh

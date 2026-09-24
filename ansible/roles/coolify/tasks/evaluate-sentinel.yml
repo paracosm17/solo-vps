@@ -1,0 +1,39 @@
+---
+- name: Validate the disposable Sentinel evaluation inputs
+  ansible.builtin.assert:
+    that:
+      - solo_vps_coolify_evaluation_candidate | default(false) | bool
+      - solo_vps_coolify_evaluation_sentinel_url | default('') is match('^https://[^/@:]+(?:\.[^/@:]+)+(?:[:][0-9]+)?(?:/.*)?$')
+    fail_msg: >-
+      Sentinel evaluation requires the explicit credential-free HTTPS Coolify
+      dashboard URL on a disposable target. Raw port 8000 and HTTP URLs are rejected.
+
+- name: Inspect the Sentinel runtime without printing its token
+  ansible.builtin.script:
+    cmd: >-
+      {{ (role_path ~ '/../../../scripts/inspect_coolify_sentinel.py') | quote }}
+      --docker {{ solo_vps_coolify_docker_binary | quote }}
+      --expected-push-endpoint {{ solo_vps_coolify_evaluation_sentinel_url | quote }}
+      {{ ('--expected-image ' ~ (solo_vps_coolify_evaluation_sentinel_image | quote)) if solo_vps_coolify_sentinel_expect_candidate | default(false) | bool else '' }}
+      {{ ('--expected-version ' ~ (solo_vps_coolify_evaluation_sentinel_version | quote)) if solo_vps_coolify_sentinel_expect_candidate | default(false) | bool else '' }}
+    executable: /usr/bin/python3
+  changed_when: false
+  register: solo_vps_coolify_sentinel_evaluation_raw
+
+- name: Parse the secret-safe Sentinel evidence
+  ansible.builtin.set_fact:
+    solo_vps_coolify_sentinel_evaluation: "{{ solo_vps_coolify_sentinel_evaluation_raw.stdout | from_json }}"
+
+- name: Prove Sentinel does not publish its API to the controller
+  ansible.builtin.wait_for:
+    host: "{{ ansible_host }}"
+    port: 8888
+    state: stopped
+    connect_timeout: 1
+    timeout: 3
+  delegate_to: localhost
+  become: false
+
+- name: Report the reviewed Sentinel trust boundary
+  ansible.builtin.debug:
+    msg: "{{ solo_vps_coolify_sentinel_evaluation }}"

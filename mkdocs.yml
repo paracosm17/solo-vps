@@ -1,0 +1,261 @@
+# yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
+
+site_name: Solo VPS
+site_description: Reproducible single-VPS infrastructure for solo developers.
+docs_dir: docs
+site_dir: site
+
+# Release evidence stays in the repository, not in the user-facing site.
+exclude_docs: |
+  alpha-release-plan.md
+  clean-vps-test.md
+  disposable-clean-target.md
+  coolify-4.3.21-evaluation.md
+  release-process.md
+  testing.md
+
+# These pages are intentionally reachable from contextual links but do not
+# belong in the main task navigation.
+not_in_nav: |
+  dependency-hygiene*.md
+  documentation-site*.md
+  license-choice*.md
+  operations/grafana-cloud-log-drain*.md
+  adr/*.md
+
+# After the first Pages deployment, set site_url to its actual URL (including
+# /solo-vps/ and trailing slash for a project site). Verify EN/RU language and
+# edit links on the deployed site. Never use a placeholder documentation URL.
+repo_url: https://github.com/paracosm17/solo-vps
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  custom_dir: overrides
+  language: en
+  logo: assets/brand/solo-vps-mark.svg
+  favicon: assets/brand/solo-vps-mark.svg
+  # Use native system fonts. This keeps the docs crisp on Windows/macOS/Linux
+  # and avoids making the interface depend on remote Google Fonts.
+  font: false
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: solo-light
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: solo-dark
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    # Deliberately no navigation.tabs: the complete task navigation belongs
+    # in the left sidebar from the first screen.
+    - navigation.sections
+    - navigation.path
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.annotate
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix
+      reconfigure_material: true
+      languages:
+        - locale: en
+          name: English
+          build: true
+          default: true
+        - locale: ru
+          name: Русский
+          build: true
+          site_name: Solo VPS
+          site_description: Воспроизводимая инфраструктура одного VPS для solo-разработчиков.
+          theme:
+            palette:
+              - media: "(prefers-color-scheme: light)"
+                scheme: solo-light
+                primary: custom
+                accent: custom
+                toggle:
+                  icon: material/weather-night
+                  name: Включить тёмную тему
+              - media: "(prefers-color-scheme: dark)"
+                scheme: solo-dark
+                primary: custom
+                accent: custom
+                toggle:
+                  icon: material/weather-sunny
+                  name: Включить светлую тему
+          nav_translations:
+            Start here: Базовая настройка
+            Overview: Обзор
+            Quick Start: Быстрый старт
+            1. VPS and Coolify: 1. VPS и Coolify
+            2. Application and CI/CD: 2. Приложение и CI/CD
+            After basic setup: После базовой настройки
+            What to add next: Что добавить дальше
+            CI/CD reference: Справочник CI/CD
+            Prepare the server: Подготовка сервера
+            Preflight & doctor: Проверка окружения
+            Admin access: Доступ администратора
+            SSH hardening: Защита SSH
+            Platform setup: Платформа
+            Install Coolify: Установка Coolify
+            Coolify dashboard on HTTPS: Панель Coolify через HTTPS
+            Verify the platform: Проверка платформы
+            Deploy & operate: Приложения и эксплуатация
+            Deployment: Деплой
+            Deploy your first app: Первое приложение
+            Application config & secrets: Настройки и секреты
+            GitHub Actions & GHCR: GitHub Actions и GHCR
+            Deployment rollback: Откат деплоя
+            Operations: Эксплуатация
+            Daily operations: Ежедневная работа
+            3. Retained logs: 3. История логов
+            4. PostgreSQL backup & restore: 4. Backup и restore PostgreSQL
+            7. VPS metrics: 7. Метрики VPS
+            Failures & maintenance: Сбои и обслуживание
+            Status & logs: Статус и логи
+            External uptime alerts: Внешние uptime-алерты
+            Observability: Наблюдаемость
+            Backup & recovery: Резервные копии
+            Backups: Копирование
+            restic off-site backups: Внешние backup через restic
+            Storage providers: Провайдеры S3
+            Backblaze B2: Backblaze B2
+            Cloudflare R2 (alternative): Cloudflare R2 (альтернатива)
+            PostgreSQL backup & restore: Backup и restore PostgreSQL
+            Recovery: Восстановление
+            Recover from a lost VPS: Восстановление после потери VPS
+            Host & security: Сервер и безопасность
+            Host: Сервер
+            Base system: Базовая система
+            Firewall: Фаервол
+            Docker host: Docker-хост
+            Automatic security updates: Автоматические обновления
+            Security: Безопасность
+            Secrets with SOPS + age: Секреты через SOPS + age
+            Security audit: Аудит безопасности
+            Maintenance: Обслуживание
+            Upgrade Solo VPS & Coolify: Обновление Solo VPS и Coolify
+            Reference: Справочник
+            Command reference: Справочник команд
+            Persistent state layout: Постоянное состояние
+            Architecture: Архитектура
+          admonition_translations:
+            note: Примечание
+            abstract: Кратко
+            info: Информация
+            tip: Совет
+            success: Успех
+            question: Вопрос
+            warning: Предупреждение
+            failure: Ошибка
+            danger: Опасно
+            bug: Баг
+            example: Пример
+            quote: Цитата
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+  links:
+    not_found: warn
+    anchors: warn
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/extra.js
+
+extra:
+  generator: false
+
+nav:
+  - Start here:
+      - Overview: index.md
+      - 1. VPS and Coolify: quick-start.md
+      - 2. Application and CI/CD: operations/first-app.md
+  - After basic setup:
+      - What to add next: operations/after-basic-setup.md
+      - Daily operations: operations/operator-ui.md
+      - 3. Retained logs: operations/observability.md
+      - 4. PostgreSQL backup & restore: operations/postgresql-backups.md
+      - 5. External uptime alerts: operations/external-uptime.md
+      - 6. Off-site backups: operations/offsite-backups.md
+      - 7. VPS metrics: operations/metrics.md
+  - Deploy & operate:
+      - Deployment:
+          - Application config & secrets: operations/application-config-and-secrets.md
+          - CI/CD reference: ci-ghcr.md
+          - Deployment rollback: operations/deployment-rollback.md
+      - Operations:
+          - Status & logs: operations/status-and-logs.md
+  - Backup & recovery:
+      - Backups:
+          - restic off-site backups: backups-restic.md
+          - Storage providers:
+              - Backblaze B2: backup-storage-backblaze-b2.md
+              - Cloudflare R2 (alternative): backup-storage-cloudflare-r2.md
+          - PostgreSQL backup & restore: database-backups.md
+      - Recovery:
+          - Recover from a lost VPS: disaster-recovery.md
+  - Host & security:
+      - Host:
+          - Base system: base-system.md
+          - Firewall: firewall.md
+          - Docker host: docker-host.md
+          - Automatic security updates: automatic-updates.md
+      - Security:
+          - Secrets with SOPS + age: secrets-sops-age.md
+          - Security audit: security-audit.md
+      - Maintenance:
+          - Failures & maintenance: operations/incidents-and-maintenance.md
+          - Upgrade Solo VPS & Coolify: upgrades.md
+  - Reference:
+      - Prepare the server:
+          - Preflight & doctor: preflight.md
+          - Admin access: admin-access.md
+          - SSH hardening: ssh-hardening.md
+      - Platform setup:
+          - Install Coolify: coolify-installation.md
+          - Coolify dashboard on HTTPS: operations/coolify-dashboard-domain.md
+          - Verify the platform: verification.md
+      - Command reference: command-reference.md
+      - Persistent state layout: state-layout.md
+      - Architecture: architecture.md

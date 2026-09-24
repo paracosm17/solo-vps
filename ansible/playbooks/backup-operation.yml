@@ -1,0 +1,13 @@
+---
+- name: Run target preflight before explicit backup operation
+  ansible.builtin.import_playbook: preflight.yml
+
+- name: Execute one explicit Solo VPS M14 repository/backup operation
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Execute the selected backup operation
+      ansible.builtin.import_role:
+        name: backup
+        tasks_from: operation

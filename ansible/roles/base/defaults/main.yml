@@ -1,0 +1,16 @@
+---
+# Intentionally small host baseline. Add packages only when they serve the core VPS path.
+solo_vps_base_packages:
+  - ca-certificates
+  - curl
+  - git
+  - jq
+  - lsof
+  - rsync
+  - sudo
+  - tzdata
+  - unzip
+
+# Refresh package metadata when the existing apt cache is older than one hour.
+# This role deliberately does not perform a full/dist upgrade.
+solo_vps_apt_cache_valid_time: 3600

@@ -1,0 +1,334 @@
+---
+# CRIT-005 security audit for the identity-gated Docker API boundary.
+# This task file is read-only. It never reads or prints Docker inspect/log response
+# bodies; target-local probes retain HTTP status codes only.
+
+- name: Confirm the unrelated low-privilege audit identity exists
+  ansible.builtin.command:
+    argv: [/usr/bin/getent, passwd, nobody]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_observability_confidentiality_unrelated_identity
+
+- name: Select one running Coolify-managed container without returning container metadata
+  ansible.builtin.command:
+    argv: [docker, container, ls, --quiet, --filter, label=coolify.managed=true]
+  changed_when: false
+  failed_when: false
+  no_log: true
+  register: solo_vps_observability_confidentiality_container_ids
+
+- name: Initialize sanitized confidentiality probe state
+  ansible.builtin.set_fact:
+    solo_vps_observability_confidentiality_container_found: >-
+      {{
+        (solo_vps_observability_confidentiality_container_ids.rc | default(1)) == 0
+        and (solo_vps_observability_confidentiality_container_ids.stdout_lines | default([]) | length) > 0
+      }}
+    solo_vps_observability_confidentiality_container_id: >-
+      {{ (solo_vps_observability_confidentiality_container_ids.stdout_lines | default([]) | first) | default('') }}
+    solo_vps_observability_confidentiality_unrelated_ping_status: -1
+    solo_vps_observability_confidentiality_unrelated_inspect_status: -1
+    solo_vps_observability_confidentiality_unrelated_logs_status: -1
+  no_log: true
+
+- name: Prove Alloy does not have direct read access to the Docker Unix socket
+  ansible.builtin.command:
+    argv: [/usr/bin/sudo, -n, -u, "{{ solo_vps_alloy_user }}", --, /usr/bin/test, -r, "{{ solo_vps_docker_api_proxy_socket }}"]
+  changed_when: false
+  failed_when: false
+  register: solo_vps_observability_confidentiality_alloy_socket_read
+
+- name: Prove the unrelated identity cannot traverse the managed proxy directory
+  ansible.builtin.command:
+    argv: [/usr/bin/sudo, -n, -u, nobody, --, /usr/bin/test, -x, "{{ solo_vps_docker_api_proxy_runtime_dir }}"]
+  when: solo_vps_observability_confidentiality_unrelated_identity.rc == 0
+  changed_when: false
+  failed_when: false
+  register: solo_vps_observability_confidentiality_unrelated_dir_access
+
+- name: Probe proxy ping as the intended Alloy identity without reading response content
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/sudo
+      - -n
+      - -u
+      - "{{ solo_vps_alloy_user }}"
+      - --
+      - /usr/bin/python3
+      - -c
+      - |
+          import http.client, socket, sys
+          class UnixHTTPConnection(http.client.HTTPConnection):
+              def __init__(self, path, timeout=3):
+                  super().__init__("localhost", timeout=timeout)
+                  self.path = path
+              def connect(self):
+                  sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                  sock.settimeout(self.timeout)
+                  sock.connect(self.path)
+                  self.sock = sock
+          try:
+              conn = UnixHTTPConnection(sys.argv[1])
+              conn.request("GET", sys.argv[2], headers={"Connection": "close"})
+              response = conn.getresponse()
+              print(response.status)
+              response.close()
+              conn.close()
+          except Exception:
+              print(-1)
+      - "{{ solo_vps_docker_api_proxy_host_socket }}"
+      - /_ping
+  changed_when: false
+  failed_when: false
+  no_log: true
+  register: solo_vps_observability_confidentiality_alloy_ping
+
+- name: Probe proxy ping as an unrelated host identity without reading response content
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/sudo
+      - -n
+      - -u
+      - nobody
+      - --
+      - /usr/bin/python3
+      - -c
+      - |
+          import http.client, socket, sys
+          class UnixHTTPConnection(http.client.HTTPConnection):
+              def __init__(self, path, timeout=3):
+                  super().__init__("localhost", timeout=timeout)
+                  self.path = path
+              def connect(self):
+                  sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                  sock.settimeout(self.timeout)
+                  sock.connect(self.path)
+                  self.sock = sock
+          try:
+              conn = UnixHTTPConnection(sys.argv[1])
+              conn.request("GET", sys.argv[2], headers={"Connection": "close"})
+              response = conn.getresponse()
+              print(response.status)
+              response.close()
+              conn.close()
+          except Exception:
+              print(-1)
+      - "{{ solo_vps_docker_api_proxy_host_socket }}"
+      - /_ping
+  when: solo_vps_observability_confidentiality_unrelated_identity.rc == 0
+  changed_when: false
+  failed_when: false
+  no_log: true
+  register: solo_vps_observability_confidentiality_unrelated_ping
+
+- name: Probe container inspect as an unrelated host identity without reading response content
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/sudo
+      - -n
+      - -u
+      - nobody
+      - --
+      - /usr/bin/python3
+      - -c
+      - |
+          import http.client, socket, sys
+          class UnixHTTPConnection(http.client.HTTPConnection):
+              def __init__(self, path, timeout=3):
+                  super().__init__("localhost", timeout=timeout)
+                  self.path = path
+              def connect(self):
+                  sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                  sock.settimeout(self.timeout)
+                  sock.connect(self.path)
+                  self.sock = sock
+          try:
+              conn = UnixHTTPConnection(sys.argv[1])
+              conn.request("GET", sys.argv[2], headers={"Connection": "close"})
+              response = conn.getresponse()
+              print(response.status)
+              response.close()
+              conn.close()
+          except Exception:
+              print(-1)
+      - "{{ solo_vps_docker_api_proxy_host_socket }}"
+      - "/containers/{{ solo_vps_observability_confidentiality_container_id }}/json"
+  when:
+    - solo_vps_observability_confidentiality_unrelated_identity.rc == 0
+    - solo_vps_observability_confidentiality_container_found | bool
+  changed_when: false
+  failed_when: false
+  no_log: true
+  register: solo_vps_observability_confidentiality_unrelated_inspect
+
+- name: Probe one bounded container log request as an unrelated host identity without reading response content
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/sudo
+      - -n
+      - -u
+      - nobody
+      - --
+      - /usr/bin/python3
+      - -c
+      - |
+          import http.client, socket, sys
+          class UnixHTTPConnection(http.client.HTTPConnection):
+              def __init__(self, path, timeout=3):
+                  super().__init__("localhost", timeout=timeout)
+                  self.path = path
+              def connect(self):
+                  sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                  sock.settimeout(self.timeout)
+                  sock.connect(self.path)
+                  self.sock = sock
+          try:
+              conn = UnixHTTPConnection(sys.argv[1])
+              conn.request("GET", sys.argv[2], headers={"Connection": "close"})
+              response = conn.getresponse()
+              print(response.status)
+              response.close()
+              conn.close()
+          except Exception:
+              print(-1)
+      - "{{ solo_vps_docker_api_proxy_host_socket }}"
+      - "/containers/{{ solo_vps_observability_confidentiality_container_id }}/logs?stdout=1&stderr=1&tail=1"
+  when:
+    - solo_vps_observability_confidentiality_unrelated_identity.rc == 0
+    - solo_vps_observability_confidentiality_container_found | bool
+  changed_when: false
+  failed_when: false
+  no_log: true
+  register: solo_vps_observability_confidentiality_unrelated_logs
+
+- name: Probe explicitly disabled Docker API sections as Alloy without reading response content
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/sudo
+      - -n
+      - -u
+      - "{{ solo_vps_alloy_user }}"
+      - --
+      - /usr/bin/python3
+      - -c
+      - |
+          import http.client, socket, sys
+          class UnixHTTPConnection(http.client.HTTPConnection):
+              def __init__(self, path, timeout=3):
+                  super().__init__("localhost", timeout=timeout)
+                  self.path = path
+              def connect(self):
+                  sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                  sock.settimeout(self.timeout)
+                  sock.connect(self.path)
+                  self.sock = sock
+          try:
+              conn = UnixHTTPConnection(sys.argv[1])
+              conn.request("GET", sys.argv[2], headers={"Connection": "close"})
+              response = conn.getresponse()
+              print(response.status)
+              response.close()
+              conn.close()
+          except Exception:
+              print(-1)
+      - "{{ solo_vps_docker_api_proxy_host_socket }}"
+      - "{{ item.path }}"
+  loop:
+    - {name: info, path: /info}
+    - {name: images, path: /images/json}
+    - {name: volumes, path: /volumes}
+    - {name: secrets, path: /secrets}
+    - {name: exec, path: /exec/solo-vps-negative-probe/json}
+  loop_control:
+    label: "{{ item.name }}"
+  changed_when: false
+  failed_when: false
+  no_log: true
+  register: solo_vps_observability_confidentiality_denied_sections
+
+- name: Derive status-only CRIT-005 confidentiality evidence
+  ansible.builtin.set_fact:
+    solo_vps_observability_confidentiality_unrelated_ping_status: >-
+      {{ (solo_vps_observability_confidentiality_unrelated_ping.stdout | default('-1') | trim | int)
+         if not (solo_vps_observability_confidentiality_unrelated_ping.skipped | default(false)) else -1 }}
+    solo_vps_observability_confidentiality_unrelated_inspect_status: >-
+      {{ (solo_vps_observability_confidentiality_unrelated_inspect.stdout | default('-1') | trim | int)
+         if not (solo_vps_observability_confidentiality_unrelated_inspect.skipped | default(false)) else -1 }}
+    solo_vps_observability_confidentiality_unrelated_logs_status: >-
+      {{ (solo_vps_observability_confidentiality_unrelated_logs.stdout | default('-1') | trim | int)
+         if not (solo_vps_observability_confidentiality_unrelated_logs.skipped | default(false)) else -1 }}
+    solo_vps_observability_confidentiality_alloy_ping_status: >-
+      {{ solo_vps_observability_confidentiality_alloy_ping.stdout | default('-1') | trim | int }}
+    solo_vps_observability_confidentiality_info_status: >-
+      {{ solo_vps_observability_confidentiality_denied_sections.results[0].stdout | default('-1') | trim | int }}
+    solo_vps_observability_confidentiality_images_status: >-
+      {{ solo_vps_observability_confidentiality_denied_sections.results[1].stdout | default('-1') | trim | int }}
+    solo_vps_observability_confidentiality_volumes_status: >-
+      {{ solo_vps_observability_confidentiality_denied_sections.results[2].stdout | default('-1') | trim | int }}
+    solo_vps_observability_confidentiality_secrets_status: >-
+      {{ solo_vps_observability_confidentiality_denied_sections.results[3].stdout | default('-1') | trim | int }}
+    solo_vps_observability_confidentiality_exec_status: >-
+      {{ solo_vps_observability_confidentiality_denied_sections.results[4].stdout | default('-1') | trim | int }}
+  no_log: true
+
+- name: Report sanitized CRIT-005 confidentiality evidence
+  ansible.builtin.debug:
+    msg:
+      threat_model: host-local unprivileged process without root, docker-group, or Alloy identity
+      proxy_transport: Unix socket inside root:solo-vps-alloy 0750 runtime directory
+      container_probe_available: "{{ solo_vps_observability_confidentiality_container_found | bool }}"
+      unrelated_identity: nobody
+      unrelated_identity_available: "{{ solo_vps_observability_confidentiality_unrelated_identity.rc == 0 }}"
+      unrelated_identity_runtime_dir_traversable: "{{ (solo_vps_observability_confidentiality_unrelated_dir_access.rc | default(0)) == 0 }}"
+      intended_alloy_identity_proxy_status: "{{ solo_vps_observability_confidentiality_alloy_ping_status }}"
+      alloy_direct_docker_socket_readable: "{{ solo_vps_observability_confidentiality_alloy_socket_read.rc == 0 }}"
+      unrelated_identity_proxy_status: "{{ solo_vps_observability_confidentiality_unrelated_ping_status }}"
+      unrelated_identity_container_inspect_status: "{{ solo_vps_observability_confidentiality_unrelated_inspect_status }}"
+      unrelated_identity_container_logs_status: "{{ solo_vps_observability_confidentiality_unrelated_logs_status }}"
+      denied_info_status: "{{ solo_vps_observability_confidentiality_info_status }}"
+      denied_images_status: "{{ solo_vps_observability_confidentiality_images_status }}"
+      denied_volumes_status: "{{ solo_vps_observability_confidentiality_volumes_status }}"
+      denied_secrets_status: "{{ solo_vps_observability_confidentiality_secrets_status }}"
+      denied_exec_status: "{{ solo_vps_observability_confidentiality_exec_status }}"
+      inspect_payload_printed: false
+      container_env_printed: false
+      container_log_payload_printed: false
+      interpretation: >-
+        The intended Alloy identity must receive HTTP 200, while the unrelated identity must
+        fail before any HTTP response (-1) because it cannot traverse the protected socket directory.
+        Disabled Docker API sections must still return HTTP 403 when tested through the allowed Alloy identity.
+      next_step: >-
+        If this gate passes, verify fresh retained application logs still arrive and then prove
+        a second managed apply converges with changed=0. Do not widen Docker permissions or publish the proxy.
+  changed_when: false
+
+- name: Enforce the CRIT-005 observability confidentiality gate
+  ansible.builtin.assert:
+    that:
+      - solo_vps_observability_confidentiality_unrelated_identity.rc == 0
+      - solo_vps_observability_confidentiality_container_found | bool
+      - solo_vps_observability_confidentiality_alloy_socket_read.rc != 0
+      - (solo_vps_observability_confidentiality_unrelated_dir_access.rc | default(0)) != 0
+      - solo_vps_observability_confidentiality_alloy_ping.rc == 0
+      - solo_vps_observability_confidentiality_unrelated_ping.rc == 0
+      - solo_vps_observability_confidentiality_unrelated_inspect.rc == 0
+      - solo_vps_observability_confidentiality_unrelated_logs.rc == 0
+      - solo_vps_observability_confidentiality_denied_sections.results | map(attribute='rc') | select('ne', 0) | list | length == 0
+      - solo_vps_observability_confidentiality_alloy_ping_status == 200
+      - solo_vps_observability_confidentiality_unrelated_ping_status == -1
+      - solo_vps_observability_confidentiality_unrelated_inspect_status == -1
+      - solo_vps_observability_confidentiality_unrelated_logs_status == -1
+      - solo_vps_observability_confidentiality_info_status == 403
+      - solo_vps_observability_confidentiality_images_status == 403
+      - solo_vps_observability_confidentiality_volumes_status == 403
+      - solo_vps_observability_confidentiality_secrets_status == 403
+      - solo_vps_observability_confidentiality_exec_status == 403
+    fail_msg: >-
+      CRIT-005 is not closed. The Docker API collector boundary still grants more host-local
+      read capability than the stable-alpha threat model permits, or the required proxy ACLs
+      are not preserved. Use only the sanitized status block above.
+    success_msg: >-
+      CRIT-005 confidentiality gate passed: only the Alloy identity can traverse/connect to
+      the managed proxy, direct Docker socket access is denied, unrelated host identity access
+      fails before HTTP, and explicitly disabled Docker API sections remain forbidden.

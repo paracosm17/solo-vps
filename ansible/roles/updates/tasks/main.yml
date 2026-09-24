@@ -1,0 +1,50 @@
+---
+- name: Install unattended security update tooling
+  ansible.builtin.apt:
+    name: "{{ solo_vps_updates_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Confirm the APT configuration query tool exists
+  ansible.builtin.stat:
+    path: "{{ solo_vps_updates_apt_config_binary }}"
+  register: solo_vps_updates_apt_config_binary_state
+
+- name: Refuse update configuration without apt-config validation support
+  ansible.builtin.assert:
+    that:
+      - solo_vps_updates_apt_config_binary_state.stat.exists
+      - solo_vps_updates_apt_config_binary_state.stat.isreg | default(false)
+    fail_msg: >-
+      Expected {{ solo_vps_updates_apt_config_binary }} on the supported Ubuntu
+      target. Refusing to write unattended-upgrades configuration that cannot
+      be syntax-checked first.
+
+- name: Configure the daily APT periodic schedule
+  ansible.builtin.template:
+    src: 20auto-upgrades.j2
+    dest: "{{ solo_vps_updates_periodic_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "{{ solo_vps_updates_apt_config_binary }} -c %s dump"
+
+- name: Configure the Solo VPS unattended security update policy
+  ansible.builtin.template:
+    src: 99zz-solo-vps-unattended-upgrades.j2
+    dest: "{{ solo_vps_updates_policy_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "{{ solo_vps_updates_apt_config_binary }} -c %s dump"
+
+- name: Enable and start APT periodic timers
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop: "{{ solo_vps_updates_timers }}"
+
+- name: Verify the automatic security update baseline
+  ansible.builtin.import_tasks: verify.yml

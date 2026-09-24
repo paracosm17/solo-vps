@@ -1,0 +1,28 @@
+version: 1
+owner: application
+
+solo_vps_deployment_boundary:
+  rollback_scope: container-image-only
+  database_schema_rollback: false
+  application_data_rollback: false
+  external_side_effect_rollback: false
+
+migration_preflight:
+  workflow_job: migration-preflight
+  workflow_name: Application migration preflight
+  sample_hook: examples/hello-app/migration_preflight.py
+  production_credentials: false
+  production_mutation: false
+  default_sample_mode: none
+
+recommended_strategy:
+  name: expand-contract
+  requirements:
+    - old and new application versions can run during the compatibility window
+    - destructive contract/remove steps happen only after old application versions are no longer rollback targets
+
+irreversible_change:
+  requires_before_deploy:
+    - fresh database backup evidence
+    - tested restore or explicit forward-fix recovery plan
+  image_rollback_is_not_recovery: true

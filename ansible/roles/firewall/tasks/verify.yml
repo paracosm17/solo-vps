@@ -1,0 +1,108 @@
+---
+- name: Validate firewall configuration for verification
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Gather installed package facts for firewall verification
+  ansible.builtin.package_facts:
+    manager: apt
+
+- name: Read UFW IPv6 configuration
+  ansible.builtin.slurp:
+    src: /etc/default/ufw
+  register: solo_vps_firewall_ufw_defaults
+
+- name: Read UFW verbose status without changing firewall state
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_firewall_ufw_binary }}"
+      - status
+      - verbose
+  environment:
+    LC_ALL: C
+    LANG: C
+  changed_when: false
+  register: solo_vps_firewall_ufw_status
+
+- name: Read numbered UFW rules without changing firewall state
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_firewall_ufw_binary }}"
+      - status
+      - numbered
+  environment:
+    LC_ALL: C
+    LANG: C
+  changed_when: false
+  register: solo_vps_firewall_ufw_numbered
+
+- name: Read listening TCP sockets and owning processes without changing host state
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_firewall_ss_binary }}"
+      - -H
+      - -lntp
+  changed_when: false
+  register: solo_vps_firewall_tcp_listeners
+
+- name: Derive effective host exposure evidence
+  ansible.builtin.set_fact:
+    solo_vps_firewall_expected_tcp_ports: >-
+      {{ ([solo_vps_firewall_ssh_port] + firewall.public_ports) | map('int') | unique | sort | list }}
+    solo_vps_firewall_expected_allow_targets: >-
+      {{ ([solo_vps_firewall_ssh_port] + firewall.public_ports)
+         | map('int')
+         | map('string')
+         | map('regex_replace', '$', '/tcp')
+         | unique
+         | sort
+         | list }}
+    solo_vps_firewall_allow_targets: >-
+      {{ solo_vps_firewall_ufw_numbered.stdout
+         | regex_findall(solo_vps_firewall_ufw_inbound_allow_pattern)
+         | unique
+         | sort
+         | list }}
+    solo_vps_firewall_wildcard_tcp_ports: >-
+      {{ solo_vps_firewall_tcp_listeners.stdout
+         | regex_findall('(?m)^LISTEN\s+\S+\s+\S+\s+(?:0[.]0[.]0[.]0|\[::\]|[*]):([0-9]+)\s')
+         | map('int')
+         | unique
+         | sort
+         | list }}
+
+- name: Derive wildcard listener diagnostics from exposure evidence
+  ansible.builtin.set_fact:
+    solo_vps_firewall_unexpected_wildcard_tcp_ports: >-
+      {{ solo_vps_firewall_wildcard_tcp_ports
+         | difference(solo_vps_firewall_expected_tcp_ports)
+         | sort
+         | list }}
+
+- name: Report current host exposure evidence before enforcing it
+  ansible.builtin.debug:
+    msg:
+      expected_tcp_ports: "{{ solo_vps_firewall_expected_tcp_ports }}"
+      expected_ufw_allow_targets: "{{ solo_vps_firewall_expected_allow_targets }}"
+      observed_ufw_allow_targets: "{{ solo_vps_firewall_allow_targets }}"
+      wildcard_tcp_listeners: "{{ solo_vps_firewall_wildcard_tcp_ports }}"
+      tcp_listener_evidence: "{{ solo_vps_firewall_tcp_listeners.stdout_lines }}"
+      wildcard_tcp_listeners_outside_expected_edge: "{{ solo_vps_firewall_unexpected_wildcard_tcp_ports }}"
+
+- name: Verify the UFW host exposure baseline
+  ansible.builtin.assert:
+    that:
+      - solo_vps_firewall_packages | difference(ansible_facts.packages.keys() | list) | length == 0
+      - "'IPV6=yes' in (solo_vps_firewall_ufw_defaults.content | b64decode).splitlines()"
+      - "solo_vps_firewall_ufw_status.stdout is search('(?m)^Status: active$')"
+      - "solo_vps_firewall_ufw_status.stdout is search('Default: deny \\(incoming\\), allow \\(outgoing\\)')"
+      - solo_vps_firewall_allow_targets | difference(solo_vps_firewall_expected_allow_targets) | length == 0
+      - solo_vps_firewall_expected_allow_targets | difference(solo_vps_firewall_allow_targets) | length == 0
+    fail_msg: >-
+      Firewall verification failed. UFW must be active with default-deny incoming,
+      only the configured Solo VPS TCP allow targets. Expected UFW allow
+      targets={{ solo_vps_firewall_expected_allow_targets }}, observed UFW allow
+      targets={{ solo_vps_firewall_allow_targets }}. Wildcard TCP listeners outside
+      the expected edge-port set are diagnostic evidence only; M5 public exposure
+      is enforced by the active default-deny policy plus the exact UFW allow set.
+      Review `ufw status numbered` and `ss -H -lntp` before continuing.
+    success_msg: Solo VPS UFW host exposure baseline is active and internally consistent.

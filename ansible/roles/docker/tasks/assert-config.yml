@@ -1,0 +1,42 @@
+---
+- name: Validate Docker host role inputs and supported target
+  ansible.builtin.assert:
+    that:
+      - admin is defined
+      - admin is mapping
+      - admin.user is defined
+      - admin.user is string
+      - admin.user | length > 0
+      - ansible_facts.get('distribution', '') == solo_vps_docker_supported_distribution
+      - ansible_facts.get('distribution_version', '') == solo_vps_docker_supported_distribution_version
+      - ansible_facts.get('architecture', '') in solo_vps_docker_supported_architectures
+      - solo_vps_docker_supported_major_versions == [29]
+      - solo_vps_docker_minimum_major_version == 29
+      - solo_vps_docker_maximum_major_version == 29
+      - solo_vps_docker_log_driver == 'local'
+      - solo_vps_docker_log_max_size is match('^[1-9][0-9]*[kKmMgG]$')
+      - solo_vps_docker_log_max_file | int > 0
+    fail_msg: >-
+      Docker host prerequisites are not satisfied. M7 currently supports Ubuntu
+      24.04 LTS on amd64/x86_64 or arm64/aarch64, Docker Engine 29.x only, and
+      requires the M4-managed non-root admin identity before Docker permissions can be configured.
+
+- name: Confirm the managed administrator already exists
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_getent_binary }}"
+      - passwd
+      - "{{ admin.user }}"
+  changed_when: false
+  failed_when: false
+  register: solo_vps_docker_admin_passwd
+
+- name: Refuse Docker mutation before the admin identity baseline exists
+  ansible.builtin.assert:
+    that:
+      - solo_vps_docker_admin_passwd.rc == 0
+      - solo_vps_docker_admin_passwd.stdout | length > 0
+    fail_msg: >-
+      The configured administrator {{ admin.user }} does not exist on the target.
+      Apply the M4 users baseline first (normally through make bootstrap) before
+      applying M7 independently. Docker will not create an implicit user account.

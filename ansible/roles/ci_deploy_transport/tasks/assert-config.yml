@@ -1,0 +1,18 @@
+---
+- name: Confirm CI deploy transport configuration is safe to consume
+  ansible.builtin.assert:
+    that:
+      - ci_deploy is defined
+      - ci_deploy is mapping
+      - ci_deploy.ssh_public_key_file is defined
+      - ci_deploy.ssh_public_key_file is string
+      - ci_deploy.ssh_public_key_file | length > 0
+      - "'CHANGE_ME' not in (ci_deploy.ssh_public_key_file | upper)"
+      - ci_deploy.ssh_public_key_file is match('^(?:/|~/)')
+      - solo_vps_ci_deploy_user == 'solo-vps-ci'
+      - solo_vps_ci_deploy_remote_host == '127.0.0.1'
+      - solo_vps_ci_deploy_remote_port == 8000
+    fail_msg: >-
+      The M11 CI deploy transport requires ci_deploy.ssh_public_key_file to
+      point to one controller-side Ed25519 public key. The transport account
+      and Coolify destination are intentionally fixed by the source contract.

@@ -1,0 +1,87 @@
+---
+- name: Gather installed package facts for update verification
+  ansible.builtin.package_facts:
+    manager: apt
+
+- name: Read effective APT configuration without changing host state
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_updates_apt_config_binary }}"
+      - dump
+  changed_when: false
+  register: solo_vps_updates_apt_config
+
+- name: Read APT timer enabled state without changing host state
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/systemctl
+      - is-enabled
+      - "{{ item }}"
+  changed_when: false
+  failed_when: false
+  loop: "{{ solo_vps_updates_timers }}"
+  register: solo_vps_updates_timer_enabled
+
+- name: Read APT timer active state without changing host state
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/systemctl
+      - is-active
+      - "{{ item }}"
+  changed_when: false
+  failed_when: false
+  loop: "{{ solo_vps_updates_timers }}"
+  register: solo_vps_updates_timer_active
+
+- name: Inspect unattended-upgrades log directory
+  ansible.builtin.stat:
+    path: "{{ solo_vps_updates_log_dir }}"
+  register: solo_vps_updates_log_dir_state
+
+- name: Inspect reboot-required marker
+  ansible.builtin.stat:
+    path: "{{ solo_vps_updates_reboot_required_path }}"
+  register: solo_vps_updates_reboot_required_state
+
+- name: Derive effective unattended-upgrades policy evidence
+  ansible.builtin.set_fact:
+    solo_vps_updates_effective_allowed_origins: >-
+      {{ solo_vps_updates_apt_config.stdout
+         | regex_findall('(?m)^Unattended-Upgrade::Allowed-Origins:: "([^"]+)";$') }}
+    solo_vps_updates_effective_origins_patterns: >-
+      {{ solo_vps_updates_apt_config.stdout
+         | regex_findall('(?m)^Unattended-Upgrade::Origins-Pattern:: \"([^\"]+)\";$') }}
+    solo_vps_updates_enabled_timer_states: >-
+      {{ solo_vps_updates_timer_enabled.results | map(attribute='stdout') | list }}
+    solo_vps_updates_active_timer_states: >-
+      {{ solo_vps_updates_timer_active.results | map(attribute='stdout') | list }}
+
+- name: Verify automatic security updates are enabled with no automatic reboot
+  ansible.builtin.assert:
+    that:
+      - solo_vps_updates_packages | difference(ansible_facts.packages.keys() | list) | length == 0
+      - solo_vps_updates_apt_config.stdout is search('(?m)^APT::Periodic::Update-Package-Lists "1";$')
+      - solo_vps_updates_apt_config.stdout is search('(?m)^APT::Periodic::Unattended-Upgrade "1";$')
+      - solo_vps_updates_apt_config.stdout is search('(?m)^Unattended-Upgrade::Automatic-Reboot "false";$')
+      - solo_vps_updates_apt_config.stdout is search('(?m)^Unattended-Upgrade::Automatic-Reboot-WithUsers "false";$')
+      - solo_vps_updates_effective_allowed_origins | difference(solo_vps_updates_allowed_origins) | length == 0
+      - solo_vps_updates_allowed_origins | difference(solo_vps_updates_effective_allowed_origins) | length == 0
+      - solo_vps_updates_effective_origins_patterns | length == 0
+      - (solo_vps_updates_enabled_timer_states | unique | list) == ['enabled']
+      - (solo_vps_updates_active_timer_states | unique | list) == ['active']
+    fail_msg: >-
+      Automatic security update verification failed. The unattended-upgrades
+      package, daily APT periodic settings, exact supported Ubuntu origin list,
+      disabled automatic reboot policy, and active/enabled apt timers must all
+      match the Solo VPS baseline.
+    success_msg: Solo VPS automatic security update baseline is active and internally consistent.
+
+- name: Report automatic update operational evidence
+  ansible.builtin.debug:
+    msg:
+      allowed_origins: "{{ solo_vps_updates_effective_allowed_origins }}"
+      timers: "{{ solo_vps_updates_timers }}"
+      log_directory: "{{ solo_vps_updates_log_dir }}"
+      log_directory_exists: "{{ solo_vps_updates_log_dir_state.stat.exists | default(false) }}"
+      reboot_required: "{{ solo_vps_updates_reboot_required_state.stat.exists | default(false) }}"
+      automatic_reboot: false

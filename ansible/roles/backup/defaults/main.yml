@@ -1,0 +1,74 @@
+---
+# M14 first slice: pinned restic host tooling only. Repository credentials,
+# initialization, schedules, retention execution, and backup sources are later
+# work items and must not be implied by installing the binary.
+solo_vps_restic_version: "0.19.1"
+solo_vps_restic_install_path: /usr/local/bin/restic
+solo_vps_restic_bunzip2_binary: /usr/bin/bunzip2
+solo_vps_restic_stage_dir: /var/tmp
+
+solo_vps_restic_artifacts:
+  x86_64:
+    url: https://github.com/restic/restic/releases/download/v0.19.1/restic_0.19.1_linux_amd64.bz2
+    sha256: f415415624dcc452f2a02b8c33641791a8c6d6d3b65bbb3543fcf9a25151585c
+  aarch64:
+    url: https://github.com/restic/restic/releases/download/v0.19.1/restic_0.19.1_linux_arm64.bz2
+    sha256: a5f64aaab53d51e311fa3829124c5b703f2d14cf187d8640b6be3b2b49376465
+
+# Refuse silent takeover of common distro/snap installations. Existing backup
+# tooling may already own repositories/timers, so migration must be explicit.
+solo_vps_restic_conflicting_paths:
+  - /usr/bin/restic
+  - /snap/bin/restic
+
+
+# M14 non-secret backup policy. This deliberately covers only reviewed Coolify
+# filesystem recovery material. Live Docker/database storage and Coolify local
+# database backup staging are not raw filesystem recovery authorities; M15/M16
+# provide logical database and selective disaster-recovery paths.
+solo_vps_backup_sources:
+  - /data/coolify
+solo_vps_backup_excludes:
+  - /data/coolify/ssh/mux
+  - /data/coolify/databases
+  - /data/coolify/backups
+solo_vps_backup_forbidden_source_prefixes:
+  - /var/lib/docker
+  - /var/lib/postgresql
+solo_vps_backup_snapshot_tag: solo-vps
+solo_vps_backup_group_by: host,tags
+solo_vps_backup_retention:
+  keep_last: 3
+  keep_daily: 14
+  keep_weekly: 8
+  keep_monthly: 12
+  keep_yearly: 3
+
+# M14 operational runtime. Repository initialization/adoption and the first
+# snapshot remain explicit operations; installing this runtime alone never
+# contacts external storage and keeps the daily timer disabled.
+solo_vps_backup_runtime_dir: /usr/local/libexec/solo-vps
+solo_vps_backup_runtime_path: /etc/solo-vps/backup/runtime.json
+solo_vps_backup_credentials_path: /etc/solo-vps/backup/credentials.json
+solo_vps_backup_cache_dir: /var/cache/solo-vps/restic
+solo_vps_backup_freshness_hours: 36
+solo_vps_backup_timer_on_calendar: '*-*-* 03:15:00'
+solo_vps_backup_timer_randomized_delay: 30m
+solo_vps_backup_retention_confirm_required: I_HAVE_REVIEWED_THE_BACKUP_RETENTION_PLAN
+solo_vps_backup_recovery_staging_parent: /var/tmp/solo-vps-disaster-recovery
+solo_vps_backup_recovery_staging_confirm_required: I_HAVE_VERIFIED_A_PRIVATE_DISASTER_RECOVERY_STAGING_DIRECTORY
+solo_vps_backup_supported_operations:
+  - repository-init
+  - repository-adopt
+  - repository-status
+  - status
+  - backup
+  - check
+  - retention-plan
+  - retention-apply
+  - restore-test
+  - restore-staging
+  - schedule-enable
+  - maintenance-schedule-enable
+solo_vps_backup_maintenance_timer_on_calendar: 'Sun *-*-* 05:00:00'
+solo_vps_backup_maintenance_timer_randomized_delay: 1h

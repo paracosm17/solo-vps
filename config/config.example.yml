@@ -1,0 +1,36 @@
+---
+# Public, non-secret project configuration example.
+# `make init` copies this to the persistent Solo VPS data directory; edit that external copy, not this tracked example.
+server:
+  host: 203.0.113.10
+  hostname: solo-vps-01
+  timezone: UTC
+
+admin:
+  user: ops
+  # Automation/controller key. On same-VPS installs this key is created on the VPS.
+  ssh_public_key_file: ~/.ssh/id_ed25519.pub
+  # Human workstation public key. Configure it explicitly before bootstrap with
+  # `make human-admin-key-stdin` (same-VPS flow) or `make human-admin-key-file`.
+  # Public keys are not secrets; private keys must never be copied to the VPS.
+  human_ssh_public_key: ""
+
+firewall:
+  # Current M5 core scope supports only public HTTP/HTTPS edge ingress.
+  public_ports:
+    - 80
+    - 443
+
+
+# Optional until the backup workflow is configured. These values are public
+# repository metadata only; never put S3 credentials or a restic password here.
+backup:
+  repository:
+    endpoint: https://s3.example.com
+    bucket: solo-vps-backups
+    prefix: solo-vps
+    region: us-east-1
+# Optional M11 deployment-control transport. Keep disabled/absent until you
+# intentionally create a dedicated Ed25519 key for GitHub Actions deployment.
+# ci_deploy:
+#   ssh_public_key_file: ~/.ssh/solo-vps-ci-deploy.pub

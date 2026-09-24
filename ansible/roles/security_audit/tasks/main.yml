@@ -1,0 +1,292 @@
+---
+- name: Inspect the staged Solo VPS SSH hardening drop-in
+  ansible.builtin.stat:
+    path: "{{ solo_vps_audit_sshd_hardening_path }}"
+    follow: false
+  register: solo_vps_audit_sshd_hardening_state
+
+- name: Validate current OpenSSH daemon syntax without changing it
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_audit_sshd_binary }}"
+      - -t
+  changed_when: false
+  failed_when: false
+  register: solo_vps_audit_sshd_syntax
+
+- name: Read effective OpenSSH daemon policy without changing it
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_audit_sshd_binary }}"
+      - -T
+  changed_when: false
+  failed_when: false
+  register: solo_vps_audit_sshd_effective
+
+- name: Read listening TCP sockets for sensitive host-service audit
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_audit_ss_binary }}"
+      - -H
+      - -lnt
+  changed_when: false
+  register: solo_vps_audit_tcp_listeners
+
+- name: Read running Docker container IDs without changing containers
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_audit_docker_binary }}"
+      - ps
+      - --quiet
+  changed_when: false
+  register: solo_vps_audit_docker_container_ids
+
+- name: Read full structured Docker container state for publication audit
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_audit_docker_binary }}"
+      - container
+      - inspect
+      - "{{ item }}"
+  loop: "{{ solo_vps_audit_docker_container_ids.stdout_lines | default([]) }}"
+  changed_when: false
+  register: solo_vps_audit_docker_container_inspections
+
+- name: Read Docker Engine server version for localhost publication risk context
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_audit_docker_binary }}"
+      - version
+      - --format
+      - "{{ '{{.Server.Version}}' }}"
+  changed_when: false
+  register: solo_vps_audit_docker_server_version
+
+- name: Derive initial security audit evidence
+  ansible.builtin.set_fact:
+    solo_vps_audit_ssh_missing_options: >-
+      {{ solo_vps_audit_expected_ssh_options
+         | difference(solo_vps_audit_sshd_effective.stdout_lines | default([]))
+         | list }}
+    solo_vps_audit_sensitive_host_listener_lines: >-
+      {{ solo_vps_audit_tcp_listeners.stdout_lines
+         | select('search', ':(' ~ (solo_vps_audit_sensitive_host_ports | map('string') | join('|')) ~ ')\\s')
+         | list }}
+    solo_vps_audit_non_loopback_sensitive_host_listeners: []
+    solo_vps_audit_docker_port_items: []
+    solo_vps_audit_docker_published_port_items: []
+    solo_vps_audit_docker_bindings: []
+    solo_vps_audit_docker_unexpected_network_bindings: []
+    solo_vps_audit_docker_public_data_bindings: []
+    solo_vps_audit_docker_loopback_bindings: []
+    solo_vps_audit_failures: []
+    solo_vps_audit_warnings: []
+
+- name: Classify non-loopback sensitive host listeners
+  ansible.builtin.set_fact:
+    solo_vps_audit_non_loopback_sensitive_host_listeners: >-
+      {{ solo_vps_audit_non_loopback_sensitive_host_listeners + [item] }}
+  loop: "{{ solo_vps_audit_sensitive_host_listener_lines }}"
+  when: >-
+    item is not search('(?:127(?:\\.[0-9]{1,3}){3}|\\[::1\\]):(' ~ (solo_vps_audit_sensitive_host_ports | map('string') | join('|')) ~ ')\\s')
+
+- name: Collect structured Docker port-map items from inspect JSON
+  ansible.builtin.set_fact:
+    solo_vps_audit_docker_port_items: >-
+      {{ solo_vps_audit_docker_port_items
+         + (((item.stdout | from_json)[0].NetworkSettings.Ports
+             | default({}, true))
+            | dict2items) }}
+  loop: "{{ solo_vps_audit_docker_container_inspections.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item | default('container') }}"
+
+- name: Select Docker ports with actual host bindings
+  ansible.builtin.set_fact:
+    solo_vps_audit_docker_published_port_items: >-
+      {{ solo_vps_audit_docker_port_items
+         | rejectattr('value', 'equalto', none)
+         | list }}
+
+- name: Validate structured Docker container-port keys
+  ansible.builtin.assert:
+    that:
+      - item.key is match(solo_vps_audit_docker_port_key_pattern)
+      - item.value is sequence
+      - item.value is not string
+    fail_msg: >-
+      Docker inspect returned a NetworkSettings.Ports entry outside the reviewed
+      M19 structured binding contract: {{ item | to_json }}. Refusing to treat
+      Docker exposure as safe.
+  loop: "{{ solo_vps_audit_docker_published_port_items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Validate structured Docker host-binding objects
+  ansible.builtin.assert:
+    that:
+      - item.1.HostIp is defined
+      - item.1.HostPort is defined
+      - item.1.HostIp is string
+      - item.1.HostPort is string
+      - item.1.HostPort is match('^[0-9]+$')
+    fail_msg: >-
+      Docker inspect returned a malformed host binding for {{ item.0.key }}:
+      {{ item.1 | to_json }}. Refusing to treat Docker exposure as safe.
+  loop: "{{ solo_vps_audit_docker_published_port_items | subelements('value') }}"
+  loop_control:
+    label: "{{ item.0.key }} -> {{ item.1.HostIp | default('?') }}:{{ item.1.HostPort | default('?') }}"
+
+- name: Normalize structured Docker host-port publications
+  ansible.builtin.set_fact:
+    solo_vps_audit_docker_bindings: >-
+      {{ solo_vps_audit_docker_bindings + [
+           {
+             'host_ip': item.1.HostIp,
+             'host_port': item.1.HostPort | int,
+             'container_port': item.0.key.split('/')[0] | int,
+             'protocol': item.0.key.split('/')[1]
+           }
+         ] }}
+  loop: "{{ solo_vps_audit_docker_published_port_items | subelements('value') }}"
+  loop_control:
+    label: "{{ item.0.key }} -> {{ item.1.HostIp }}:{{ item.1.HostPort }}"
+
+- name: Classify Docker publications outside loopback and reviewed public edge ports
+  ansible.builtin.set_fact:
+    solo_vps_audit_docker_unexpected_network_bindings: >-
+      {{ solo_vps_audit_docker_unexpected_network_bindings + [item] }}
+  loop: "{{ solo_vps_audit_docker_bindings }}"
+  when:
+    - item.host_ip not in ['127.0.0.1', '::1']
+    - >-
+      (item.protocol != 'tcp') or
+      (item.host_port not in (firewall.public_ports | map('int') | list))
+
+- name: Classify public PostgreSQL or Redis Docker publications
+  ansible.builtin.set_fact:
+    solo_vps_audit_docker_public_data_bindings: >-
+      {{ solo_vps_audit_docker_public_data_bindings + [item] }}
+  loop: "{{ solo_vps_audit_docker_bindings }}"
+  when:
+    - item.host_ip not in ['127.0.0.1', '::1']
+    - >-
+      (item.host_port in solo_vps_audit_data_service_ports) or
+      (item.container_port in solo_vps_audit_data_service_ports)
+
+- name: Classify Docker localhost-only publications
+  ansible.builtin.set_fact:
+    solo_vps_audit_docker_loopback_bindings: >-
+      {{ solo_vps_audit_docker_loopback_bindings + [item] }}
+  loop: "{{ solo_vps_audit_docker_bindings }}"
+  when: item.host_ip in ['127.0.0.1', '::1']
+
+- name: Derive staged SSH hardening audit status
+  ansible.builtin.set_fact:
+    solo_vps_audit_ssh_hardening_status: >-
+      {% if not (solo_vps_audit_sshd_hardening_state.stat.isreg | default(false)) %}
+      PENDING
+      {% elif solo_vps_audit_sshd_syntax.rc != 0 %}
+      FAIL
+      {% elif solo_vps_audit_sshd_effective.rc != 0 %}
+      FAIL
+      {% elif solo_vps_audit_ssh_missing_options | length > 0 %}
+      FAIL
+      {% else %}
+      PASS
+      {% endif %}
+    solo_vps_audit_docker_server_major: >-
+      {{ (solo_vps_audit_docker_server_version.stdout | trim).split('.')[0] | int }}
+
+- name: Record clear SSH hardening failure
+  ansible.builtin.set_fact:
+    solo_vps_audit_failures: >-
+      {{ solo_vps_audit_failures + [
+           'SSH hardening drop-in exists but sshd syntax/effective policy does not match the M4 contract'
+         ] }}
+  when: solo_vps_audit_ssh_hardening_status | trim == 'FAIL'
+
+- name: Record staged SSH hardening as pending
+  ansible.builtin.set_fact:
+    solo_vps_audit_warnings: >-
+      {{ solo_vps_audit_warnings + [
+           'SSH hardening is not activated; M4 remains staged and requires make ssh-harden plus independent reconnect evidence'
+         ] }}
+  when: solo_vps_audit_ssh_hardening_status | trim == 'PENDING'
+
+- name: Record sensitive non-loopback host listeners
+  ansible.builtin.set_fact:
+    solo_vps_audit_failures: >-
+      {{ solo_vps_audit_failures + [
+           'Sensitive host TCP listeners are bound outside loopback: ' ~
+           (solo_vps_audit_non_loopback_sensitive_host_listeners | join(' ; '))
+         ] }}
+  when: solo_vps_audit_non_loopback_sensitive_host_listeners | length > 0
+
+- name: Record unexpected Docker network publications
+  ansible.builtin.set_fact:
+    solo_vps_audit_failures: >-
+      {{ solo_vps_audit_failures + [
+           'Docker publishes host ports outside loopback and the reviewed public edge set: ' ~
+           (solo_vps_audit_docker_unexpected_network_bindings | to_json)
+         ] }}
+  when: solo_vps_audit_docker_unexpected_network_bindings | length > 0
+
+- name: Record public PostgreSQL or Redis Docker publications
+  ansible.builtin.set_fact:
+    solo_vps_audit_failures: >-
+      {{ solo_vps_audit_failures + [
+           'PostgreSQL/Redis canonical ports are published by Docker outside loopback: ' ~
+           (solo_vps_audit_docker_public_data_bindings | to_json)
+         ] }}
+  when: solo_vps_audit_docker_public_data_bindings | length > 0
+
+- name: Record Docker localhost publication caveat on older engines
+  ansible.builtin.set_fact:
+    solo_vps_audit_warnings: >-
+      {{ solo_vps_audit_warnings + [
+           'Docker Engine < 28 has a documented same-L2 caveat for localhost-published ports; do not treat loopback publication as external isolation evidence'
+         ] }}
+  when:
+    - solo_vps_audit_docker_loopback_bindings | length > 0
+    - solo_vps_audit_docker_server_major | int < 28
+
+- name: Report the Solo VPS security audit summary
+  ansible.builtin.debug:
+    msg:
+      controls:
+        admin_identity_and_sudo: "PASS: managed admin identity and sudo verification completed before the security audit"
+        ssh_hardening: "{{ solo_vps_audit_ssh_hardening_status | trim }}"
+        ufw_host_exposure: "PASS: managed firewall verification completed before the security audit"
+        docker_daemon_tcp: "PASS: managed Docker verification completed before the security audit"
+        docker_published_ports: >-
+          {{ 'PASS'
+             if (solo_vps_audit_docker_unexpected_network_bindings | length == 0)
+             else 'FAIL' }}
+        postgresql_redis_public_exposure: >-
+          {{ 'PASS'
+             if (solo_vps_audit_non_loopback_sensitive_host_listeners | length == 0 and
+                 solo_vps_audit_docker_public_data_bindings | length == 0)
+             else 'FAIL' }}
+        automatic_security_updates: "PASS: automatic security-update verification completed before the security audit"
+      evidence:
+        effective_ssh_missing_options: "{{ solo_vps_audit_ssh_missing_options }}"
+        sensitive_host_listeners: "{{ solo_vps_audit_non_loopback_sensitive_host_listeners }}"
+        docker_bindings: "{{ solo_vps_audit_docker_bindings }}"
+        docker_loopback_bindings: "{{ solo_vps_audit_docker_loopback_bindings }}"
+        docker_server_version: "{{ solo_vps_audit_docker_server_version.stdout | trim }}"
+      warnings: "{{ solo_vps_audit_warnings }}"
+      unavailable: "{{ solo_vps_audit_evidence_boundaries }}"
+
+- name: Fail the audit only on clear security control violations
+  ansible.builtin.assert:
+    that:
+      - solo_vps_audit_failures | length == 0
+    fail_msg: >-
+      Security audit found clear failures: {{ solo_vps_audit_failures | to_json }}.
+      PENDING/WARN/UNAVAILABLE states are reported separately and are not converted
+      into false PASS results.
+    success_msg: >-
+      Security audit found no clear violations in the currently verifiable host
+      controls. Review PENDING/WARN/UNAVAILABLE results before treating the host as
+      fully production-validated.

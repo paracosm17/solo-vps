@@ -1,0 +1,57 @@
+---
+solo_vps_docker_repository_uri: https://download.docker.com/linux/ubuntu
+solo_vps_docker_key_url: https://download.docker.com/linux/ubuntu/gpg
+solo_vps_docker_keyring_dir: /etc/apt/keyrings
+solo_vps_docker_key_path: /etc/apt/keyrings/docker.asc
+solo_vps_docker_source_path: /etc/apt/sources.list.d/docker.sources
+solo_vps_docker_daemon_dir: /etc/docker
+solo_vps_docker_daemon_config_path: /etc/docker/daemon.json
+
+solo_vps_docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+
+# Do not silently replace a pre-existing distro/container runtime installation.
+# A non-fresh host needs an explicit migration/recovery decision first.
+solo_vps_docker_conflicting_packages:
+  - docker.io
+  - docker-compose
+  - docker-compose-v2
+  - docker-doc
+  - docker-buildx
+  - podman-docker
+  - containerd
+  - runc
+
+solo_vps_docker_services:
+  - docker.service
+  - containerd.service
+
+solo_vps_docker_binary: /usr/bin/docker
+solo_vps_dockerd_binary: /usr/bin/dockerd
+solo_vps_dpkg_binary: /usr/bin/dpkg
+solo_vps_apt_cache_binary: /usr/bin/apt-cache
+solo_vps_systemctl_binary: /usr/bin/systemctl
+solo_vps_snap_binary: /usr/bin/snap
+solo_vps_docker_socket_path: /var/run/docker.sock
+solo_vps_getent_binary: /usr/bin/getent
+solo_vps_docker_group: docker
+solo_vps_docker_supported_major_versions:
+  - 29
+solo_vps_docker_minimum_major_version: 29
+solo_vps_docker_maximum_major_version: 29
+solo_vps_docker_supported_distribution: Ubuntu
+solo_vps_docker_supported_distribution_version: "24.04"
+solo_vps_docker_supported_architectures:
+  - x86_64
+  - aarch64
+
+# Opinionated host baseline. Keep this deliberately small so Coolify remains
+# the application platform instead of competing with host-level Docker policy.
+solo_vps_docker_log_driver: local
+solo_vps_docker_log_max_size: 20m
+solo_vps_docker_log_max_file: 5
+solo_vps_docker_live_restore: true

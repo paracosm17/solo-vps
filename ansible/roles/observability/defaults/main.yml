@@ -1,0 +1,56 @@
+---
+# M24 first implementation slice: pinned Grafana Alloy host binary only.
+# No service, Docker socket access, telemetry credentials, remote backend,
+# listeners, or outbound log/metric delivery are configured by this slice.
+solo_vps_alloy_version: "1.18.1"
+solo_vps_alloy_install_path: /usr/local/bin/alloy
+solo_vps_alloy_dpkg_deb_binary: /usr/bin/dpkg-deb
+solo_vps_alloy_stage_dir: /var/tmp
+
+solo_vps_alloy_artifacts:
+  x86_64:
+    url: https://github.com/grafana/alloy/releases/download/v1.18.1/alloy-1.18.1-1.amd64.deb
+    sha256: 7d7b8211ac97f5cda63f908325f64d52aa4bbaeb496897d8234f75bad87d9cb2
+  aarch64:
+    url: https://github.com/grafana/alloy/releases/download/v1.18.1/alloy-1.18.1-1.arm64.deb
+    sha256: 4d360ba922fdeb7b3ad65c6c73283d2eb65d9cb5f83c9809f23db7b85a108b54
+
+# Refuse silent takeover of a distro/vendor package installation. A future
+# migration/upgrade path must be explicit because it may already own a service,
+# configuration, credentials, and telemetry state.
+solo_vps_alloy_conflicting_paths:
+  - /usr/bin/alloy
+
+# M24 retained application-log runtime. Alloy stays non-root and never mounts the
+# Docker daemon socket. The pinned proxy owns that high-trust socket and exposes its
+# read-only Docker API only through a group-gated Unix socket. CONTAINERS + NETWORKS
+# remains a coarse read scope inside the trusted Alloy identity boundary.
+solo_vps_observability_credentials_path: /etc/solo-vps/observability/grafana-cloud.json
+solo_vps_observability_runtime_env_path: /etc/solo-vps/observability/alloy.env
+# Keep non-secret Alloy configuration outside the root-only credential directory.
+# The credential installer intentionally keeps /etc/solo-vps/observability at 0700.
+solo_vps_alloy_config_dir: /etc/solo-vps-alloy
+solo_vps_alloy_config_path: /etc/solo-vps-alloy/config.alloy
+solo_vps_alloy_legacy_config_path: /etc/solo-vps/observability/alloy/config.alloy
+solo_vps_alloy_service_name: solo-vps-alloy.service
+solo_vps_alloy_user: solo-vps-alloy
+solo_vps_alloy_group: solo-vps-alloy
+solo_vps_alloy_state_dir: /var/lib/solo-vps-alloy
+solo_vps_alloy_http_host: 127.0.0.1
+solo_vps_alloy_http_port: 12345
+solo_vps_docker_api_proxy_name: solo-vps-docker-api-proxy
+solo_vps_docker_api_proxy_version: "0.5.0"
+solo_vps_docker_api_proxy_socket: /var/run/docker.sock
+solo_vps_docker_api_proxy_runtime_dir: /run/solo-vps-docker-api
+solo_vps_docker_api_proxy_host_socket: /run/solo-vps-docker-api/docker-api.sock
+solo_vps_docker_api_proxy_container_socket_dir: /proxy
+solo_vps_docker_api_proxy_container_socket: /proxy/docker-api.sock
+solo_vps_docker_api_proxy_bind_config: /proxy/docker-api.sock mode 666
+solo_vps_docker_api_proxy_tmpfiles_path: /etc/tmpfiles.d/solo-vps-observability.conf
+solo_vps_alloy_docker_host: unix:///run/solo-vps-docker-api/docker-api.sock
+# Exact previous V3 transport, retained only for an explicit one-time migration.
+solo_vps_docker_api_proxy_legacy_host: 127.0.0.1
+solo_vps_docker_api_proxy_legacy_port: 2375
+solo_vps_docker_api_proxy_images:
+  x86_64: ghcr.io/tecnativa/docker-socket-proxy:v0.5.0@sha256:753044cb0851ce53ab44c2504872ff02ae37be9c294fa8abea3754074e61eab4
+  aarch64: ghcr.io/tecnativa/docker-socket-proxy:v0.5.0@sha256:c50ae24d0d3ec88b8cf07fbd9e7e262eba91caf846e632e1a01ad5bbfaa9f47d

@@ -1,0 +1,13 @@
+---
+- name: Run target preflight before Coolify verification
+  ansible.builtin.import_playbook: preflight.yml
+
+- name: Verify the managed Coolify installation without changing it
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Run read-only Coolify verification
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: verify

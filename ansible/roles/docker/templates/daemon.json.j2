@@ -1,0 +1,8 @@
+{
+  "live-restore": {{ solo_vps_docker_live_restore | bool | lower }},
+  "log-driver": "{{ solo_vps_docker_log_driver }}",
+  "log-opts": {
+    "max-size": "{{ solo_vps_docker_log_max_size }}",
+    "max-file": "{{ solo_vps_docker_log_max_file }}"
+  }
+}

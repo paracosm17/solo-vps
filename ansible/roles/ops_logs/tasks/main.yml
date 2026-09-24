@@ -1,0 +1,47 @@
+---
+- name: Validate bounded container-log request
+  ansible.builtin.assert:
+    that:
+      - solo_vps_ops_log_container is string
+      - solo_vps_ops_log_container is match('^[A-Za-z0-9][A-Za-z0-9_.-]*$')
+      - solo_vps_ops_log_tail | int >= 1
+      - solo_vps_ops_log_tail | int <= 1000
+    fail_msg: "Choose one container from make ops-status and a TAIL value from 1 to 1000."
+
+- name: Confirm the requested Docker container exists
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_ops_docker_binary }}"
+      - container
+      - inspect
+      - "{{ solo_vps_ops_log_container }}"
+  changed_when: false
+  failed_when: false
+  register: solo_vps_ops_log_container_inspect
+
+- name: Refuse an unknown container name
+  ansible.builtin.assert:
+    that:
+      - solo_vps_ops_log_container_inspect.rc == 0
+    fail_msg: "Container does not exist. Run make ops-status and copy an exact container name."
+
+- name: Read the requested bounded Docker log tail
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_ops_docker_binary }}"
+      - logs
+      - --timestamps
+      - --tail
+      - "{{ solo_vps_ops_log_tail | int | string }}"
+      - "{{ solo_vps_ops_log_container }}"
+  changed_when: false
+  register: solo_vps_ops_log_output
+
+- name: Report the selected Docker log tail
+  ansible.builtin.debug:
+    msg:
+      container: "{{ solo_vps_ops_log_container }}"
+      tail: "{{ solo_vps_ops_log_tail | int }}"
+      stdout: "{{ solo_vps_ops_log_output.stdout_lines }}"
+      stderr: "{{ solo_vps_ops_log_output.stderr_lines }}"
+      note: "Application logs can contain user data or secrets; review before sharing them."

@@ -1,0 +1,36 @@
+[Unit]
+Description=Solo VPS Grafana Alloy retained application logs
+Documentation=https://grafana.com/docs/alloy/
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User={{ solo_vps_alloy_user }}
+Group={{ solo_vps_alloy_group }}
+EnvironmentFile={{ solo_vps_observability_runtime_env_path }}
+WorkingDirectory={{ solo_vps_alloy_state_dir }}
+ExecStart={{ solo_vps_alloy_install_path }} run --disable-reporting --server.http.enable-pprof=false --server.http.listen-addr={{ solo_vps_alloy_http_host }}:{{ solo_vps_alloy_http_port }} --storage.path={{ solo_vps_alloy_state_dir }} {{ solo_vps_alloy_config_path }}
+Restart=on-failure
+RestartSec=5s
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectControlGroups=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectClock=true
+LockPersonality=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadWritePaths={{ solo_vps_alloy_state_dir }}
+
+[Install]
+WantedBy=multi-user.target

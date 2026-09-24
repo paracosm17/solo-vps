@@ -1,0 +1,20 @@
+---
+- name: Confirm base system configuration is safe to consume
+  ansible.builtin.assert:
+    that:
+      - server is defined
+      - server is mapping
+      - server.hostname is defined
+      - server.hostname is string
+      - server.hostname | length > 0
+      - server.hostname | length <= 253
+      - server.hostname is match('^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$')
+      - server.timezone is defined
+      - server.timezone is string
+      - server.timezone | length > 0
+      - server.timezone is match('^[A-Za-z0-9_+.-]+(?:/[A-Za-z0-9_+.-]+)*$')
+      - "'.' not in server.timezone.split('/')"
+      - "'..' not in server.timezone.split('/')"
+    fail_msg: >-
+      Base system configuration is missing or unsafe. Use the documented
+      Makefile entry points so config/config.yml is validated before bootstrap.

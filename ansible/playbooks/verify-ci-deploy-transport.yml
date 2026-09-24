@@ -1,0 +1,11 @@
+---
+- name: Verify the restricted Solo VPS CI deployment transport
+  hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Run read-only CI deploy transport verification
+      ansible.builtin.import_role:
+        name: ci_deploy_transport
+        tasks_from: verify.yml

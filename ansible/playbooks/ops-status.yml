@@ -1,0 +1,9 @@
+---
+- name: Show Solo VPS operational status
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Read the lightweight Solo VPS operational status
+      ansible.builtin.import_role:
+        name: ops_status

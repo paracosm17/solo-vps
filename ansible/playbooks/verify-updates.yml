@@ -1,0 +1,10 @@
+---
+- name: Verify the Solo VPS automatic security update baseline
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Run read-only automatic update verification
+      ansible.builtin.import_role:
+        name: updates
+        tasks_from: verify

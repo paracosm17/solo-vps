@@ -1,0 +1,105 @@
+---
+- name: Read service state for the operational summary
+  ansible.builtin.service_facts:
+
+- name: Read human-readable uptime
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_ops_uptime_binary }}"
+      - -p
+  changed_when: false
+  failed_when: false
+  register: solo_vps_ops_uptime
+
+- name: Read memory usage
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_ops_free_binary }}"
+      - -h
+  changed_when: false
+  failed_when: false
+  register: solo_vps_ops_memory
+
+- name: Read root filesystem usage
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_ops_df_binary }}"
+      - -h
+      - /
+  changed_when: false
+  failed_when: false
+  register: solo_vps_ops_disk
+
+- name: Read failed systemd units
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_ops_systemctl_binary }}"
+      - --failed
+      - --no-legend
+      - --plain
+  changed_when: false
+  failed_when: false
+  register: solo_vps_ops_failed_units
+
+- name: Read Docker container status
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_ops_docker_binary }}"
+      - ps
+      - --all
+      - --format
+      - "{{ '{{.Names}}|{{.Status}}|{{.Ports}}' }}"
+  changed_when: false
+  failed_when: false
+  register: solo_vps_ops_containers
+
+- name: Read one-shot Docker resource usage
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_ops_docker_binary }}"
+      - stats
+      - --no-stream
+      - --format
+      - "{{ '{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}|{{.MemPerc}}' }}"
+  changed_when: false
+  failed_when: false
+  register: solo_vps_ops_stats
+
+- name: Probe loopback Coolify health without changing runtime state
+  ansible.builtin.uri:
+    url: "{{ solo_vps_ops_coolify_health_url }}"
+    method: GET
+    status_code: 200
+    return_content: false
+    timeout: "{{ solo_vps_ops_coolify_health_timeout }}"
+  changed_when: false
+  failed_when: false
+  register: solo_vps_ops_coolify_health
+
+- name: Report concise Solo VPS operational status
+  ansible.builtin.debug:
+    msg:
+      host:
+        hostname: "{{ ansible_facts.hostname }}"
+        uptime: "{{ solo_vps_ops_uptime.stdout | default('UNAVAILABLE', true) }}"
+        load_1m: "{{ ansible_facts.loadavg['1m'] | default('UNAVAILABLE') }}"
+      services:
+        ssh: "{{ ansible_facts.get('services', {}).get('ssh.service', {}).get('state', 'missing') }}"
+        docker: "{{ ansible_facts.get('services', {}).get('docker.service', {}).get('state', 'missing') }}"
+        containerd: "{{ ansible_facts.get('services', {}).get('containerd.service', {}).get('state', 'missing') }}"
+      system:
+        memory: "{{ solo_vps_ops_memory.stdout_lines if solo_vps_ops_memory.rc == 0 else ['UNAVAILABLE: free failed'] }}"
+        root_filesystem: "{{ solo_vps_ops_disk.stdout_lines if solo_vps_ops_disk.rc == 0 else ['UNAVAILABLE: df failed'] }}"
+        failed_systemd_units: "{{ solo_vps_ops_failed_units.stdout_lines if solo_vps_ops_failed_units.rc == 0 else ['UNAVAILABLE: systemctl failed'] }}"
+      docker:
+        containers: "{{ solo_vps_ops_containers.stdout_lines if solo_vps_ops_containers.rc == 0 else ['UNAVAILABLE: docker ps failed'] }}"
+        one_shot_stats: "{{ solo_vps_ops_stats.stdout_lines if solo_vps_ops_stats.rc == 0 else ['UNAVAILABLE: docker stats failed'] }}"
+      coolify:
+        loopback_health: >-
+          {{ 'HTTP 200' if (solo_vps_ops_coolify_health.status | default(0) | int) == 200
+             else 'UNAVAILABLE: no HTTP 200 from loopback health endpoint' }}
+      next:
+        daily_ui: "GitHub Actions for CI; Coolify for deployments, runtime logs, secrets and terminals"
+        raw_log_fallback: "make ops-logs CONTAINER=<container-name> TAIL=100"
+        full_verification: "make verify"
+        security_audit: "make audit"

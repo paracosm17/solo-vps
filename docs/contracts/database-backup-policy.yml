@@ -1,0 +1,49 @@
+version: 1
+status: accepted
+owner: coolify
+scope:
+  engine: postgresql
+  lifecycle: application
+backup:
+  method: logical
+  program: pg_dump
+  format: custom
+  required_arguments:
+    - --format=custom
+    - --no-acl
+    - --no-owner
+verification:
+  program: pg_restore
+  required_arguments:
+    - --list
+storage:
+  backend: s3-compatible
+  off_site_required: true
+  credentials_in_public_config: forbidden
+scheduling:
+  owner: coolify
+  frequency_required: true
+  retention_required: true
+  frequency_default: daily
+  retention_amount_locally_default: 2
+  retention_days_s3_default: 30
+  freshness_hours_default: 36
+operation:
+  api_transport: loopback-only
+  save_s3_required: true
+  managed_state: external-controller-state
+  existing_schedule_adoption: explicit
+  mutation_confirmation: I_HAVE_REVIEWED_THE_COOLIFY_DATABASE_BACKUP_POLICY
+  independent_s3_object_check_required_for_v3: true
+restore:
+  target_database_prefix: solo_vps_restore_
+  empty_target_required: true
+  authentication: pgpass-file
+  application_verification_required: true
+  destructive_confirmation: I_HAVE_VERIFIED_A_DISPOSABLE_POSTGRES_RESTORE_TARGET
+boundaries:
+  raw_pgdata_backup: forbidden
+  ansible_pg_dump_scheduler: forbidden
+  restic_pg_dump_scheduler: forbidden
+  coolify_instance_backup_covers_application_data: false
+  restore_test_required_for_completion: true

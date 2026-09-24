@@ -1,0 +1,105 @@
+version: 1
+status: source-ready
+scope:
+  product_compute_topology: workstation-plus-one-maintained-vps
+  temporary_second_vps: validation-only
+  supported_database_recovery: postgresql-logical
+  arbitrary_persistent_application_volumes: not-covered-by-core-alpha
+recovery_inputs:
+  source_release:
+    required: true
+    recoverable_from: public-release-or-maintainer-archive
+  recovery_kit:
+    required: true
+    must_be_copied_off_lost_vps: true
+    contains:
+      - non-secret-config
+      - encrypted-backup-credentials
+      - encrypted-observability-credentials-when-configured
+      - public-sops-policy-and-recipient-when-configured
+      - database-backup-ownership-metadata-when-present
+    forbids:
+      - age-private-key
+      - ssh-private-key
+      - plaintext-runtime-credentials
+      - stale-host-inventory-as-recovery-authority
+    extraction:
+      existing_inputs_overwritten: false
+      destination_private: true
+  age_private_identity:
+    required_when_sops_is_used: true
+    recoverable_from: separate-workstation-personal-backup
+  restic_repository:
+    required: true
+    purpose: coolify-filesystem-recovery-material
+  coolify_instance_database_backup:
+    required: true
+    format: postgresql-custom
+    off_vps: true
+  application_database_backups:
+    required_for_stateful_postgresql_apps: true
+    format: postgresql-custom
+    off_vps: true
+  application_artifacts:
+    required: true
+    source: git-plus-immutable-registry-artifacts
+  dns_provider_access:
+    required_when_address_changes: true
+filesystem_backup_boundary:
+  source: /data/coolify
+  excludes:
+    - /data/coolify/ssh/mux
+    - /data/coolify/databases
+    - /data/coolify/backups
+  restore_mode: stage-and-select
+  direct_overlay_onto_fresh_coolify: forbidden
+  staging:
+    parent: /var/tmp/solo-vps-disaster-recovery
+    new_leaf_required: true
+    owner: root:root
+    mode: "0700"
+    exact_confirmation: I_HAVE_VERIFIED_A_PRIVATE_DISASTER_RECOVERY_STAGING_DIRECTORY
+coolify_instance_restore:
+  fresh_same_version_install_first: true
+  old_env_wholesale_copy: forbidden
+  previous_app_key:
+    source: staged-restic-copy-of-old-env
+    destination: APP_PREVIOUS_KEYS
+  fresh_database_credentials_preserved: true
+  instance_database_restore:
+    command_family: pg_restore
+    clean: true
+    no_owner: true
+    no_acl: true
+  ssh_keys:
+    source: staged-restic-copy
+    all_recovered_private_key_files_restored_for_coolify: true
+    localhost_private_key_resolution: restored-server-id-0-to-private-key-relation
+    only_database_associated_localhost_public_key_reauthorized: true
+    unrelated_recovered_keys_reauthorized_locally: false
+  require_explicit_replacement_target_marker: true
+  require_explicit_destructive_confirmation: true
+application_restore:
+  immutable_image_redeploy_required: true
+  postgres_restore_exercise_required: true
+  image_rollback_does_not_restore_schema_or_data: true
+verification:
+  - verify-coolify
+  - verify
+  - audit
+  - application-health
+  - application-relevant-database-query
+  - backup-repository-freshness
+final_evidence:
+  machine_checkable_where_possible: true
+  public_safe: true
+  must_not_contain:
+    - host-address
+    - private-keys
+    - tokens-or-passwords
+    - database-credentials
+    - app-key-values
+validation:
+  source_level: V2
+  real_offsite_backup_minimum: V3
+  clean_lost_vps_restore: V4

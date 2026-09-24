@@ -1,0 +1,35 @@
+---
+solo_vps_audit_ss_binary: /usr/bin/ss
+solo_vps_audit_sshd_binary: /usr/sbin/sshd
+solo_vps_audit_sshd_hardening_path: /etc/ssh/sshd_config.d/00-solo-vps-hardening.conf
+solo_vps_audit_docker_binary: /usr/bin/docker
+solo_vps_audit_docker_port_key_pattern: '^[0-9]+/(tcp|udp)$'
+
+# Keep this aligned with the M4 SSH hardening contract. The source validator
+# compares both roles so the audit cannot silently weaken the expected policy.
+solo_vps_audit_expected_ssh_options:
+  - permitrootlogin no
+  - passwordauthentication no
+  - kbdinteractiveauthentication no
+  - pubkeyauthentication yes
+  - permitemptypasswords no
+
+# Canonical data-service ports only. M19 calls these "obvious" exposure checks;
+# it does not claim to identify every possible custom database/cache port.
+solo_vps_audit_data_service_ports:
+  - 5432
+  - 6379
+
+# Docker daemon TCP ports are checked as host listeners as defense-in-depth.
+# M7 verify-docker remains the authoritative daemon configuration verifier.
+solo_vps_audit_sensitive_host_ports:
+  - 2375
+  - 2376
+  - 5432
+  - 6379
+
+solo_vps_audit_evidence_boundaries:
+  external_reachability: "UNAVAILABLE: this host-local audit does not replace an external monitor, port scan, or provider-firewall check"
+  coolify_runtime: "UNAVAILABLE: this security audit does not run the dedicated Coolify runtime verifier; run make verify-coolify"
+  backup_repository: "UNAVAILABLE: this security audit does not contact off-site storage; run make backup-status for repository and snapshot evidence"
+  database_restore: "UNAVAILABLE: this security audit does not perform a database restore; use the documented isolated restore drill"

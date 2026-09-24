@@ -1,0 +1,53 @@
+---
+- name: Validate restic host tooling inputs
+  ansible.builtin.import_tasks: assert-config.yml
+
+- name: Inspect the managed restic binary
+  ansible.builtin.stat:
+    path: "{{ solo_vps_restic_install_path }}"
+  register: solo_vps_restic_verify_path_state
+
+- name: Inspect common conflicting restic paths during verification
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ solo_vps_restic_conflicting_paths }}"
+  register: solo_vps_restic_verify_conflicts
+
+- name: Read the managed restic version
+  ansible.builtin.command:
+    argv:
+      - "{{ solo_vps_restic_install_path }}"
+      - version
+  changed_when: false
+  register: solo_vps_restic_verify_version
+  when: solo_vps_restic_verify_path_state.stat.exists
+
+- name: Verify pinned restic host tooling state
+  ansible.builtin.assert:
+    that:
+      - solo_vps_restic_verify_path_state.stat.exists
+      - solo_vps_restic_verify_path_state.stat.isreg | default(false)
+      - solo_vps_restic_verify_path_state.stat.pw_name | default('') == 'root'
+      - solo_vps_restic_verify_path_state.stat.gr_name | default('') == 'root'
+      - solo_vps_restic_verify_path_state.stat.mode | default('') == '0755'
+      - >-
+        solo_vps_restic_verify_conflicts.results
+        | selectattr('stat.exists', 'equalto', true)
+        | list
+        | length == 0
+      - (solo_vps_restic_verify_version.stdout | default('')) is match('^restic ' ~ solo_vps_restic_version ~ '( |$)')
+    fail_msg: >-
+      M14 restic tooling verification failed. The managed binary must exist only
+      at /usr/local/bin/restic, be root-owned mode 0755, and report the exact
+      pinned version. This check does not claim any backup repository exists.
+    success_msg: Solo VPS pinned restic host tooling matches the M14 baseline.
+
+- name: Report restic tooling evidence and current M14 boundary
+  ansible.builtin.debug:
+    msg:
+      restic_version: "{{ solo_vps_restic_verify_version.stdout | default('not-installed') | trim }}"
+      install_path: "{{ solo_vps_restic_install_path }}"
+      repository_initialized: false
+      backup_scheduled: false
+      offsite_snapshot_verified: false
+      restore_verified: false

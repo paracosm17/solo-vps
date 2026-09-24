@@ -1,0 +1,13 @@
+# Managed by Solo VPS: proxy TCP edge policy v1.
+# Coolify v4.1.2 runs `docker compose` in /data/coolify/proxy without -f;
+# the adjacent docker-compose.override.yml survives base-config regeneration.
+# Replace the list: normal Compose merging would retain 8080/tcp and 443/udp.
+services:
+  traefik:
+    ports: !override
+      - target: 80
+        published: "80"
+        protocol: tcp
+      - target: 443
+        published: "443"
+        protocol: tcp

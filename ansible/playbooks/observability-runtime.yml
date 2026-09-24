@@ -1,0 +1,10 @@
+---
+- name: Apply the Solo VPS repository-managed retained application-log runtime
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Install and start the reviewed retained-log runtime
+      ansible.builtin.import_role:
+        name: observability
+        tasks_from: install-runtime.yml

@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Solo VPS encrypted off-site backup daily
+
+[Timer]
+OnCalendar={{ solo_vps_backup_timer_on_calendar }}
+RandomizedDelaySec={{ solo_vps_backup_timer_randomized_delay }}
+Persistent=true
+AccuracySec=1m
+Unit=solo-vps-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,23 @@
+---
+- name: Validate the disposable Coolify evaluation identity
+  ansible.builtin.assert:
+    that:
+      - solo_vps_coolify_evaluation_candidate | default(false) | bool
+      - solo_vps_coolify_evaluation_target_id | default('') is match('^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$')
+    fail_msg: >-
+      The 4.3.21 evaluation path requires a non-secret disposable target ID.
+      It must never be used as an unreviewed maintained-server upgrade shortcut.
+
+- name: Require the reviewed GHCR registry identity for candidate evaluation
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/grep
+      - -Fx
+      - REGISTRY_URL=ghcr.io
+      - "{{ solo_vps_coolify_env_path }}"
+  changed_when: false
+
+- name: Verify working Sentinel HTTPS communication before upgrade mutation
+  ansible.builtin.import_tasks: evaluate-sentinel.yml
+  vars:
+    solo_vps_coolify_sentinel_expect_candidate: false

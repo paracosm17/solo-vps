@@ -1,0 +1,7 @@
+# Managed by Solo VPS.
+Types: deb
+URIs: {{ solo_vps_docker_repository_uri }}
+Suites: {{ ansible_facts.distribution_release }}
+Components: stable
+Architectures: {{ solo_vps_docker_dpkg_architecture.stdout | trim }}
+Signed-By: {{ solo_vps_docker_key_path }}
