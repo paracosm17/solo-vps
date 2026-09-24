@@ -48,6 +48,15 @@ class HostedCiContractTests(unittest.TestCase):
     def test_current_contract_is_valid(self) -> None:
         validate_root(self.root)
 
+    def test_rejects_missing_runner_temp_state_boundary(self) -> None:
+        self.mutate(
+            ".github/workflows/repository-ci.yml",
+            '          export SOLO_VPS_DATA_BASE="${RUNNER_TEMP}/solo-vps-ci-data"\n',
+            "",
+        )
+        with self.assertRaises(ContractError):
+            validate_root(self.root)
+
     def test_rejects_missing_pull_request_trigger(self) -> None:
         self.mutate(".github/workflows/repository-ci.yml", "  pull_request:\n", "")
         with self.assertRaises(ContractError):

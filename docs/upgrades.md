@@ -28,7 +28,7 @@ Solo VPS source is updated by opening a **new checkout of a reviewed release**, 
 No release tag exists while the project is PRE-ALPHA. Until the first release is published, use only the reviewed commit or archive supplied for a test. After a release is published, use its exact tag:
 
 ```bash
-REPOSITORY_URL='YOUR_SOLO_VPS_REPOSITORY_URL'
+REPOSITORY_URL='https://github.com/paracosm17/solo-vps.git'
 RELEASE_VERSION='v0.1.0'
 git clone --branch "$RELEASE_VERSION" --depth 1 "$REPOSITORY_URL" "solo-vps-${RELEASE_VERSION}"
 cd "solo-vps-${RELEASE_VERSION}"

@@ -100,15 +100,15 @@ Material используется как engine, а не как готовая �
 
 `.github/workflows/docs.yml` проверяет сайт строгой сборкой в pull requests с изменениями документации. Изменения в `docs/` и `overrides/` запускают workflow. Push в `main` загружает собранный сайт как Pages artifact и публикует его через окружение `github-pages`.
 
-После появления публичного репозитория:
+Для публичного репозитория `https://github.com/paracosm17/solo-vps`:
 
 1. Откройте **Settings → Pages** репозитория.
 2. В **Build and deployment → Source** выберите **GitHub Actions**. Ограничьте окружение `github-pages` веткой по умолчанию.
 3. Укажите фактический Pages URL в `site_url` файла `mkdocs.yml`, включая путь репозитория и завершающий `/` для project site. Это сохраняет корректные языковые ссылки.
-4. Укажите фактический URL репозитория в `repo_url`; включайте `edit_uri: edit/main/docs/` только если ветка по умолчанию — `main`.
+4. Убедитесь, что `main` — ветка по умолчанию; `repo_url` и `edit_uri: edit/main/docs/` уже настроены.
 5. Перед коммитом изменения URL выполните `make docs-build`, затем проверьте публикацию, ссылки EN/RU и ссылки редактирования.
 
-Не добавляйте фиктивный repository URL или production documentation domain до появления этих ресурсов.
+Не добавляйте предполагаемый Pages URL или production documentation domain до появления этих ресурсов.
 
 ## Политика навигации
 

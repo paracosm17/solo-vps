@@ -28,7 +28,7 @@ identify exact current + target versions
 Пока проект PRE-ALPHA, release tag ещё не опубликован. До первого релиза используйте только проверенный commit или архив, подготовленный для тестирования. После публикации релиза выбирайте его точный tag:
 
 ```bash
-REPOSITORY_URL='YOUR_SOLO_VPS_REPOSITORY_URL'
+REPOSITORY_URL='https://github.com/paracosm17/solo-vps.git'
 RELEASE_VERSION='v0.1.0'
 git clone --branch "$RELEASE_VERSION" --depth 1 "$REPOSITORY_URL" "solo-vps-${RELEASE_VERSION}"
 cd "solo-vps-${RELEASE_VERSION}"

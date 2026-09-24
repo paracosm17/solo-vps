@@ -15,7 +15,7 @@ Prepare:
 - a domain and access to its DNS records;
 - Solo VPS source: a repository URL and selected full commit ID, or the ZIP archive supplied for testing; keep the same source revision available on your workstation as well as the VPS.
 
-**PRE-ALPHA:** use a test VPS for now. There is no validated public release yet. Installation needs the selected source, not a made-up repository URL.
+**PRE-ALPHA:** use a test VPS for now. The [source repository](https://github.com/paracosm17/solo-vps) is public, but there is no validated release yet. Record the full commit ID selected for your test.
 
 This is the supported one-VPS alpha setup. Make/Ansible run on the VPS in the steps below; Windows PowerShell handles workstation SSH/SCP. If you run Linux-side project tools on Windows, use WSL. The exact release revision has not yet passed the clean-host and recovery gates; do not use this path as a production guarantee.
 
@@ -26,7 +26,7 @@ Choose these values before you start:
 | `SERVER_IP` | Your VPS IPv4 address |
 | `ADMIN_USER` | The Linux administrator name you want Solo VPS to create |
 | `COOLIFY_DOMAIN` | Your Coolify dashboard domain, for example `coolify.example.com` |
-| `REPOSITORY_URL` | The Solo VPS repository URL |
+| `REPOSITORY_URL` | `https://github.com/paracosm17/solo-vps.git` |
 | `REVIEWED_REVISION` | The selected full commit ID |
 
 The project directory remains `solo-vps`. Commands below define their variables before use; replace every `YOUR_...` value. External backup storage, Grafana and another server are not required.
@@ -64,14 +64,14 @@ apt-get install -y --no-install-recommends make git nano ca-certificates
 
 The first command refreshes package indexes; the second installs the tools needed to obtain and configure the project.
 
-Choose the source format you received. After the public repository and `v0.1.0` tag exist, use the Git path with the real repository URL and the full commit ID pointed to by that tag.
+Use the Git path with the public repository URL and the full commit ID selected for this test. After `v0.1.0` is released, use the full commit ID pointed to by that tag. The ZIP path remains for a separately supplied test archive.
 
 === "Git"
 
     **On the VPS as root:**
 
     ```bash
-    REPOSITORY_URL='YOUR_REPOSITORY_URL'
+    REPOSITORY_URL='https://github.com/paracosm17/solo-vps.git'
     REVIEWED_REVISION='YOUR_REVIEWED_FULL_COMMIT_ID'
     git clone "$REPOSITORY_URL" solo-vps
     cd solo-vps

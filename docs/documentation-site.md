@@ -100,15 +100,15 @@ Keep overrides narrow. Prefer CSS and documented Material extension points over 
 
 `.github/workflows/docs.yml` validates the site with a strict build on documentation pull requests. Changes under both `docs/` and `overrides/` trigger the documentation workflow. A push to `main` uploads the built site as a Pages artifact and deploys it to the `github-pages` environment.
 
-After the public repository exists:
+For the public repository at `https://github.com/paracosm17/solo-vps`:
 
 1. Open the repository **Settings → Pages**.
 2. Set **Build and deployment → Source** to **GitHub Actions**. Restrict the `github-pages` environment to the default branch.
 3. Add the actual Pages URL as `site_url` in `mkdocs.yml`, including the repository path and trailing slash for a project site. This base URL keeps language links correct.
-4. Set `repo_url` to the actual repository URL and enable `edit_uri: edit/main/docs/` only if `main` is the default branch.
+4. Confirm that `main` is the default branch; `repo_url` and `edit_uri: edit/main/docs/` are already configured.
 5. Run `make docs-build` before committing the URL change, then verify the hosted deployment, English/Russian links, and edit links.
 
-Do not add a fake repository URL or production documentation domain before those resources exist.
+Do not add a guessed Pages URL or production documentation domain before those resources exist.
 
 ## Navigation policy
 

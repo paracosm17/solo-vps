@@ -80,14 +80,19 @@ def validate_workflow(root: pathlib.Path) -> None:
         raise ContractError("hosted CI fast-source timeout must remain bounded to at most 15 minutes")
 
     env = job.get("env")
-    if not isinstance(env, dict) or "runner.temp" not in str(env.get("SOLO_VPS_DATA_BASE", "")):
-        raise ContractError("hosted CI mutable Solo VPS state must live under runner.temp")
+    if not isinstance(env, dict):
+        raise ContractError("hosted CI job environment must be a mapping")
+    if "SOLO_VPS_DATA_BASE" in env:
+        raise ContractError("hosted CI mutable Solo VPS state must be set after the runner starts")
     if "SOLO_VPS_CHECKOUT_TOKEN" in env:
         raise ContractError("github.token must not be exposed at job scope")
 
     steps = job.get("steps")
     if not isinstance(steps, list):
         raise ContractError("hosted CI fast-source must define an explicit steps list")
+    gate_steps = [step for step in steps if isinstance(step, dict) and "make ci-fast" in str(step.get("run", ""))]
+    if len(gate_steps) != 1 or 'export SOLO_VPS_DATA_BASE="${RUNNER_TEMP}/solo-vps-ci-data"' not in str(gate_steps[0]["run"]):
+        raise ContractError("hosted CI mutable Solo VPS state must live under RUNNER_TEMP in the gate step")
     checkout_steps = [step for step in steps if isinstance(step, dict) and str(step.get("name", "")).startswith("Check out the exact workflow revision")]
     if len(checkout_steps) != 1:
         raise ContractError("hosted CI must define exactly one exact-revision checkout step")

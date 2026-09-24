@@ -74,7 +74,7 @@ Do not change pins from research alone. Sentinel is a Coolify-managed Linux/Dock
 
 ### Publication
 
-The public upstream is `https://github.com/paracosm17/solo-vps`; no release tag exists. The source includes `Repository CI / fast-source` and a strict-PR MkDocs build with artifact-based Pages deployment. The release scanner rejects common operator-state paths in both the tracked snapshot and reachable history. Hosted required-check evidence, a deployed Pages URL, branch policy and Private Vulnerability Reporting remain publication-time gates; scan the exact public refs before the first push.
+The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push has one clean root commit. Gitleaks found no leaks in the exported tree or that commit's history. No release tag exists. The source includes `Repository CI / fast-source` and a strict-PR MkDocs build with artifact-based Pages deployment. Hosted required-check evidence, a deployed Pages URL, branch policy and Private Vulnerability Reporting remain publication gates; repeat exact-ref scanning before tagging.
 
 ---
 
@@ -86,10 +86,10 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; no release tag 
 2. Choose and implement the reviewed Coolify release/lifecycle target.
 3. On one disposable Ubuntu 24.04 VPS, prove clean install, second-run idempotency, supported Coolify upgrade/interruption recovery, whole-host DOWN/UP notification, and full lost-VPS reconstruction.
 4. Replay the exact candidate using only rendered public documentation and no ChatGPT or maintainer notes.
-5. Publish the reviewed source to the real upstream and require hosted `Repository CI / fast-source`.
-6. Choose the default branch, enable GitHub Actions as the Pages source, verify deployment, and set `site_url`, `repo_url`, and `edit_uri` from real URLs.
+5. Require a green hosted `Repository CI / fast-source` check for the release commit.
+6. Verify `main` as the default branch, enable GitHub Actions as the Pages source, verify deployment, and set `site_url` from the real Pages URL (`repo_url` and `edit_uri` are set).
 7. Enable and test a guaranteed private vulnerability-reporting path.
-8. Before the first push, scan the exact public tree and history for secrets and owner-specific state with the built-in check and an independent scanner.
+8. Before the release tag, repeat exact-ref history and archive scans for secrets and owner-specific state with the built-in check and an independent scanner.
 9. Prepare a dated `0.1.0` changelog entry, clean release dry-run, immutable tag and release notes.
 
 ### Explicitly deferred
