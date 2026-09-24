@@ -37,7 +37,7 @@ class DockerVersionTemplateTests(unittest.TestCase):
     def assert_gate(self, name, variables, expected):
         templar = Templar(loader=self.loader, variables={**self.defaults, **variables})
         for condition in self.task(name)["ansible.builtin.assert"]["that"]:
-            self.assertIs(templar.evaluate_conditional(condition), expected)
+            self.assertIs(templar.evaluate_conditional(trust_as_template(condition)), expected)
 
     def test_installed_versions_and_guard(self):
         for version, major, accepted in (
