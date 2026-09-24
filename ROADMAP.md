@@ -74,7 +74,7 @@ Do not change pins from research alone. Sentinel is a Coolify-managed Linux/Dock
 
 ### Publication
 
-The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or current published history. No release tag exists. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`; the deployed EN/RU home and Quick Start language links resolve under `/solo-vps/`, and both edit links target the right source file. Private Vulnerability Reporting is enabled; an independent reporter-path test remains. Hosted `Repository CI / fast-source` passed on `e6db58a`; require it in branch policy and repeat it on the eventual release commit. Repeat exact-ref scanning before tagging.
+The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or current published history. No release tag exists. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`; the deployed EN/RU home and Quick Start language links resolve under `/solo-vps/`, and both edit links target the right source file. Private Vulnerability Reporting is enabled; an independent reporter-path test remains. Hosted `Repository CI / fast-source` passed on `3217146` and is required by the protected `main` branch. Repeat it on the eventual release commit, then repeat exact-ref scanning before tagging.
 
 ---
 
@@ -108,7 +108,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-001 backup/restore/DR | PARTIAL V3 | B2, PostgreSQL restore and restic restore-test pass; clean replacement-host reconstruction pending |
 | CRIT-002 failed deploy rollback | DONE / V3 | failed immutable candidate restores the known-good image; database rollback excluded |
 | CRIT-003 workstation admin key | DONE / V3 | independent human key, sudo, root denial and hardening gate proven |
-| CRIT-004 hosted self-CI / clean target | HOSTED CHECK PASS / V2 | `fast-source` passed on `e6db58a`; branch policy, release-commit run and disposable execution pending |
+| CRIT-004 hosted self-CI / clean target | HOSTED CHECK PASS / V2 | `fast-source` passed on `3217146` and is required on `main`; release-commit run and disposable execution pending |
 | CRIT-005 observability confidentiality | DONE / V3 | Repository-managed non-root Alloy uses a protected Unix socket boundary |
 | CRIT-006 Quick Start complexity | SOURCE DONE / V2 | two-part route and semantic values implemented; exact-candidate user replay pending |
 | CRIT-007 operator help surface | DONE / V2 | bounded `help`, `help-ops`, `help-dev`, `help-all` |
