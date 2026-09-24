@@ -61,6 +61,7 @@ theme:
     - toc.follow
     - search.suggest
     - search.highlight
+    - content.action.edit
     - content.code.annotate
 
 plugins:

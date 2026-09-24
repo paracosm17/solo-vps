@@ -10,3 +10,5 @@ skip_list:
 exclude_paths:
   - legacy/
   - .venv/
+  # Data loaded via vars_files by the four evaluation playbooks, not a playbook.
+  - ansible/playbooks/coolify-4.3.21-evaluation-vars.yml

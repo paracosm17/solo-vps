@@ -74,7 +74,7 @@ Do not change pins from research alone. Sentinel is a Coolify-managed Linux/Dock
 
 ### Publication
 
-The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or published history. No release tag exists. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`, and Private Vulnerability Reporting is enabled. The hosted `fast-source` check still needs a green release-candidate run and branch policy; EN/RU links need verification after the `site_url` deployment. Repeat exact-ref scanning before tagging.
+The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or current published history. No release tag exists. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`; the deployed EN/RU home and Quick Start language links resolve under `/solo-vps/`. Private Vulnerability Reporting is enabled; an independent reporter-path test remains. The hosted `fast-source` check still needs a green release-candidate run and branch policy. Repeat exact-ref scanning before tagging.
 
 ---
 
@@ -87,10 +87,9 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 3. On one disposable Ubuntu 24.04 VPS, prove clean install, second-run idempotency, supported Coolify upgrade/interruption recovery, whole-host DOWN/UP notification, and full lost-VPS reconstruction.
 4. Replay the exact candidate using only rendered public documentation and no ChatGPT or maintainer notes.
 5. Require a green hosted `Repository CI / fast-source` check for the release commit.
-6. Verify the deployed EN/RU and edit links after committing the real Pages `site_url`.
-7. Test the enabled private vulnerability-reporting path from a reporter account.
-8. Before the release tag, repeat exact-ref history and archive scans for secrets and owner-specific state with the built-in check and an independent scanner.
-9. Prepare a dated `0.1.0` changelog entry, clean release dry-run, immutable tag and release notes.
+6. Verify deployed edit links and test the enabled private vulnerability-reporting path from a reporter account.
+7. Before the release tag, repeat exact-ref history and archive scans for secrets and owner-specific state with the built-in check and an independent scanner.
+8. Prepare a dated `0.1.0` changelog entry, clean release dry-run, immutable tag and release notes.
 
 ### Explicitly deferred
 
@@ -119,7 +118,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-011 Docker/Coolify lifecycle | SOURCE DONE / V2 + CURRENT V3 | Docker 29.x and current no-op path proven; `4.3.21` disposable evaluation pending |
 | CRIT-012 CI deployment transport | DEFERRED | restricted SSH tunnel remains the proven default |
 | CRIT-013 recovery priority | CLOSED | recovery path implemented before optional observability expansion |
-| CRIT-014 private security channel | BLOCKED | GitHub setting or another guaranteed private route required |
+| CRIT-014 private security channel | PARTIAL | GitHub Private Vulnerability Reporting enabled; independent reporter-path test pending |
 | CRIT-015 external outage detection | PARTIAL V3 | application-level DOWN/UP proven; whole-target outage pending |
 | CRIT-016 migration safety | DONE / V2 | app-owned preflight and image-only rollback boundary |
 | CRIT-017 release/upgrade story | PARTIAL | tagged-source contract documented; first tag and lifecycle proof pending |
