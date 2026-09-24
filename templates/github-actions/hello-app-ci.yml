@@ -280,7 +280,7 @@ jobs:
           [[ "${IMAGE_REF}" =~ ^ghcr\.io/[a-z0-9_.-]+/[a-z0-9_.-]+@sha256:[0-9a-f]{64}$ ]] || fail_deploy_config 'IMAGE_REF must be the published GHCR image with its sha256 digest.'
           [[ "${SOLO_VPS_DEPLOY_HOST}" =~ ^[A-Za-z0-9.-]+$ ]] || fail_deploy_config 'Set SOLO_VPS_DEPLOY_HOST in environment production to the VPS address, without user, protocol or port.'
           [[ "${COOLIFY_RESOURCE_UUID}" =~ ^[a-z0-9]{8,64}$ ]] || fail_deploy_config 'Set COOLIFY_RESOURCE_UUID in environment production to the application UUID.'
-          [[ "${SOLO_VPS_DEPLOY_SSH_FINGERPRINT}" =~ ^SHA256:[A-Za-z0-9+/]+$ ]] || fail_deploy_config 'SOLO_VPS_DEPLOY_SSH_FINGERPRINT in environment production must start with SHA256: (include the prefix). Copy the complete CI-key fingerprint from step 9 of the first-app guide.'
+          [[ "${SOLO_VPS_DEPLOY_SSH_FINGERPRINT}" =~ ^SHA256:[A-Za-z0-9+/]+$ ]] || fail_deploy_config 'SOLO_VPS_DEPLOY_SSH_FINGERPRINT must start with SHA256:. Copy the full fingerprint from first-app step 9.'
           [[ -n "${SOLO_VPS_DEPLOY_SSH_KEY}" ]] || fail_deploy_config 'Add the private CI key as secret SOLO_VPS_DEPLOY_SSH_KEY in environment production.'
           [[ -n "${COOLIFY_API_TOKEN}" ]] || fail_deploy_config 'Add secret COOLIFY_API_TOKEN in environment production.'
           [[ "${SOLO_VPS_SSH_KNOWN_HOSTS}" != *$'\n'* ]] || fail_deploy_config 'SOLO_VPS_SSH_KNOWN_HOSTS must contain exactly one server-key line, without a trailing newline.'

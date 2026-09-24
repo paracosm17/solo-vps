@@ -281,8 +281,10 @@
     solo_vps_alloy_runtime_proxy_networks_status: "{{ solo_vps_alloy_runtime_proxy_alloy_probes.results[2].stdout | default('-1') | trim | int }}"
     solo_vps_alloy_runtime_proxy_info_status: "{{ solo_vps_alloy_runtime_proxy_alloy_probes.results[3].stdout | default('-1') | trim | int }}"
     solo_vps_alloy_runtime_proxy_unrelated_status: "{{ solo_vps_alloy_runtime_proxy_unrelated_probe.stdout | default('-1') | trim | int }}"
+    # yamllint disable rule:line-length
     solo_vps_alloy_runtime_auth_errors: >-
       {{ (solo_vps_alloy_runtime_recent_logs.stdout | default('') | regex_search('(?i)((loki|grafana|remote[_ -]?write|prometheus)[^\n]*(401|403|unauthorized|forbidden)|(401|403|unauthorized|forbidden)[^\n]*(loki|grafana|remote[_ -]?write|prometheus))')) is not none }}
+    # yamllint enable rule:line-length
     solo_vps_alloy_runtime_docker_errors: >-
       {{ (solo_vps_alloy_runtime_recent_logs.stdout | default('') | regex_search('(?i)(docker.*(denied|forbidden|connection refused|unexpected eof)|request forbidden by administrative rules)')) is not none }}
     solo_vps_alloy_runtime_unknown_flag_errors: >-
