@@ -203,10 +203,12 @@ Keep the root terminal open and confirm you can open the provider's recovery con
 
 ```bash
 cd ~/solo-vps
+make use-bootstrap SSH_USER=root
+make prepare-access
 make apply
 ```
 
-This creates the administrator and configures the firewall, automatic security updates and Docker. Verification is included in the command.
+`make use-bootstrap` selects the provider SSH user. `make prepare-access` trusts this VPS's own SSH host key and prepares its local automation key. `make apply` creates the administrator and configures the firewall, automatic security updates and Docker. Verification is included in the command.
 
 Wait for `PASS Solo VPS host apply`.
 
