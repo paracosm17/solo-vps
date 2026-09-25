@@ -22,7 +22,7 @@
     that:
       - ansible_facts.get('nodename', '') == server.hostname
       - solo_vps_localtime_state.stat.islnk | default(false)
-      - solo_vps_localtime_state.stat.lnk_source | default('') == '/usr/share/zoneinfo/' ~ server.timezone
+      - solo_vps_localtime_state.stat.lnk_target | default('') == '/usr/share/zoneinfo/' ~ server.timezone
       - solo_vps_timezone_file.content | b64decode | trim == server.timezone
       - solo_vps_base_packages | difference(ansible_facts.packages.keys() | list) | length == 0
     fail_msg: >-
