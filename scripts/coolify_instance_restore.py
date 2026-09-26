@@ -193,12 +193,30 @@ def _key_files(root: Path) -> list[Path]:
 def inspect_archive(archive: Path, *, pg_restore: str = "pg_restore", runner: Runner = subprocess.run) -> int:
     require_regular(archive, "Coolify instance database archive", private=True)
     binary = shutil.which(pg_restore) if "/" not in pg_restore else pg_restore
-    if not binary:
-        raise CoolifyInstanceRestoreError("pg_restore is required to inspect the Coolify instance archive")
-    result = runner([binary, "--list", str(archive)], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    if binary:
+        result = runner([binary, "--list", str(archive)], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    else:
+        docker = shutil.which("docker")
+        if not docker:
+            raise CoolifyInstanceRestoreError("pg_restore or a running Coolify database container is required to inspect the archive")
+        docker_env = dict(os.environ)
+        docker_env.pop("DOCKER_CONTEXT", None)
+        docker_env["DOCKER_HOST"] = "unix:///var/run/docker.sock"
+        with archive.open("rb") as handle:
+            result = runner(
+                [docker, "--host", "unix:///var/run/docker.sock", "exec", "-i", "coolify-db", "pg_restore", "--list"],
+                stdin=handle,
+                env=docker_env,
+                text=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+    stderr = result.stderr.decode("utf-8", "replace") if isinstance(result.stderr, bytes) else (result.stderr or "")
+    stdout = result.stdout.decode("utf-8", "replace") if isinstance(result.stdout, bytes) else (result.stdout or "")
     if result.returncode != 0:
-        raise CoolifyInstanceRestoreError(f"Coolify instance archive inspection failed: {_bounded(result.stderr or '')}")
-    objects = len([row for row in (result.stdout or "").splitlines() if row.strip() and not row.startswith(";")])
+        raise CoolifyInstanceRestoreError(f"Coolify instance archive inspection failed: {_bounded(stderr)}")
+    objects = len([row for row in stdout.splitlines() if row.strip() and not row.startswith(";")])
     if objects < 1:
         raise CoolifyInstanceRestoreError("Coolify instance archive contains no restorable objects")
     return objects
@@ -494,7 +512,7 @@ def main() -> int:
         print("  fresh_runtime_database_credentials_preserved: true")
         print("  follow_up: make verify-coolify && make verify && make audit")
         return 0
-    except (KeyError, OSError, pwd.KeyError, subprocess.TimeoutExpired, CoolifyInstanceRestoreError) as exc:
+    except (KeyError, OSError, subprocess.TimeoutExpired, CoolifyInstanceRestoreError) as exc:
         print(f"ERROR Coolify instance restore: {exc}", file=sys.stderr)
         return 2
 

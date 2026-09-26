@@ -5,7 +5,7 @@
 > **Current phase:** first-release productization and runtime evidence
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** finish whole-host outage and lost-host reconstruction evidence on the disposable Ubuntu 24.04 VPS before deciding whether to promote the Coolify `4.3.21` lifecycle pins.
+> **Next action:** prove full lost-host reconstruction from off-site inputs on a clean Ubuntu 24.04 VPS before deciding whether to promote the Coolify `4.3.21` lifecycle pins.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -29,7 +29,7 @@ Ubuntu 24.04 host
 → failed-image rollback and planned reboot recovery
 ```
 
-A separate disposable Ubuntu 24.04 VPS now has V3 evidence for a clean host setup, Coolify `4.1.2` → `4.3.21` forward-resume upgrade, Sentinel, HTTPS demo CI/CD, B2/restic recovery checks, and isolated PostgreSQL restore from B2. Its external monitor delivered real application DOWN and UP emails. This is not V4: whole-host outage, complete lost-host reconstruction, retained logs on this target, and the final owner-only public-doc replay remain open.
+A separate disposable Ubuntu 24.04 VPS now has V3 evidence for a clean host setup, Coolify `4.1.2` → `4.3.21` forward-resume upgrade, Sentinel, HTTPS demo CI/CD, B2/restic recovery checks, and isolated PostgreSQL restore from B2. Its external monitor delivered real application and whole-host DOWN/UP emails; the whole-host exercise has a private provider screenshot and observation record, while the formal latency summary remains open. This is not V4: complete lost-host reconstruction, retained logs on this target, and the final owner-only public-doc replay remain open.
 
 ### Validation levels
 
@@ -119,7 +119,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-012 CI deployment transport | DEFERRED | restricted SSH tunnel remains the proven default |
 | CRIT-013 recovery priority | CLOSED | recovery path implemented before optional observability expansion |
 | CRIT-014 private security channel | PARTIAL | GitHub Private Vulnerability Reporting enabled; independent reporter-path test pending |
-| CRIT-015 external outage detection | PARTIAL V3 | New disposable app produced real HTTP 503 DOWN and recovery UP emails; provider-level whole-target outage pending |
+| CRIT-015 external outage detection | PARTIAL V3 | Provider-level VPS shutdown/restart produced real DOWN/UP emails and private evidence; formal latency record remains open |
 | CRIT-016 migration safety | DONE / V2 | app-owned preflight and image-only rollback boundary |
 | CRIT-017 release/upgrade story | PARTIAL | tagged-source contract documented; first tag and lifecycle proof pending |
 | CRIT-018 documentation duplication | DONE / V2 | user, architecture, plan and evidence roles separated |
@@ -195,8 +195,8 @@ The maintained product topology remains one VPS.
 ### Remaining blockers
 
 - three-day Grafana marker lookup;
-- supported Coolify pin decision after remaining disposable recovery and outage proof;
-- replacement-host recovery and whole-host outage proof;
+- supported Coolify pin decision after lost-host reconstruction and remaining candidate proof;
+- replacement-host recovery and formal whole-host alert timing summary;
 - exact-candidate owner replay;
 - independent private-reporting path test, release-commit hosted CI and immutable release identity.
 
