@@ -43,6 +43,7 @@ def evaluate_inspect(
     *,
     expected_push_endpoint: str,
     expected_image: str | None = None,
+    expected_image_id: str | None = None,
     observed_version: str | None = None,
     expected_version: str | None = None,
 ) -> dict[str, Any]:
@@ -87,7 +88,12 @@ def evaluate_inspect(
 
     image = str(config.get("Image", ""))
     if expected_image:
-        _require(image == expected_image, "Sentinel image does not match the evaluation candidate")
+        allowed_images = {expected_image}
+        if expected_image.startswith("ghcr.io/"):
+            allowed_images.add("docker.io/" + expected_image.removeprefix("ghcr.io/"))
+        _require(image in allowed_images, "Sentinel image does not match the evaluation candidate")
+        _require(bool(expected_image_id), "candidate Sentinel image ID must be pinned")
+        _require(inspect.get("Image") == expected_image_id, "Sentinel image content does not match the evaluation candidate")
     if expected_version:
         _require(observed_version == expected_version, "Sentinel API version does not match the evaluation candidate")
 
@@ -125,6 +131,7 @@ def main() -> int:
     parser.add_argument("--inspect-json", type=Path)
     parser.add_argument("--expected-push-endpoint", required=True)
     parser.add_argument("--expected-image")
+    parser.add_argument("--expected-image-id")
     parser.add_argument("--expected-version")
     args = parser.parse_args()
 
@@ -142,6 +149,7 @@ def main() -> int:
             payload,
             expected_push_endpoint=args.expected_push_endpoint,
             expected_image=args.expected_image,
+            expected_image_id=args.expected_image_id,
             observed_version=observed_version,
             expected_version=args.expected_version,
         )

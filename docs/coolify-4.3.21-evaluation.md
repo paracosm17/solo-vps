@@ -136,7 +136,7 @@ COOLIFY_EVALUATION_CONFIRM=I_HAVE_VERIFIED_A_DISPOSABLE_COOLIFY_4_3_21_TARGET \
 make coolify-evaluate-4-3-21-resume
 ```
 
-Ожидаемый результат — успешное завершение, версия `4.3.21`, здоровый Sentinel `1.0.1` и удалённый transaction marker.
+Ожидаемый результат — успешное завершение, версия `4.3.21`, здоровый Sentinel `1.0.1` и удалённый transaction marker. После перезапуска Coolify может создать Sentinel под именем `docker.io/coollabsio/sentinel:1.0.1` вместо `ghcr.io/coollabsio/sentinel:1.0.1`; candidate verifier принимает оба имени только при совпадении заранее проверенного image ID.
 
 ## 6. Проверьте кандидат после обновления
 

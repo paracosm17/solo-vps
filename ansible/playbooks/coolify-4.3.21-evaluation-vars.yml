@@ -21,5 +21,6 @@ solo_vps_coolify_release_artifacts:
     checksum: sha256:4a8070a010ac5c919f05919d36a67065f87e8b514a52c38b381f1b1cd7fcbe5c
 solo_vps_coolify_evaluation_sentinel_version: "1.0.1"
 solo_vps_coolify_evaluation_sentinel_image: "ghcr.io/coollabsio/sentinel:1.0.1"
+solo_vps_coolify_evaluation_sentinel_image_id: "sha256:23b28fee258052080eaf89ffdc2acc318eaa58d1238ee5d56247daa27738a548"
 solo_vps_coolify_evaluation_required_directories:
   - /data/coolify/images

@@ -132,6 +132,7 @@ def validate(root: Path) -> None:
     require(candidate.get("solo_vps_coolify_expected_image") == "ghcr.io/coollabsio/coolify:4.3.21", "candidate Coolify image drifted")
     require(candidate.get("solo_vps_coolify_evaluation_sentinel_version") == "1.0.1", "candidate Sentinel version drifted")
     require(candidate.get("solo_vps_coolify_evaluation_sentinel_image") == "ghcr.io/coollabsio/sentinel:1.0.1", "candidate Sentinel image drifted")
+    require(candidate.get("solo_vps_coolify_evaluation_sentinel_image_id") == "sha256:23b28fee258052080eaf89ffdc2acc318eaa58d1238ee5d56247daa27738a548", "candidate Sentinel image ID drifted")
     expected_hashes = {
         "docker-compose.yml": "sha256:0223699dfef8a421116872b050830b21cfedfc58911576a0129c2082aeaadc59",
         "docker-compose.prod.yml": "sha256:77f4723dfac49deeec550b412e366bde70a329ff8c66ceb44d5d10b146a24124",
