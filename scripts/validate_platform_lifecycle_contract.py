@@ -129,7 +129,7 @@ def validate(root: Path) -> None:
     require(candidate.get("solo_vps_coolify_evaluation_candidate") is True, "Coolify candidate must stay explicitly evaluation-only")
     require(candidate.get("solo_vps_coolify_previous_supported_version") == "4.1.2", "Coolify candidate must start at the current supported release")
     require(candidate.get("solo_vps_coolify_version") == "4.3.21", "reviewed disposable Coolify candidate drifted")
-    require(candidate.get("solo_vps_coolify_expected_image") == "ghcr.io/coollabsio/coolify:4.3.21", "candidate Coolify image drifted")
+    require(candidate.get("solo_vps_coolify_expected_image") == "docker.io/coollabsio/coolify:4.3.21", "candidate Coolify image drifted")
     require(candidate.get("solo_vps_coolify_evaluation_sentinel_version") == "1.0.1", "candidate Sentinel version drifted")
     require(candidate.get("solo_vps_coolify_evaluation_sentinel_image") == "ghcr.io/coollabsio/sentinel:1.0.1", "candidate Sentinel image drifted")
     require(candidate.get("solo_vps_coolify_evaluation_sentinel_image_id") == "sha256:23b28fee258052080eaf89ffdc2acc318eaa58d1238ee5d56247daa27738a548", "candidate Sentinel image ID drifted")

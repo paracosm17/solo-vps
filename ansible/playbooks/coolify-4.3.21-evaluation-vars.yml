@@ -6,7 +6,7 @@ solo_vps_coolify_previous_supported_version: "4.1.2"
 solo_vps_coolify_version: "4.3.21"
 solo_vps_coolify_release_tag: "v4.3.21"
 solo_vps_coolify_image_tag: "4.3.21"
-solo_vps_coolify_expected_image: "ghcr.io/coollabsio/coolify:4.3.21"
+solo_vps_coolify_expected_image: "docker.io/coollabsio/coolify:4.3.21"
 solo_vps_coolify_release_base_url: >-
   https://raw.githubusercontent.com/coollabsio/coolify/v4.3.21
 solo_vps_coolify_release_artifacts:
