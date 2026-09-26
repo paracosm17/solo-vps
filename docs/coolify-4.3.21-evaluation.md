@@ -100,22 +100,12 @@ make coolify-evaluate-4-3-21-preflight
 Убедитесь, что нет активных deployments. Затем:
 
 ```bash
-read -rsp 'Coolify API token: ' COOLIFY_API_TOKEN
-export COOLIFY_API_TOKEN
-printf '\n'
-
-export DATABASE_BACKUP_DATABASE_UUID=<database-uuid>
-export DATABASE_BACKUP_S3_STORAGE_UUID=<s3-storage-uuid>
-export DATABASE_BACKUP_DATABASES=<database-name>
-export DATABASE_BACKUP_CONFIRM=I_HAVE_REVIEWED_THE_COOLIFY_DATABASE_BACKUP_POLICY
-
 make backup-now
 make backup-check
-make database-backup-trigger
-make database-backup-verify
+make backup-restore-test
 ```
 
-Используйте UUID и database name именно тестового приложения. Token вводится скрыто и не попадает в command line; после испытания закройте этот shell или выполните `unset COOLIFY_API_TOKEN`.
+В панели Coolify запустите **Backup Now** для PostgreSQL тестового приложения. Требуйте **Success**, **S3 Available** и реальный объект в отдельном B2 bucket. Восстановите этот объект прямо из S3 в новую пустую PostgreSQL той же major version и проверьте контрольные строки по [главе о внешних копиях](operations/offsite-backups.md). API helper `database-backup-trigger`/`verify` сейчас не подходит для 4.3.21: API не раскрывает проверяемое соответствие между `s3_storage_id` и UUID, поэтому helper останавливается; не засчитывайте его как PASS.
 
 Проверьте свежий instance backup Coolify в панели и запишите идентификаторы последних off-site snapshot и database backup. Не копируйте пароли или access keys.
 
@@ -146,7 +136,7 @@ COOLIFY_EVALUATION_CONFIRM=I_HAVE_VERIFIED_A_DISPOSABLE_COOLIFY_4_3_21_TARGET \
 make coolify-evaluate-4-3-21-resume
 ```
 
-Ожидаемый результат — успешное завершение, версия `4.3.21`, здоровый Sentinel `1.0.1` и удалённый transaction marker.
+Ожидаемый результат — успешное завершение, версия `4.3.21`, здоровый Sentinel `1.0.1` и удалённый transaction marker. После перезапуска Coolify может создать Sentinel под именем `docker.io/coollabsio/sentinel:1.0.1` вместо `ghcr.io/coollabsio/sentinel:1.0.1`; candidate verifier принимает оба имени только при совпадении заранее проверенного image ID.
 
 ## 6. Проверьте кандидат после обновления
 
@@ -154,9 +144,10 @@ make coolify-evaluate-4-3-21-resume
 
 ```bash
 make verify-coolify-4-3-21-candidate
-make verify
 make audit
 ```
+
+На candidate checkout обычный `make verify` всё ещё проверяет поддерживаемый pin `4.1.2`, поэтому после перехода на `4.3.21` он ожидаемо останавливается на проверке версии. Это не результат candidate gate. После полного `PASS`, отдельного изменения поддерживаемых pins и пользовательской документации повторите `make verify` на том же disposable VPS перед его удалением.
 
 Затем проверьте вручную:
 
@@ -166,12 +157,12 @@ make audit
 4. Новый commit тестового приложения проходит GitHub Actions и разворачивается через штатный CI/CD путь.
 5. Live logs видны; retained logs продолжают поступать после redeploy.
 6. Host metrics и alert delivery работают независимо от того, включена ли история метрик Sentinel.
-7. `make backup-now`, `make backup-check` и database backup/verify снова проходят.
+7. `make backup-now`, `make backup-check`, `make backup-restore-test` проходят; новый backup PostgreSQL показывает **Success** и **S3 Available**, объект есть в B2, а прямой restore в новую пустую тестовую БД проходит без ошибок `pg_restore`.
 8. С внешней машины `SERVER_IP:8000`, `:6001`, `:6002` и `:8888` недоступны.
 
 Любой неожиданный открытый port, `Sentinel Out of Sync`, потеря данных, сломанный deploy или неработающий forward resume означает `FAIL`. Основной VPS при этом остаётся на `4.1.2`.
 
-## 7. Зафиксируйте результат и удалите VPS
+## 7. Зафиксируйте результат и завершите проверку pins
 
 Сохраните sanitised evidence:
 
@@ -184,6 +175,6 @@ make audit
 - идентификаторы backup/snapshot без credentials;
 - список найденных дефектов.
 
-После экспорта evidence удалите disposable VPS, DNS records и тестовые buckets, затем отзовите все выданные ему credentials.
+После полного candidate `PASS` отдельным коммитом измените поддерживаемые pins, пользовательскую документацию обновления и lifecycle contracts Solo VPS. Сохраните этот disposable VPS до проверки нового source: запустите на нём `make verify` и `make audit`, затем повторите внешний HTTPS health check.
 
-Только после полного `PASS` можно отдельным коммитом менять поддерживаемые pins, пользовательскую документацию обновления и lifecycle contracts Solo VPS.
+Только после экспорта evidence и успешной проверки новых pins удалите disposable VPS, DNS records и тестовые buckets, затем отзовите выданные ему credentials.

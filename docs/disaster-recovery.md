@@ -115,7 +115,7 @@ make coolify-instance-restore-plan \
   RECOVERY_STAGING_ROOT=/var/tmp/solo-vps-disaster-recovery/recovery-<id>
 ```
 
-The actual destructive restore is intentionally safety-gated and reserved for the reviewed replacement target.
+The archive inspector uses a local `pg_restore` when available, or the `pg_restore` in the running fresh `coolify-db` container on the replacement VPS. The actual destructive restore is intentionally safety-gated and reserved for the reviewed replacement target.
 
 The supported restore keeps the **fresh** platform secrets where appropriate, restores the old Coolify instance database, restores the previous Coolify application encryption key through `APP_PREVIOUS_KEYS`, and restores the required Coolify SSH identities without authorizing every recovered key for localhost login.
 

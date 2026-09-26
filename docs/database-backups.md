@@ -6,7 +6,9 @@ The core rule is simple: **a successful backup job is not enough; recovery must 
 
 ## Responsibility boundary
 
-The **Coolify API operational layer** manages one explicitly owned backup schedule and verifies its freshness. It **does not run a second database dump scheduler**.
+Coolify owns the backup schedule and logical dumps. The **Coolify API operational layer** is designed to manage one explicitly owned schedule through loopback; it **does not run a second database dump scheduler**.
+
+> **Coolify 4.3.21 API limitation:** on the tested VPS, the backup-schedule API returned only numeric `s3_storage_id`, while the S3-storage API returned a UUID without that numeric ID. The helper cannot prove that the configured storage is the requested one, so adoption and verification correctly fail closed. The API commands below are not a passing alpha gate on 4.3.21. Use the [tested Coolify UI and direct B2 restore procedure](operations/offsite-backups.md) for this release; do not report the API helper as working until this mapping is fixed and retested.
 
 ```text
 Coolify
@@ -36,7 +38,7 @@ freshness threshold:  36 hours
 
 These defaults are not proof that your real external object exists.
 
-## Configure a Coolify-owned schedule
+## Conditional Coolify API helper
 
 The helper talks only to the private Coolify API (`127.0.0.1:8000`, or the reviewed local-forward endpoint). The API token is supplied through the environment and is not a command argument.
 

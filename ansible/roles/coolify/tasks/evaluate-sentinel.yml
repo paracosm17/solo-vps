@@ -15,6 +15,7 @@
       --docker {{ solo_vps_coolify_docker_binary | quote }}
       --expected-push-endpoint {{ solo_vps_coolify_evaluation_sentinel_url | quote }}
       {{ ('--expected-image ' ~ (solo_vps_coolify_evaluation_sentinel_image | quote)) if solo_vps_coolify_sentinel_expect_candidate | default(false) | bool else '' }}
+      {{ ('--expected-image-id ' ~ (solo_vps_coolify_evaluation_sentinel_image_id | quote)) if solo_vps_coolify_sentinel_expect_candidate | default(false) | bool else '' }}
       {{ ('--expected-version ' ~ (solo_vps_coolify_evaluation_sentinel_version | quote)) if solo_vps_coolify_sentinel_expect_candidate | default(false) | bool else '' }}
     executable: /usr/bin/python3
   changed_when: false
