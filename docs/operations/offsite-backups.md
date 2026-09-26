@@ -155,18 +155,18 @@ PGPASSWORD="$POSTGRES_PASSWORD" psql \
 
 The source now contains `4|after-offsite`, while the B2 object was created earlier.
 
-Create another PostgreSQL resource in Coolify with the **same major version**, for example `solo-vps-db-offsite-restore`. Do not connect the application to it.
+Create a **fresh, empty** PostgreSQL resource in Coolify with the **same major version**, for example `solo-vps-db-offsite-restore`. Do not connect the application to it. Use a new disposable resource for each restore exercise. Coolify runs `pg_restore` without clearing existing tables first; errors such as `relation already exists` or `duplicate key` mean the restore failed, even if the confirmation warns that existing data will be replaced.
 
 Open **Configuration → Import Backup**.
 
 If the UI offers an S3 restore:
 
-1. choose **Restore from S3**;
-2. select `solo-vps-b2`;
-3. select the backup you just uploaded to B2;
-4. confirm the restore into the disposable database.
+1. choose **S3 storage** and select `solo-vps-b2`;
+2. in **Backblaze → Browse Files**, copy the full object key of the backup you just uploaded. It resembles `data/coolify/backups/databases/.../pg-dump-....dmp`. If copying the path from Coolify's **Backups → Executions** instead, remove only its leading `/`;
+3. enter that key in **File path**, select **Check File**, and require **File found in S3** with a positive size;
+4. select **Restore From S3** and confirm the restore into the empty disposable database with your Coolify account password.
 
-This is the primary path: Coolify reads the external backup directly from B2, so no local `.dmp` on the workstation is required.
+This is the primary path: Coolify reads the external backup directly from B2, so no local `.dmp` on the workstation is required. Check the restore output for `pg_restore` errors before treating it as successful.
 
 If your Coolify version does not offer the S3 option, download the `.dmp` from **Backblaze → Browse Files** and use **Restore from File → Restore Database from File**.
 

@@ -165,18 +165,18 @@ PGPASSWORD="$POSTGRES_PASSWORD" psql \
 
 Теперь источник содержит `4|after-offsite`, а объект в B2 был создан раньше.
 
-Создайте в Coolify ещё одну PostgreSQL **той же major version**, например `solo-vps-db-offsite-restore`. Не подключайте к ней приложение.
+Создайте в Coolify **новую пустую** PostgreSQL **той же major version**, например `solo-vps-db-offsite-restore`. Не подключайте к ней приложение. Для каждой проверки восстановления используйте новую одноразовую БД. Coolify запускает `pg_restore`, не очищая существующие таблицы: ошибки `relation already exists` или `duplicate key` означают неудачное восстановление, хотя окно подтверждения предупреждает о замене данных.
 
 Откройте **Configuration → Import Backup**.
 
 Если интерфейс показывает восстановление из S3:
 
-1. выберите **Restore from S3**;
-2. выберите `solo-vps-b2`;
-3. выберите backup, который только что отправили в B2;
-4. подтвердите восстановление в disposable БД.
+1. выберите **S3 storage**, затем `solo-vps-b2`;
+2. в **Backblaze → Browse Files** скопируйте полный ключ загруженного объекта. Он выглядит как `data/coolify/backups/databases/.../pg-dump-....dmp`. Если копируете путь из **Backups → Executions** в Coolify, уберите только первый `/`;
+3. вставьте ключ в **File path**, нажмите **Check File** и убедитесь, что Coolify показывает **File found in S3** и размер больше нуля;
+4. нажмите **Restore From S3** и подтвердите восстановление в пустую одноразовую БД паролем своего аккаунта Coolify.
 
-Это основной путь: Coolify читает внешний backup прямо из B2, локальный `.dmp` на компьютере не нужен.
+Это основной путь: Coolify читает внешний backup прямо из B2, локальный `.dmp` на компьютере не нужен. Перед проверкой строк убедитесь, что в выводе восстановления нет ошибок `pg_restore`.
 
 Если в вашей версии Coolify нет S3-варианта, скачайте `.dmp` в **Backblaze → Browse Files** и используйте **Restore from File → Restore Database from File**.
 

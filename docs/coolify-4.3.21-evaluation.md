@@ -154,9 +154,10 @@ make coolify-evaluate-4-3-21-resume
 
 ```bash
 make verify-coolify-4-3-21-candidate
-make verify
 make audit
 ```
+
+На candidate checkout обычный `make verify` всё ещё проверяет поддерживаемый pin `4.1.2`, поэтому после перехода на `4.3.21` он ожидаемо останавливается на проверке версии. Это не результат candidate gate. После полного `PASS`, отдельного изменения поддерживаемых pins и пользовательской документации повторите `make verify` на том же disposable VPS перед его удалением.
 
 Затем проверьте вручную:
 
