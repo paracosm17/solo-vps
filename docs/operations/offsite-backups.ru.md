@@ -418,7 +418,7 @@ Restic **не делает raw backup живого PostgreSQL data directory**. 
 
 Полная потеря VPS ещё не проверена: для неё нужен отдельный replacement server. Мы сделаем этот destructive exercise позже на disposable VPS, а не на рабочем сервере.
 
-**Готово:** глава завершена, если PostgreSQL backup скачан из B2 и восстановлен, Coolify instance backup виден в B2, `make backup-restore-test` прошёл, а ежедневный restic timer включён.
+**Готово:** глава завершена, если PostgreSQL backup восстановлен напрямую из B2 в пустую тестовую БД (или скачан и восстановлен запасным способом через файл), Coolify instance backup виден в B2, `make backup-restore-test` прошёл, а ежедневный restic timer включён.
 
 ## Альтернативные S3-провайдеры
 

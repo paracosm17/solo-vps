@@ -408,7 +408,7 @@ Restic intentionally does **not** make a raw backup of a live PostgreSQL data di
 
 A complete lost-VPS replacement is still a different exercise because it requires another host. We perform that destructive rehearsal later on a disposable VPS, not on the working server.
 
-**Done:** this chapter is complete when a PostgreSQL backup has been downloaded from B2 and restored, a Coolify instance backup is visible in B2, `make backup-restore-test` passes, and the daily restic timer is enabled.
+**Done:** this chapter is complete when a PostgreSQL backup has been restored directly from B2 into an empty test database (or downloaded and restored through the documented file fallback), a Coolify instance backup is visible in B2, `make backup-restore-test` passes, and the daily restic timer is enabled.
 
 ## Alternative S3 providers
 
