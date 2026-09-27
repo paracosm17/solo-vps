@@ -1060,71 +1060,6 @@ body {
   margin-bottom: 0.08rem;
 }
 
-.solo-start-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.65rem;
-  margin: 0.85rem 0 1.65rem;
-}
-
-.solo-start-card {
-  display: grid;
-  grid-template-columns: 1.65rem 1fr auto;
-  gap: 0.65rem;
-  align-items: start;
-  min-height: 5.15rem;
-  border: 1px solid var(--solo-border);
-  border-radius: var(--solo-radius-lg);
-  padding: 0.78rem;
-  background: var(--solo-surface-raised);
-  color: var(--solo-text) !important;
-  text-decoration: none !important;
-  transition: border-color 100ms ease, background 100ms ease;
-}
-
-.solo-start-card:hover {
-  border-color: color-mix(in srgb, var(--solo-accent) 45%, var(--solo-border));
-  background: var(--solo-hover);
-}
-
-.solo-start-card__icon {
-  display: inline-flex;
-  width: 1.65rem;
-  height: 1.65rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  background: var(--solo-active);
-  color: var(--solo-accent);
-}
-
-.solo-start-card__icon .twemoji,
-.solo-start-card__icon svg {
-  width: 0.9rem;
-  height: 0.9rem;
-}
-
-.solo-start-card__title {
-  display: block;
-  margin-bottom: 0.14rem;
-  color: var(--solo-text);
-  font-size: 0.78rem;
-  font-weight: 650;
-}
-
-.solo-start-card__copy {
-  display: block;
-  color: var(--solo-muted);
-  font-size: 0.7rem;
-  line-height: 1.48;
-}
-
-.solo-start-card__arrow {
-  margin-top: 0.08rem;
-  color: var(--solo-muted);
-  font-size: 0.8rem;
-}
-
 .solo-command-path {
   display: flex;
   flex-wrap: wrap;
@@ -1277,10 +1212,6 @@ body {
 
   .md-typeset h1 {
     font-size: 1.62rem;
-  }
-
-  .solo-start-grid {
-    grid-template-columns: 1fr;
   }
 
   .solo-language__button {

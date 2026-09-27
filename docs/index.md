@@ -1,44 +1,21 @@
 # Solo VPS
 
-<p class="solo-home-intro" data-solo-home><strong>Start with a clean Ubuntu VPS. Finish with a ready-to-use server for your applications.</strong> Solo VPS chooses the stack, supplies the settings and automation, and walks you through the few commands and UI steps that cannot be avoided.</p>
+<p class="solo-home-intro" data-solo-home><strong>A new VPS should not mean searching old notes for SSH, Docker and deployment commands.</strong> Solo VPS provides one step-by-step route for Ubuntu 24.04: configure the server, install Coolify and deploy an application from GitHub.</p>
 
-You do not need to be a DevOps engineer. Follow the guide and Solo VPS will configure secure access, the firewall, Docker and Coolify. You then deploy and manage applications through GitHub and Coolify instead of maintaining the infrastructure by hand.
+The commands configure and verify the host; the guide covers the GitHub and Coolify steps. After setup, a `git push` can update the application while its status and logs stay visible in Coolify.
 
 <div class="solo-status">
   <svg class="solo-status__icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.75 22 20H2L12 2.75Zm0 5.1a1 1 0 0 0-1 1v5.25a1 1 0 1 0 2 0V8.85a1 1 0 0 0-1-1Zm0 9.05a1.15 1.15 0 1 0 0 2.3 1.15 1.15 0 0 0 0-2.3Z"/></svg>
-  <div class="solo-status__body"><strong>PRE-ALPHA</strong>Use a test VPS for now. The complete installation and recovery paths are still being validated.</div>
+  <div class="solo-status__body"><strong>PRE-ALPHA</strong>Use a test VPS for now. The basic route has been completed on a clean host; no release has been published yet.</div>
 </div>
 
 ## Start here
 
-If this is your first Solo VPS installation, complete parts 1 and 2 in order. Together they cover basic setup through CI/CD, runtime variables and live logs. You do not need to read the architecture or internal implementation first. Then open [After basic setup](operations/after-basic-setup.md) and add the operational pieces your application needs.
+If this is your first Solo VPS installation, complete the first two chapters in order. Then choose the operational chapters your application needs from the list below. You do not need to read the architecture or internal implementation first.
 
-<div class="solo-start-grid">
-  <a class="solo-start-card" href="quick-start/">
-    <span class="solo-start-card__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-    <span><span class="solo-start-card__title">1. VPS and Coolify</span><span class="solo-start-card__copy">From a fresh Ubuntu server to administrator access and Coolify over HTTPS.</span></span>
-    <span class="solo-start-card__arrow">→</span>
-  </a>
-  <a class="solo-start-card" href="operations/first-app/">
-    <span class="solo-start-card__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3Zm0 9 8-4.5M12 12 4 7.5M12 12v9"/></svg></span>
-    <span><span class="solo-start-card__title">2. Application and CI/CD</span><span class="solo-start-card__copy">Create the demo, enable GitHub deployment, set ENV and inspect logs — all on one page.</span></span>
-    <span class="solo-start-card__arrow">→</span>
-  </a>
-  <a class="solo-start-card" href="operations/operator-ui/">
-    <span class="solo-start-card__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg></span>
-    <span><span class="solo-start-card__title">Daily operations</span><span class="solo-start-card__copy">Know where deployments, variables, logs, health checks and diagnostics live.</span></span>
-    <span class="solo-start-card__arrow">→</span>
-  </a>
-  <a class="solo-start-card" href="operations/offsite-backups/">
-    <span class="solo-start-card__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 12a8 8 0 1 0 2.3-5.7L4 8.6M4 4v4.6h4.6"/></svg></span>
-    <span><span class="solo-start-card__title">Backups and recovery</span><span class="solo-start-card__copy">Move PostgreSQL, Coolify and filesystem backups off the VPS and prove a real restore.</span></span>
-    <span class="solo-start-card__arrow">→</span>
-  </a>
-</div>
+## Components
 
-## What is already decided for you
-
-Solo VPS provides one recommended path instead of asking you to assemble your own platform:
+Solo VPS uses these components:
 
 | Choice | Purpose |
 | --- | --- |
@@ -49,7 +26,7 @@ Solo VPS provides one recommended path instead of asking you to assemble your ow
 | **SOPS + age** | Encrypted infrastructure and recovery secrets |
 | **restic, external monitoring and Grafana Cloud** | Optional off-site recovery, outage alerts, retained logs and host metrics |
 
-The result is not a multi-server cloud platform. It is one understandable server with concrete defaults and documented recovery steps.
+The setup runs on one VPS. Recovery has its own documented procedure.
 
 ## Installation path
 
@@ -71,19 +48,24 @@ The [Quick Start](quick-start.md) explains where each command runs, what it chan
 
 ## Common tasks
 
-- **New server:** [Quick Start](quick-start.md)
-- **Something fails before installation:** [Preflight & doctor](preflight.md)
-- **Deploy an application:** [Deploy your first app](operations/first-app.md)
-- **Find deployments, variables or current logs:** [Daily operations](operations/operator-ui.md)
-- **Decide what to configure after the basic setup:** [After basic setup](operations/after-basic-setup.md)
-- **Find application logs from days ago:** [Retained logs](operations/observability.md)
-- **Check host status and bounded logs:** [Status & logs](operations/status-and-logs.md)
-- **Move backups off the VPS:** [Chapter 6: off-site backups](operations/offsite-backups.md)
-- **Back up or restore PostgreSQL:** [Chapter 4: PostgreSQL backup & restore](operations/postgresql-backups.md)
-- **Get notified about downtime:** [Chapter 5: external uptime monitor](operations/external-uptime.md)
-- **Watch CPU, memory and disk:** [Chapter 7: VPS metrics](operations/metrics.md)
-- **Handle an incident or planned maintenance:** [Failures and maintenance](operations/incidents-and-maintenance.md)
-- **Replace a lost VPS:** [Recover from a lost VPS](disaster-recovery.md)
-- **Update the host/platform:** [Upgrade Solo VPS & Coolify](upgrades.md)
-- **Find an exact command:** [Command reference](command-reference.md)
-- **Understand ownership and system boundaries:** [Architecture](architecture.md)
+**Follow the guided chapters:**
+
+1. [Set up the VPS and Coolify](quick-start.md).
+2. [Deploy an application and enable CI/CD](operations/first-app.md).
+3. [Add retained logs](operations/observability.md) if you need them.
+4. [Back up and restore PostgreSQL](operations/postgresql-backups.md) if you use a database.
+5. [Set up external uptime monitoring](operations/external-uptime.md).
+6. [Move backups off the VPS](operations/offsite-backups.md).
+7. [Add VPS metrics](operations/metrics.md) if you want to watch resource use.
+
+Choose chapters 3–7 to fit your application. [After basic setup](operations/after-basic-setup.md) explains their order and dependencies.
+
+**Find a specific task:**
+
+- Something fails before installation: [Preflight & doctor](preflight.md).
+- Find deployments, variables or current logs: [Daily operations](operations/operator-ui.md).
+- Check host status and bounded logs: [Status & logs](operations/status-and-logs.md).
+- Handle an incident or planned maintenance: [Failures and maintenance](operations/incidents-and-maintenance.md).
+- Replace a lost VPS: [Lost VPS recovery](disaster-recovery.md).
+- Update the host or Coolify: [Upgrade guide](upgrades.md).
+- Find an exact command or system boundary: [Command reference](command-reference.md) and [Architecture](architecture.md).

@@ -19,6 +19,9 @@ The project is **PRE-ALPHA** and has not published a supported release. Changes 
 
 ### Changed
 
+- Rewrite the README and documentation home pages around the maintainer's actual VPS setup and deployment workflow, and present the guided chapters before reference tasks.
+- Ask for server, administrator and application repository values in copyable EN/RU first-run commands; clarify the Coolify image digest field and the Git author setup step.
+- State the supported VPS resources as minimums and remove the small-VPS evaluation exception from the public Quick Start.
 - Publish documentation through a GitHub Pages artifact/deployment workflow with a strict pull-request build and scoped deployment permissions.
 - Clarify the one-VPS alpha prerequisites, Windows/WSL developer path and release-only external evidence gates.
 - Make the public user route task-oriented: chapters 1–7 are guided setup tasks, while failures and maintenance is an operational runbook.
