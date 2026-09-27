@@ -44,7 +44,7 @@ A public release is blocked unless all applicable checks below are true:
 13. `make release-dry-run RELEASE_VERSION=v0.x.y` passes;
 14. the owner explicitly approves the actual tag/release/publish action.
 
-The v0.1.0 candidate also needs the ROADMAP gates that a source dry run cannot prove: full lost-VPS reconstruction, exact-candidate replay from the rendered public docs without maintainer assistance, a successful GitHub Pages deployment with correct EN/RU links, and an enabled/tested private vulnerability-reporting channel. The `4.1.2` → `4.3.21` transition and replacement-host recovery have disposable evidence; the promoted source still needs its ordinary verifiers and a clean-install replay.
+The v0.1.0 candidate also needs the ROADMAP gates that a source dry run cannot prove: full lost-VPS reconstruction, exact-candidate replay from the rendered public docs without maintainer assistance, a successful GitHub Pages deployment with correct EN/RU links, and an enabled/tested private vulnerability-reporting channel. The `4.1.2` → `4.3.21` transition and replacement-host recovery have disposable evidence; the promoted source passed ordinary verifiers on that host and still needs a clean-install replay.
 
 The dry-run does not weaken these gates merely to make PRE-ALPHA publishing easier.
 

@@ -403,7 +403,7 @@ secure: check-local-files check-ssh-hardening-confirm ## Activate SSH hardening 
 
 platform: doctor-admin-local ## Install/verify pinned Coolify after the hardened admin reconnect
 	@$(MAKE) --no-print-directory coolify
-	@printf '%s\n' 'PASS Solo VPS Coolify bootstrap' 'NEXT: complete HTTPS dashboard and Sentinel onboarding, then run make verify-coolify and make verify.'
+	@printf '%s\n' 'PASS Solo VPS Coolify bootstrap' 'For a new install: complete HTTPS dashboard and Sentinel onboarding, then run make verify-coolify and make verify.'
 
 backup: doctor-admin-local ## EXTERNAL WRITE: run one configured off-site backup and verify repository/freshness
 	@$(MAKE) --no-print-directory backup-now

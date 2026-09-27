@@ -5,7 +5,7 @@
 > **Current phase:** first-release productization and runtime evidence
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** review the Coolify `4.3.21` supported-pin change against the completed replacement-host exercise, then verify the changed source on the disposable VPS.
+> **Next action:** replay the exact release candidate from rendered public instructions on a clean Ubuntu 24.04 VPS without maintainer assistance.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -29,7 +29,7 @@ Ubuntu 24.04 host
 → failed-image rollback and planned reboot recovery
 ```
 
-A disposable Ubuntu 24.04 VPS has V3 evidence for clean host setup, Coolify `4.1.2` → `4.3.21` forward-resume upgrade, Sentinel, HTTPS demo CI/CD, and real application and whole-host DOWN/UP emails. After reimaging that VPS, the replacement-host exercise restored the Coolify instance and identity, PostgreSQL from B2, and the immutable demo image; public HTTPS, candidate verification, security audit, a new restic snapshot, its restore-test, and the daily backup timer passed. This is not V4: supported-pin verification, retained logs on the replacement, and final owner-only public-doc replay remain open. No precise alert-latency claim is made from the approximate provider stop time.
+A disposable Ubuntu 24.04 VPS has V3 evidence for clean host setup, Coolify `4.1.2` → `4.3.21` forward-resume upgrade, Sentinel, HTTPS demo CI/CD, and real application and whole-host DOWN/UP emails. After reimaging that VPS, the replacement-host exercise restored the Coolify instance and identity, PostgreSQL from B2, and the immutable demo image; public HTTPS, security audit, a new restic snapshot, its restore-test, and the daily backup timer passed. The promoted `4.3.21` source then passed ordinary `verify-coolify`, full `verify` and `audit` on this recovered host. This is not V4: retained logs on the replacement and final owner-only public-doc replay remain open. No precise alert-latency claim is made from the approximate provider stop time.
 
 ### Validation levels
 
@@ -68,13 +68,13 @@ The immediate retained-log path is V3: entries survived application redeploy and
 
 ### Coolify lifecycle
 
-The source still supports only Coolify `4.1.1 → 4.1.2`. Official upstream review on 2026-09-17 selected `4.3.21` as the **disposable evaluation candidate**, not yet as a supported Solo VPS target. That reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data. The 2026-09-27 replacement-host exercise passed on `4.3.21`; supported pins still await a source change and same-host verification.
+The source now supports Coolify `4.3.21`, with `4.1.2` as the previous supported upgrade origin. The reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data. The `4.1.2` → `4.3.21` interruption/resume and replacement-host exercises passed, followed by same-host verification of the promoted source.
 
-Do not change pins from research alone. Sentinel is a Coolify-managed Linux/Docker metrics agent, not a Solo VPS server mode and not Redis Sentinel. The old verified "Sentinel absent" result records a `4.1.2` bridge-to-loopback incompatibility; it is not the desired contract for `4.3.19+`. A committed, safety-gated [exercise sheet](docs/coolify-4.3.21-evaluation.md) now proves the exact candidate artifacts, an HTTPS push path, the high-trust Docker/host boundary, absence of unintended public ports and deterministic interruption/forward-resume behavior. The disposable Ubuntu 24.04 evaluation reached `4.3.21` with an intentional interruption and explicit forward resume. Sentinel is healthy; candidate verification passed with `changed=0 failed=0`; the HTTPS demo app passed hosted CI and deployed a new image. The `database-backup-adopt` API helper fails closed because the `4.3.21` schedule API omits the required S3 storage UUID; Coolify UI backup and isolated B2 restore passed instead. The supported `4.1.2` pin remains until the `4.3.21` policy/source change and same-host verification pass.
+Sentinel is a Coolify-managed Linux/Docker metrics agent. The old verified "Sentinel absent" result records a `4.1.2` bridge-to-loopback incompatibility; it is not the desired contract for `4.3.19+`. A safety-gated [exercise sheet](docs/coolify-4.3.21-evaluation.md) records exact artifacts, HTTPS push path, the high-trust Docker/host boundary, absence of unintended public ports and interruption/forward-resume behavior. The `database-backup-adopt` API helper fails closed because the `4.3.21` schedule API omits the required S3 storage UUID; Coolify UI backup and isolated B2 restore passed instead. A clean install from the promoted `4.3.21` source remains for V4 replay.
 
 ### Publication
 
-The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or current published history. No release tag exists. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`; the deployed EN/RU home and Quick Start language links resolve under `/solo-vps/`, and both edit links target the right source file. Private Vulnerability Reporting is enabled; an independent reporter-path test remains. Hosted `Repository CI / fast-source` passed on `3217146` and is required by the protected `main` branch. PR [#9](https://github.com/paracosm17/solo-vps/pull/9) has green hosted checks for the `4.3.21` evidence and backup documentation; merge is pending. Repeat hosted CI on the eventual release commit and exact-ref scanning before tagging.
+The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or earlier published history. No release tag exists. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`; the deployed EN/RU home and Quick Start language links resolve under `/solo-vps/`, and both edit links target the right source file. Private Vulnerability Reporting is enabled; an independent reporter-path test remains. Hosted `Repository CI / fast-source` is required by the protected `main` branch. PR [#9](https://github.com/paracosm17/solo-vps/pull/9) carries the promoted `4.3.21` source; hosted checks on the final release commit and exact-ref scanning remain before tagging.
 
 ---
 
@@ -115,7 +115,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-008 Passport factual drift | DONE / V2 | Passport is design boundary; README owns current user contract |
 | CRIT-009 ROADMAP sprawl | DONE / V2 | current state, gates and next action are concise |
 | CRIT-010 contract-test imbalance | PARTIAL | source gates exist; runtime V4 evidence remains higher priority than more wording tests |
-| CRIT-011 Docker/Coolify lifecycle | PARTIAL V3 | Disposable `4.1.2` → `4.3.21` interruption/resume and candidate verification pass; supported pins and API backup adoption need a reviewed decision |
+| CRIT-011 Docker/Coolify lifecycle | PARTIAL V3 | Supported `4.3.21` source passes same-host verification after `4.1.2` → `4.3.21` interruption/resume; clean-source install pending, API backup adoption remains fail-closed |
 | CRIT-012 CI deployment transport | DEFERRED | restricted SSH tunnel remains the proven default |
 | CRIT-013 recovery priority | CLOSED | recovery path implemented before optional observability expansion |
 | CRIT-014 private security channel | PARTIAL | GitHub Private Vulnerability Reporting enabled; independent reporter-path test pending |
@@ -142,7 +142,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M6 — Automatic Security Updates | P1 | DONE | V3; V4 replay pending |
 | M7 — Docker Host | P1 | DONE | Docker 29.x V3; V4 pending |
 | M8 — Optional Tailscale Administrative Plane | P3 | DEFERRED | post-release optional work |
-| M9 — Coolify Installation Backend | P1 | DONE | `4.3.21` candidate upgrade/resume V3; supported pin decision pending |
+| M9 — Coolify Installation Backend | P1 | DONE | supported `4.3.21` same-host verification V3; clean-source install V4 pending |
 | M10 — First End-to-End Application | P1 | DONE | V3 |
 | M11 — GitHub Actions + GHCR Template | P1 | DONE | consumer repository V3 |
 | M12 — Dependency & Image Hygiene | P2 | DONE | V2 |
@@ -161,8 +161,8 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M25 — PostgreSQL Application UX / Guidance | P3 | DEFERRED | optional DB administration work |
 | M26 — Public README & Quick Start | P1 | SOURCE DONE | release productization V2; owner-only V4 replay pending |
 | M27 — Architecture Documentation & ADR | P2 | DONE | V2 |
-| M28 — SECURITY / CONTRIBUTING / LICENSE | P2 | DONE | V2; private reporting setting pending |
-| M29 — Upgrade Guide | P2 | SOURCE DONE | tagged-source contract documented; Coolify target/proof pending |
+| M28 — SECURITY / CONTRIBUTING / LICENSE | P2 | DONE | V2; private reporting enabled, independent reporter test pending |
+| M29 — Upgrade Guide | P2 | SOURCE DONE | tagged-source contract documented; supported Coolify target has same-host V3 proof, V4 replay pending |
 | M30 — Release Process | P2 | SOURCE DONE | hosted dry-run and public release pending |
 
 ---

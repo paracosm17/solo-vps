@@ -171,7 +171,7 @@ Proposed entries do not change the supported architecture until their stated evi
 
 | ADR | Status | Decision |
 | --- | --- | --- |
-| [`ADR-0005`](adr/0005-coolify-sentinel-trust-boundary.md) | **Proposed** | Accept mandatory Sentinel only inside the reviewed high-trust Coolify boundary after disposable runtime proof |
+| [`ADR-0005`](adr/0005-coolify-sentinel-trust-boundary.md) | **Accepted** | Accept mandatory Sentinel only inside the reviewed high-trust Coolify boundary after disposable runtime proof |
 
 Change a long-lived boundary by updating/superseding the ADR first, then the user docs and implementation in the same coherent change.
 
@@ -181,7 +181,7 @@ Change a long-lived boundary by updating/superseding the ADR first, then the use
 
 **Docker.** Docker-published ports are a separate exposure surface from UFW. Management interfaces must not become public merely because a container can publish them.
 
-**Coolify.** Ports `8000/6001/6002` remain private/loopback in the core profile. Public traffic belongs on the application edge. Proposed ADR-0005 treats Sentinel as part of this high-trust control plane because its upstream container uses the host PID namespace and read-write Docker socket; its API must not publish a host port.
+**Coolify.** Ports `8000/6001/6002` remain private/loopback in the core profile. Public traffic belongs on the application edge. ADR-0005 treats Sentinel as part of this high-trust control plane because its upstream container uses the host PID namespace and read-write Docker socket; its API must not publish a host port.
 
 **Observability.** The retained-log path uses a restricted Docker API proxy through `/run/solo-vps-docker-api/docker-api.sock`. The proxy is still high-trust because it owns the real Docker daemon socket, while Alloy only receives the narrowed Unix-socket interface. A host-local unprivileged identity should not be able to traverse that boundary. The host-metrics profile is deliberately separate: `solo-vps-metrics` reads only selected Linux host metrics through Alloy's Unix exporter, has no Docker access, and exposes its Alloy HTTP endpoint only on loopback.
 

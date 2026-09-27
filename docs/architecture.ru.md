@@ -171,7 +171,7 @@ Grafana Cloud  -> optional retained historical application logs
 
 | ADR | Статус | Решение |
 | --- | --- | --- |
-| [`ADR-0005`](adr/0005-coolify-sentinel-trust-boundary.md) | **Proposed** | Принимать обязательный Sentinel только внутри проверенной high-trust границы Coolify после disposable runtime proof |
+| [`ADR-0005`](adr/0005-coolify-sentinel-trust-boundary.md) | **Accepted** | Принимать обязательный Sentinel только внутри проверенной high-trust границы Coolify после disposable runtime proof |
 
 Долгоживущую boundary меняйте через update/supersede ADR, а затем согласованно обновляйте user docs и implementation.
 
@@ -181,7 +181,7 @@ Grafana Cloud  -> optional retained historical application logs
 
 **Docker.** Docker-published ports — отдельная exposure surface от UFW. Management interfaces не должны становиться public только потому, что container умеет их публиковать.
 
-**Coolify.** Ports `8000/6001/6002` остаются private/loopback в core profile. Public traffic идёт через application edge. Предложенный ADR-0005 считает Sentinel частью этого high-trust control plane, потому что upstream container использует host PID namespace и read-write Docker socket; его API не должен публиковать host port.
+**Coolify.** Ports `8000/6001/6002` остаются private/loopback в core profile. Public traffic идёт через application edge. ADR-0005 считает Sentinel частью этого high-trust control plane, потому что upstream container использует host PID namespace и read-write Docker socket; его API не должен публиковать host port.
 
 **Observability.** Retained-log path использует restricted Docker API proxy через `/run/solo-vps-docker-api/docker-api.sock`. Proxy остаётся high-trust, потому что владеет реальным Docker daemon socket, а Alloy получает только narrowed Unix-socket interface. Host-local unprivileged identity не должна уметь пересечь эту границу. Профиль host metrics намеренно отделён: `solo-vps-metrics` читает только выбранные метрики Linux через Alloy Unix exporter, не имеет доступа к Docker, а HTTP-интерфейс Alloy слушает только loopback.
 
