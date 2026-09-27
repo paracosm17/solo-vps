@@ -90,11 +90,11 @@ The earlier Coolify qualification, whole-host outage, lost-VPS reconstruction, r
 
 Review the rendered EN/RU Home, Quick Start, first-application guide, daily operations, upgrade and recovery pages. Fix stale UI labels, contradictory version statements, duplicated text and development-history wording. Run the documentation/release validators and strict MkDocs build.
 
-### 2. Run one exact-candidate fresh-user rehearsal
+### 2. Reconcile the independent clean-host rehearsal with the candidate
 
-Reimage the existing disposable test VPS to clean Ubuntu 24.04. From one clean candidate commit, follow only the published Quick Start as a new user: bootstrap the host, establish the administrator and hardened SSH path, install/onboard Coolify `4.3.21` and Sentinel, deploy the demo application, configure the restricted CI path and prove one automatic deployment. Finish with the documented `verify-coolify`, full `verify` and `audit` checks plus an idempotent second `make platform` run.
+The owner has followed the public first two chapters on a clean Ubuntu 24.04 VPS and reported a working application with automatic deployment. First establish the Solo VPS revision actually used and compare it with the final candidate. Carry this rehearsal forward only when the operational source is equivalent, the rendered instructions still match the executed route, and the evidence includes clean bootstrap, administrator/SSH hardening, Coolify `4.3.21` and Sentinel, restricted CI deployment, `verify-coolify`, full `verify`, `audit`, and an idempotent second `make platform` run with `changed=0`.
 
-Do not reuse old controller state, Coolify data, shell history or chat-only instructions. Optional Grafana/B2 chapters already have separate V3 evidence and are not repeated unless the clean replay exposes a dependency on them. Any missing value, renamed Coolify control or undocumented recovery step found here is a release defect: fix the source/docs and repeat the affected section.
+If the revision or any clean-install proof cannot be established, repeat the full public route on a clean Ubuntu 24.04 VPS. A docs-only edit does not itself require reimaging if the executed route is equivalent. On a repeat, do not reuse old controller state, Coolify data, shell history or chat-only instructions. Optional Grafana/B2 chapters already have separate V3 evidence and are not repeated unless the clean replay exposes a dependency on them. Any missing value, renamed Coolify control or undocumented recovery step is a release defect: fix the source/docs and repeat the affected section.
 
 ### 3. Validate the exact release commit on GitHub
 

@@ -5,7 +5,7 @@
 > **Current phase:** first-release productization and runtime evidence
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** review and merge the first-run documentation polish, then confirm the exact candidate revision and final verification/audit on the clean VPS used for the owner's independent walkthrough.
+> **Next action:** review and merge the first-run documentation polish, then establish the clean-host walkthrough revision and reconcile its evidence with the final release candidate.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -60,7 +60,7 @@ V5  real production-use evidence
 
 The public route now treats chapters 1–7 as the guided setup sequence. Failures and maintenance is a separate runbook. Guided commands use semantic `SERVER_IP` / `ADMIN_USER` values, the navigation gives the tutorial more visual weight than reference trees, and the palette is calmer. The upgrade guide defines a new-checkout tagged-source update contract instead of an active-checkout `git pull` workflow.
 
-The owner independently completed the core public route on a clean host and reported only first-run wording/input friction. EN/RU first pages and copyable commands are being polished from that feedback. Exact candidate identity and final host checks remain to close the release proof.
+The owner independently completed the core public route on a clean host and reported only first-run wording/input friction. EN/RU first pages and copyable commands are being polished from that feedback. The walkthrough can close the V4 gate only if its source revision is identified, the final candidate is operationally equivalent, and the clean-host evidence includes the required audit and idempotency rerun. Missing clean-install evidence requires another clean-host replay.
 
 ### Observability evidence
 
@@ -82,7 +82,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 
 ### Must pass before `v0.1.0`
 
-1. Record the exact Solo VPS candidate revision used on the owner's independently configured clean Ubuntu 24.04 VPS, confirm the final public instructions match that route, and run the documented verification/audit commands on that host. If the candidate changed operational behavior, repeat the affected clean-host steps before claiming V4.
+1. Establish the Solo VPS revision used for the owner's independent clean Ubuntu 24.04 walkthrough and compare it with the final candidate. Carry that replay forward only if the candidate is operationally equivalent, the rendered guide still matches the executed route, and the evidence proves clean bootstrap, SSH hardening, first application/automatic deployment, `verify-coolify`, full `verify`, `audit`, and idempotent `make platform` with `changed=0`. If revision or required clean-install evidence cannot be established, repeat the clean-host replay; a check on an already configured host cannot replace it.
 2. Require a green hosted `Repository CI / fast-source` check and successful documentation deployment for that exact release commit.
 3. Before the release tag, repeat exact-ref history and archive scans for secrets and owner-specific state with the built-in check and an independent scanner.
 4. Prepare a dated `0.1.0` changelog entry, run the clean release dry-run, review the immutable commit, then create the tag and GitHub Release only with explicit owner approval.
@@ -167,7 +167,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 
 Use one temporary Ubuntu 24.04 VPS and reimage it between scenarios:
 
-The disposable lifecycle, whole-target outage and lost-VPS reconstruction scenarios are already V3 evidence. The owner also completed the public core route on a fresh VPS. Confirm its source revision and final host checks before deciding whether any changed operational steps need a repeat; do not reimage solely for a docs-only edit.
+The disposable lifecycle, whole-target outage and lost-VPS reconstruction scenarios are already V3 evidence. The owner also completed the public core route on a fresh VPS. Reconcile its source revision, operational diff and complete evidence with the candidate. A docs-only edit does not itself require reimaging when the executed instructions remain equivalent; missing revision or clean-install proof does.
 
 The maintained product topology remains one VPS; another permanent or additional validation server is not required.
 
@@ -186,7 +186,7 @@ The maintained product topology remains one VPS; another permanent or additional
 
 ### Remaining blockers
 
-- exact candidate identity and final verify/audit evidence for the independently completed clean-host Quick Start;
+- candidate equivalence and complete clean-host evidence, including verify/audit and idempotency, for the owner's walkthrough; otherwise another clean-host replay;
 - release-commit hosted CI/Pages checks and exact-ref secret/state scans;
 - dated changelog, clean release dry-run and immutable `v0.1.0` release identity.
 
