@@ -68,7 +68,7 @@ class ReadmeContractTests(unittest.TestCase):
 
     def test_unknown_make_target_is_rejected(self) -> None:
         root = self.make_fixture()
-        self.mutate(root, "README.md", "make platform", "make imaginary-target")
+        self.mutate(root, "docs/quick-start.md", "make platform\n", "make platform\nmake imaginary-target\n")
         with self.assertRaises(ContractError):
             validate_readme(root)
 
