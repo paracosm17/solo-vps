@@ -15,7 +15,7 @@ The project is **PRE-ALPHA** and has not published a supported release. Changes 
 - SOPS + age infrastructure/recovery secrets, restic off-site backup tooling, PostgreSQL logical backup/restore and lost-VPS recovery source.
 - Optional Grafana Alloy retained logs and host metrics, external uptime guidance and operator maintenance runbooks.
 - A tagged-checkout Solo VPS source-update contract that preserves persistent state outside the source tree.
-- A safety-gated Coolify `4.3.21` disposable evaluation harness with exact release artifacts, Sentinel trust-boundary checks and deterministic interrupted-upgrade recovery; the supported transition remains `4.1.1 → 4.1.2` until runtime proof exists.
+- A safety-gated Coolify `4.3.21` disposable evaluation harness with exact release artifacts, Sentinel trust-boundary checks and deterministic interrupted-upgrade recovery; the supported transition remains `4.1.1 → 4.1.2` until the supported-pin change is implemented and verified.
 
 ### Changed
 
@@ -43,7 +43,7 @@ The project is **PRE-ALPHA** and has not published a supported release. Changes 
 - CRIT-005 is closed at V3: Repository-managed Alloy uses a protected Unix socket and a restricted Docker API proxy; unrelated host users cannot use the collector boundary.
 - Image rollback is container-image-only and never claims to reverse database migrations, data changes or external side effects.
 - Real Backblaze B2 PostgreSQL restore, restic snapshot/freshness/temporary restore-test and planned reboot recovery are integration-proven.
-- Full lost-VPS reconstruction, a reviewed current Coolify lifecycle, whole-host outage notification and exact-candidate clean replay remain release gates.
+- Disposable lost-VPS reconstruction and whole-host DOWN/UP notification passed. The supported Coolify lifecycle, measured alert interval and exact-candidate owner replay remain release gates.
 - No supported release tag exists yet.
 
 [Unreleased]: ./ROADMAP.md
