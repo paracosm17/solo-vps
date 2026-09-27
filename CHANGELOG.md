@@ -38,6 +38,7 @@ The project is **PRE-ALPHA** and has not published a supported release. Changes 
 - Prevent expected Docker API proxy `403` responses after reboot from being misclassified as Grafana provider-auth failures.
 - Align the retained-log and metrics walkthroughs with the operator-verified Grafana Cloud UI.
 - Align the first-app and CI authorization flow with Coolify `4.3.21`: use separate `read` + `write` and deploy-only API tokens because the current non-root token UI makes `deploy` exclusive; refresh the affected Coolify UI labels and remove the stale `4.1.2` creation-form workaround.
+- Remove brittle new-resource button wording from the public Coolify walkthroughs, refresh the web-terminal reference, and document Coolify's built-in **Sponsorship reminders** switch as an optional UI preference.
 
 ### Security and recovery boundaries
 

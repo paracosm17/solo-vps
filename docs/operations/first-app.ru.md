@@ -107,7 +107,7 @@ ghcr.io/<github-owner>/solo-vps-demo@sha256:<64-hex-digest>
 
 1. Откройте **Projects** и создайте проект `solo-vps-demo`.
 2. Откройте его окружение `production`.
-3. Нажмите **+ New → Docker Image** и выберите существующий сервер **localhost**.
+3. Откройте в environment меню создания нового ресурса, выберите **Docker Image**, затем существующий сервер **localhost**.
 4. В **Image Name** вставьте только имя образа: `ghcr.io/<github-owner>/solo-vps-demo`, подставив своего владельца.
 5. Завершите создание ресурса.
 

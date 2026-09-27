@@ -24,6 +24,8 @@ https://coolify.example.com
 
 Use this HTTPS domain for the normal dashboard, live logs, realtime features, and browser terminal.
 
+Optional UI preference: in **Settings → Configuration → Advanced**, set **Sponsorship reminders** to **Disabled** if you do not want Coolify's periodic sponsorship popup. This is a dashboard preference only; it is separate from **Anonymous telemetry** / Do Not Track and does not change Solo VPS behavior.
+
 ## Security contract
 
 The intended exposure remains:
@@ -82,4 +84,4 @@ A server-side readiness PASS plus a browser websocket failure points to the HTTP
 ## References
 
 - Coolify DNS configuration: <https://coolify.io/docs/knowledge-base/dns-configuration>
-- Coolify terminal documentation: <https://coolify.io/docs/knowledge-base/internal/terminal>
+- Coolify terminal documentation: <https://coolify.io/docs/core/infrastructure/servers/web-terminal>

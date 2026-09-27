@@ -107,7 +107,7 @@ The example is `app.example.com`. With Cloudflare, select **DNS only**. Add an A
 
 1. Open **Projects** and create a project named `solo-vps-demo`.
 2. Open its `production` environment.
-3. Select **+ New → Docker Image**, then the existing **localhost** server.
+3. Open the environment's new-resource picker, choose **Docker Image**, then select the existing **localhost** server.
 4. Set **Image Name** to just `ghcr.io/<github-owner>/solo-vps-demo`, replacing the owner.
 5. Complete resource creation.
 
