@@ -54,6 +54,17 @@ class CoolifySentinelInspectTests(unittest.TestCase):
         self.assertNotIn("secret-value", repr(report))
         self.assertFalse(report["host_ports_published"])
 
+    def test_supported_check_validates_https_without_operator_supplied_url(self) -> None:
+        report = evaluate_inspect(fixture(), expected_image=EXPECTED_IMAGE,
+                                  observed_version="1.0.1", expected_version="1.0.1")
+        self.assertEqual(report["push_endpoint"], EXPECTED_ENDPOINT)
+
+    def test_supported_check_accepts_architecture_specific_image_content(self) -> None:
+        payload = fixture()
+        payload[0]["Image"] = "sha256:" + "a" * 64
+        self.assertEqual(evaluate_inspect(payload, expected_image=EXPECTED_IMAGE,
+                                          observed_version="1.0.1", expected_version="1.0.1")["status"], "PASS")
+
     def test_post_reboot_docker_hub_alias_passes_with_pinned_image_id(self) -> None:
         payload = fixture()
         payload[0]["Config"]["Image"] = "docker.io/coollabsio/sentinel:1.0.1"

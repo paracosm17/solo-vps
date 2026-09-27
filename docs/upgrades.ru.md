@@ -25,28 +25,23 @@ identify exact current + target versions
 
 Исходники Solo VPS обновляются через **новый checkout проверенного релиза**, а не через `git pull` в активном каталоге. Конфигурация конкретной установки, inventory и зашифрованное состояние оператора находятся вне исходников, поэтому оба checkout используют одно persistent state.
 
-Пока проект PRE-ALPHA, release tag ещё не опубликован. До первого релиза используйте только проверенный commit или архив, подготовленный для тестирования. После публикации релиза выбирайте его точный tag:
+Пока проект PRE-ALPHA, release tag ещё не опубликован. До первого релиза используйте только проверенный commit или архив для тестирования. После публикации релиза выполните в **старом checkout**, подставив точный опубликованный tag:
 
 ```bash
-REPOSITORY_URL='https://github.com/paracosm17/solo-vps.git'
-RELEASE_VERSION='v0.1.0'
-git clone --branch "$RELEASE_VERSION" --depth 1 "$REPOSITORY_URL" "solo-vps-${RELEASE_VERSION}"
-cd "solo-vps-${RELEASE_VERSION}"
-test "$(git describe --tags --exact-match)" = "$RELEASE_VERSION"
+make source-update-prepare RELEASE_VERSION=v0.2.3
+cd ../solo-vps-v0.2.3
 ```
 
-До изменения VPS проверьте новые исходники:
+Команда откажется работать при локальных изменениях в старом checkout или существующем целевом каталоге, склонирует точный tag в соседний каталог и проверит его. Она не меняет VPS. До изменения VPS проверьте новые исходники:
 
 ```bash
 make setup
 make paths
 make validate
 make doctor
-make verify
-make audit
 ```
 
-Сравните вывод `make paths` со старым checkout. Пути config и inventory должны совпадать. Прочитайте release notes целевой версии и выполните только явно указанную subsystem migration или lifecycle-команду. Смена исходников сама по себе не требует `make secure`, обновления Docker или обновления Coolify.
+Сравните вывод `make paths` со старым checkout. Пути config и inventory должны совпадать. Прочитайте release notes целевой версии и выполните только явно указанную subsystem migration или lifecycle-команду. Если установленная версия Coolify соответствует предыдущей поддерживаемой версии нового source, сначала запустите read-only `make coolify-upgrade-preflight`, затем явное обновление: новый `make verify` правильно отклонит старую версию до завершения перехода. Если runtime уже соответствует новому source, сразу выполните `make verify`. В конце выполните `make verify` и `make audit`. Смена исходников сама по себе не требует `make secure`, обновления Docker или обновления Coolify.
 
 Сохраняйте предыдущий checkout, пока новые исходники не пройдут проверки и приложение не останется healthy. Возврат к старому каталогу возвращает только automation source и не отменяет runtime-изменения, уже выполненные subsystem upgrade.
 
@@ -115,9 +110,9 @@ Solo VPS управляет Coolify через закреплённую и пр�
 Поддерживаемая lifecycle pair в этой source revision:
 
 ```text
-previous supported Coolify: `4.1.1`
-current supported Coolify: `4.1.2`
-transition:                 4.1.1 -> 4.1.2
+previous supported Coolify: `4.1.2`
+current supported Coolify: `4.3.21`
+transition:                 4.1.2 -> 4.3.21
 AUTOUPDATE=false
 ```
 
@@ -125,13 +120,13 @@ AUTOUPDATE=false
 
 ### Preflight
 
-Перед поддерживаемым transition:
+Перед поддерживаемым переходом в Coolify `4.1.2` задайте **Servers → localhost → Sentinel → Configuration → Coolify URL** равным рабочему HTTPS-адресу панели, включите Sentinel, выполните Sync и подтвердите **Sentinel In Sync**. Raw-порты `8000` и `8888` должны оставаться закрытыми. Затем выполните:
 
 ```bash
-make coolify-upgrade-preflight
+COOLIFY_SENTINEL_URL=https://coolify.example.com make coolify-upgrade-preflight
 ```
 
-Preflight проверяет managed installation, exact version pair, Docker support window, current runtime health, loopback-only management ports, `AUTOUPDATE=false` и отсутствие незавершённой install/upgrade transaction.
+Preflight проверяет managed installation, exact version pair, Docker support window, current runtime health, loopback-only management ports, HTTPS-настройку и границу доступа Sentinel, `AUTOUPDATE=false` и отсутствие незавершённой install/upgrade transaction. Проверка Sentinel подтверждает локальное состояние и конфигурацию; доставку подтвердите статусом **Sentinel In Sync** в панели.
 
 ### Upgrade
 
@@ -139,12 +134,13 @@ Mutating path намеренно защищён explicit confirmations:
 
 ```bash
 COOLIFY_UPGRADE_CONFIRM=I_HAVE_REVIEWED_THE_COOLIFY_UPGRADE_PLAN \
+COOLIFY_SENTINEL_URL=https://coolify.example.com \
 make coolify-upgrade
 ```
 
 Перед обновлением автоматически создаётся локальная копия в `/var/lib/solo-vps/checkpoints/coolify-*`: custom-format dump БД Coolify, архив `source` (включая `.env`), SSH-ключей и marker, SHA-256 manifest. Проверяется `pg_restore --list`; при ошибке обновление не начинается. Каталог доступен только root. Он сохраняется после успеха или сбоя, его путь записан в `.solo-vps-upgrading`. S3 и restic не требуются.
 
-Копия содержит секреты и не включает данные пользовательских приложений. Она не переживёт потерю VPS, а проверка архива не доказывает успешное восстановление. Перед обновлением остановите деплои и изменения ENV в UI. Если forward resume невозможен, сохраните копию и исследуйте восстановление на отдельном тестовом экземпляре той же исходной версии. Автоматический restore этой локальной копии пока не предоставляется. Удаляйте старые копии вручную только после проверки обновления и нужного периода хранения.
+Копия содержит секреты и не включает данные пользовательских приложений. Она не переживёт потерю VPS, а проверка архива не доказывает успешное восстановление. Перед обновлением остановите деплои и изменения ENV в UI. Если подключён профиль внешних копий, дополнительно запустите `make backup-now`, `make backup-check`, `make backup-restore-test` и проверьте свежий backup instance database Coolify до изменения версии. Если forward resume невозможен, сохраните копию и исследуйте восстановление на отдельном тестовом экземпляре той же исходной версии. Автоматический restore этой локальной копии пока не предоставляется. Удаляйте старые копии вручную только после проверки обновления и нужного периода хранения.
 
 ### Прерванное обновление
 
@@ -248,9 +244,9 @@ make verify-backup-tooling
 
 - контракт обновления через tagged checkout описан, но публичного release channel и release tag пока нет;
 - Docker support намеренно ограничен 29.x вместо generic package auto-upgrades;
-- текущий lifecycle source представляет только transition Coolify 4.1.1 → 4.1.2;
-- source-level implementation не заменяет disposable upgrade/recovery evidence;
-- off-site backup и изолированный restore подтверждены интеграционно, но полное восстановление потерянного VPS ещё требует clean replacement-host exercise;
+- текущий lifecycle source представляет только transition Coolify 4.1.2 → 4.3.21;
+- disposable upgrade и восстановление после переустановки прошли, но новому source ещё нужны штатные проверки и повторный прогон чистой установки;
+- API helper для backup PostgreSQL на 4.3.21 останавливается безопасно; используйте UI Coolify и отдельный restore из B2;
 - optional modules сохраняют отдельные lifecycle contracts.
 
 Перед любым изменением, способным повлиять на data или control-plane recovery, прочитайте [Disaster recovery](disaster-recovery.md).

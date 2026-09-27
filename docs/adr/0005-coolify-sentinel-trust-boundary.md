@@ -1,6 +1,6 @@
 # ADR-0005: Accept Coolify Sentinel only inside the Coolify trust boundary
 
-Status: Proposed
+Status: Accepted
 
 Date: 2026-09-17
 
@@ -10,7 +10,7 @@ Coolify `4.3.19` made Sentinel mandatory on regular servers. Sentinel reports ho
 
 Solo VPS keeps Coolify management ports loopback-only. The generated localhost Sentinel URL `http://host.docker.internal:8000` therefore cannot be the maintained communication path: making raw port `8000` public would weaken the existing boundary.
 
-## Proposed decision
+## Decision
 
 Treat Sentinel as part of the existing high-trust Coolify control plane, not as a separate low-trust monitoring component.
 
@@ -29,6 +29,6 @@ Metrics collection remains optional. Repository-managed Alloy remains the separa
 
 Sentinel compromise must be treated like Coolify control-plane compromise because its Docker socket access can control host containers. The component cannot honestly be described as least-privilege or read-only.
 
-The HTTPS push path avoids exposing a new management port, but depends on the dashboard domain, TLS and reverse proxy being healthy. The disposable evaluation must therefore prove communication before and after the upgrade.
+The HTTPS push path avoids exposing a new management port, but depends on the dashboard domain, TLS and reverse proxy being healthy. The disposable `4.1.2 → 4.3.21` evaluation showed **Sentinel In Sync** before and after the upgrade and after replacement-host recovery. The local inspector proves configuration and container health; the UI status is the delivery evidence.
 
-Until the candidate exercise passes, Solo VPS retains its existing supported Coolify pins. This proposal does not authorize an automatic upgrade or a downgrade-based recovery path.
+Solo VPS now pins `4.3.21` for new installs and supports only the explicit `4.1.2 → 4.3.21` transition. This decision does not authorize unattended upgrades or downgrade-based recovery. The promoted source and clean-install path still require release validation.

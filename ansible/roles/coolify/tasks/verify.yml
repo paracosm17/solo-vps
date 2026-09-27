@@ -256,6 +256,9 @@
 - name: Verify the running Coolify runtime and exposure contract
   ansible.builtin.import_tasks: verify-runtime.yml
 
+- name: Verify the supported Sentinel runtime after dashboard onboarding
+  ansible.builtin.import_tasks: verify-sentinel.yml
+
 - name: Report read-only Coolify verification summary
   ansible.builtin.debug:
     msg:

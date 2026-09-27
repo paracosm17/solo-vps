@@ -472,7 +472,7 @@ def main() -> int:
     parser.add_argument("operation", choices=("inspect", "plan", "restore"))
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--recovery-root", type=Path)
-    parser.add_argument("--expected-version", default="4.1.2")
+    parser.add_argument("--expected-version", default="4.3.21")
     parser.add_argument("--target-id", default="")
     args = parser.parse_args()
     try:

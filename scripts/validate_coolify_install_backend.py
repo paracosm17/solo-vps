@@ -49,7 +49,8 @@ def validate(root: Path) -> list[str]:
         "solo_vps_coolify_managed_marker: /data/coolify/.solo-vps-managed",
         "solo_vps_coolify_pending_marker: /data/coolify/.solo-vps-installing",
         "id.{{ admin.user }}@host.docker.internal",
-        "solo_vps_coolify_expected_image: \"ghcr.io/coollabsio/coolify:{{ solo_vps_coolify_image_tag }}\"",
+        "solo_vps_coolify_expected_image: \"docker.io/coollabsio/coolify:{{ solo_vps_coolify_image_tag }}\"",
+        "- /data/coolify/images",
         'solo_vps_coolify_non_root_parent_mode: "0711"',
         'solo_vps_coolify_non_root_data_root_mode: "0710"',
         'solo_vps_coolify_non_root_resource_root_mode: "0710"',
@@ -257,6 +258,7 @@ def validate(root: Path) -> list[str]:
         'chdir: "{{ solo_vps_coolify_data_root }}/proxy"',
         "solo_vps_coolify_proxy_chdir_probe.stdout",
         "ansible.builtin.import_tasks: verify-runtime.yml",
+        "ansible.builtin.import_tasks: verify-sentinel.yml",
     ):
         require(verify, phrase, "managed verifier")
 
@@ -273,6 +275,7 @@ def validate(root: Path) -> list[str]:
     verify_pos = playbook.find("tasks_from: verify")
     if not (0 <= reconcile_pos < verify_pos):
         raise ContractError("managed Coolify runtime access must reconcile before verification")
+    require(playbook, "when: solo_vps_coolify_install_marker.stat.exists", "post-onboarding verification stage")
 
     require(recover_playbook, "tasks_from: recover", "Coolify recovery playbook")
     require(verify_playbook, "tasks_from: verify", "Coolify verify playbook")

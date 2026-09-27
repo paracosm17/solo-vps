@@ -41,8 +41,8 @@ REQUIRED_SAFETY_PHRASES = (
     "If a change cannot describe its recovery path, it is not ready for production execution.",
     "new checkout of a reviewed release",
     "not by running `git pull` in the active checkout",
-    "RELEASE_VERSION='v0.1.0'",
-    "test \"$(git describe --tags --exact-match)\" = \"$RELEASE_VERSION\"",
+    "make source-update-prepare RELEASE_VERSION=v0.2.3",
+    "clones the exact tag into a sibling directory, and verifies that tag",
 )
 
 
@@ -151,8 +151,8 @@ def validate_upgrade_guide(root: Path) -> None:
         raise ContractError("M29 expects ADR-0001 to remain Accepted")
     required = (
         "Solo VPS manages Coolify through a pinned, reviewed integration.",
-        "previous supported Coolify: `4.1.1`",
-        "current supported Coolify: `4.1.2`",
+        "previous supported Coolify: `4.1.2`",
+        "current supported Coolify: `4.3.21`",
         "make coolify-upgrade-preflight",
         "make coolify-upgrade",
         "make coolify-upgrade-resume",

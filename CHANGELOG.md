@@ -15,7 +15,7 @@ The project is **PRE-ALPHA** and has not published a supported release. Changes 
 - SOPS + age infrastructure/recovery secrets, restic off-site backup tooling, PostgreSQL logical backup/restore and lost-VPS recovery source.
 - Optional Grafana Alloy retained logs and host metrics, external uptime guidance and operator maintenance runbooks.
 - A tagged-checkout Solo VPS source-update contract that preserves persistent state outside the source tree.
-- A safety-gated Coolify `4.3.21` disposable evaluation harness with exact release artifacts, Sentinel trust-boundary checks and deterministic interrupted-upgrade recovery; the supported transition remains `4.1.1 → 4.1.2` until the supported-pin change is implemented and verified.
+- A safety-gated Coolify `4.1.2 → 4.3.21` lifecycle with exact release artifacts, Sentinel trust-boundary checks and deterministic interrupted-upgrade recovery. The new supported source still requires ordinary verifier and clean-install replay evidence before `v0.1.0`.
 
 ### Changed
 

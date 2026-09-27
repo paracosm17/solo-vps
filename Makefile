@@ -403,8 +403,7 @@ secure: check-local-files check-ssh-hardening-confirm ## Activate SSH hardening 
 
 platform: doctor-admin-local ## Install/verify pinned Coolify after the hardened admin reconnect
 	@$(MAKE) --no-print-directory coolify
-	@$(MAKE) --no-print-directory verify-coolify
-	@printf '%s\n' 'PASS Solo VPS application platform' 'NEXT: run make verify, then follow docs/operations/first-app.md.'
+	@printf '%s\n' 'PASS Solo VPS Coolify bootstrap' 'NEXT: complete HTTPS dashboard and Sentinel onboarding, then run make verify-coolify and make verify.'
 
 backup: doctor-admin-local ## EXTERNAL WRITE: run one configured off-site backup and verify repository/freshness
 	@$(MAKE) --no-print-directory backup-now
@@ -429,9 +428,19 @@ source-update-plan: validate-upgrade-guide ## Show the reviewed-tag/new-checkout
 		'Solo VPS source update contract:' \
 		'1. Keep config, encrypted bundles, SSH keys and recovery material outside the checkout.' \
 		'2. Clone the reviewed release tag into a new directory; do not git pull the active checkout.' \
-		'3. In the new checkout run make setup, make paths, make validate, make doctor, make verify and make audit.' \
-		'4. Keep the previous checkout only as source rollback context; it is not a runtime/data rollback.' \
+		'3. In the new checkout run make setup, make paths, make validate and make doctor.' \
+		'4. If Coolify is previous-supported, run the target release preflight and explicit upgrade; if already current, run make verify.' \
+		'5. Finish with make verify and make audit after the runtime matches the new source.' \
+		'6. Keep the previous checkout only as source rollback context; it is not a runtime/data rollback.' \
 		'SEE: docs/upgrades.md#update-solo-vps-source'
+
+source-update-prepare: ## Clone and verify one exact release tag beside this checkout; no VPS mutation
+	@test -n "$(RELEASE_VERSION)" || { printf '%s\n' 'ERROR: set RELEASE_VERSION to an exact tag such as v0.2.3.' >&2; exit 2; }
+	@$(PYTHON) scripts/prepare_source_update.py --version "$(RELEASE_VERSION)" --current .
+
+test-source-update-prepare: ## Test exact-tag source checkout preparation without network or VPS writes
+	@$(PYTHON) -m unittest tests.test_prepare_source_update
+
 
 validate-platform-lifecycle: ## Validate CRIT-011 Docker/Coolify version and upgrade lifecycle source boundaries
 	@$(PYTHON) $(PLATFORM_LIFECYCLE_CONTRACT_VALIDATOR) .
@@ -443,11 +452,13 @@ platform-lifecycle-plan: validate-platform-lifecycle ## Show the reviewed Docker
 	@$(PYTHON) $(PLATFORM_LIFECYCLE) plan --policy "$(PLATFORM_LIFECYCLE_POLICY)"
 
 coolify-upgrade-preflight: check-local-files ## Read-only preflight for the exact previous-supported -> current-supported Coolify path
-	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/coolify-upgrade-preflight.yml --extra-vars "@$(CONFIG)"
+	@test -n "$(COOLIFY_SENTINEL_URL)" || { printf '%s\n' 'ERROR: set COOLIFY_SENTINEL_URL to the reviewed HTTPS dashboard URL.' >&2; exit 2; }
+	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/coolify-upgrade-preflight.yml --extra-vars "@$(CONFIG)" --extra-vars "solo_vps_coolify_upgrade_sentinel_url=$(COOLIFY_SENTINEL_URL)"
 
 coolify-upgrade: check-local-files ## Upgrade only the supported previous Coolify release after backup and exact confirmations
+	@test -n "$(COOLIFY_SENTINEL_URL)" || { printf '%s\n' 'ERROR: set COOLIFY_SENTINEL_URL to the reviewed HTTPS dashboard URL.' >&2; exit 2; }
 	@test "$(COOLIFY_UPGRADE_CONFIRM)" = "$(COOLIFY_UPGRADE_CONFIRM_REQUIRED)" || { printf '%s\n' 'ERROR: set COOLIFY_UPGRADE_CONFIRM=I_HAVE_REVIEWED_THE_COOLIFY_UPGRADE_PLAN after reviewing the preflight.' >&2; exit 2; }
-	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/coolify-upgrade.yml --extra-vars "@$(CONFIG)" --extra-vars "solo_vps_coolify_upgrade_confirm=$(COOLIFY_UPGRADE_CONFIRM)"
+	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/coolify-upgrade.yml --extra-vars "@$(CONFIG)" --extra-vars "solo_vps_coolify_upgrade_confirm=$(COOLIFY_UPGRADE_CONFIRM) solo_vps_coolify_upgrade_sentinel_url=$(COOLIFY_SENTINEL_URL)"
 
 coolify-upgrade-resume: check-local-files ## Explicitly resume a known interrupted supported Coolify upgrade; never auto-downgrades
 	@test "$(COOLIFY_UPGRADE_RESUME_CONFIRM)" = "$(COOLIFY_UPGRADE_RESUME_CONFIRM_REQUIRED)" || { printf '%s\n' 'ERROR: set COOLIFY_UPGRADE_RESUME_CONFIRM=I_HAVE_REVIEWED_THE_INTERRUPTED_COOLIFY_UPGRADE only after reviewing the protected transaction marker and recovery choices.' >&2; exit 2; }
@@ -642,6 +653,8 @@ prove-disposable-clean-target: validate-disposable-clean-target test-disposable-
 		--evidence-dir "$(DISPOSABLE_TARGET_EVIDENCE_DIR)"
 
 ci-fast-source: validate-ai-coding validate-platform-lifecycle test-platform-lifecycle validate-documentation-governance test-documentation-governance validate-operator-surface test-operator-surface validate-application-migration-contract test-application-migration-contract validate-hosted-ci-contract test-hosted-ci-contract validate-disposable-clean-target test-disposable-clean-target validate-disaster-recovery test-disaster-recovery validate-backup-runtime test-backup-runtime validate-metrics-credentials test-metrics-credentials validate-metrics-runtime test-metrics-runtime validate-backup-policy test-backup-policy validate-database-backup-contract test-database-backup-contract validate-database-backup-runtime test-database-backup-runtime validate-state-layout test-state-layout validate-yaml validate-onboarding-contract test-onboarding-contract validate-coolify-contract test-coolify-install-backend validate-ci-template test-ci-template test-coolify-deploy-api validate-public-product-hygiene test-public-product-hygiene validate-qa-contract test-qa-contract validate-readme-contract test-readme-contract validate-architecture-docs test-architecture-docs validate-release-process test-release-process validate-external-uptime test-external-uptime ## Run the bounded source-only part of the public hosted CI gate
+
+ci-fast-source: test-source-update-prepare
 
 ci-fast: ci-fast-source qa-tools qa-static ## Run the full public hosted CI fast gate, including the pinned real Ansible QA layer
 

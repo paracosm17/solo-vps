@@ -41,17 +41,19 @@ def _mount(inspect: dict[str, Any], destination: str) -> dict[str, Any] | None:
 def evaluate_inspect(
     payload: Any,
     *,
-    expected_push_endpoint: str,
+    expected_push_endpoint: str | None = None,
     expected_image: str | None = None,
     expected_image_id: str | None = None,
     observed_version: str | None = None,
     expected_version: str | None = None,
 ) -> dict[str, Any]:
-    parsed_url = urlparse(expected_push_endpoint)
-    _require(
-        parsed_url.scheme == "https" and bool(parsed_url.netloc) and not parsed_url.username,
-        "expected Sentinel push endpoint must be a credential-free HTTPS URL",
-    )
+    if expected_push_endpoint is not None:
+        parsed_url = urlparse(expected_push_endpoint)
+        _require(
+            parsed_url.scheme == "https" and bool(parsed_url.hostname) and not parsed_url.username
+            and not parsed_url.password and not parsed_url.query and not parsed_url.fragment,
+            "expected Sentinel push endpoint must be a credential-free HTTPS URL",
+        )
     _require(isinstance(payload, list) and len(payload) == 1, "docker inspect must return exactly one container")
     inspect = payload[0]
     _require(isinstance(inspect, dict), "docker inspect item must be an object")
@@ -82,7 +84,15 @@ def evaluate_inspect(
     _require(data_mount.get("Source") == "/data/coolify/sentinel", "Sentinel data mount source drifted")
 
     _require(bool(environment.get("TOKEN")), "Sentinel token is missing")
-    _require(environment.get("PUSH_ENDPOINT") == expected_push_endpoint, "Sentinel push endpoint does not match the reviewed HTTPS URL")
+    push_endpoint = environment.get("PUSH_ENDPOINT", "")
+    push_url = urlparse(push_endpoint)
+    _require(
+        push_url.scheme == "https" and bool(push_url.hostname) and not push_url.username
+        and not push_url.password and not push_url.query and not push_url.fragment,
+        "Sentinel push endpoint must use a credential-free HTTPS URL",
+    )
+    if expected_push_endpoint is not None:
+        _require(push_endpoint == expected_push_endpoint, "Sentinel push endpoint does not match the reviewed HTTPS URL")
     _require(environment.get("DEBUG") == "false", "Sentinel debug mode must remain disabled")
     _require(environment.get("COLLECTOR_ENABLED") in {"true", "false"}, "Sentinel collector setting is invalid")
 
@@ -92,8 +102,8 @@ def evaluate_inspect(
         if expected_image.startswith("ghcr.io/"):
             allowed_images.add("docker.io/" + expected_image.removeprefix("ghcr.io/"))
         _require(image in allowed_images, "Sentinel image does not match the evaluation candidate")
-        _require(bool(expected_image_id), "candidate Sentinel image ID must be pinned")
-        _require(inspect.get("Image") == expected_image_id, "Sentinel image content does not match the evaluation candidate")
+        if expected_image_id:
+            _require(inspect.get("Image") == expected_image_id, "Sentinel image content does not match the evaluation candidate")
     if expected_version:
         _require(observed_version == expected_version, "Sentinel API version does not match the evaluation candidate")
 
@@ -104,7 +114,7 @@ def evaluate_inspect(
         "runtime_status": state.get("Status"),
         "health": (state.get("Health") or {}).get("Status"),
         "api_version": observed_version,
-        "push_endpoint": expected_push_endpoint,
+        "push_endpoint": push_endpoint,
         "token_present": True,
         "debug_enabled": False,
         "metrics_collector_enabled": environment.get("COLLECTOR_ENABLED") == "true",
@@ -129,7 +139,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--docker", default="/usr/bin/docker")
     parser.add_argument("--inspect-json", type=Path)
-    parser.add_argument("--expected-push-endpoint", required=True)
+    parser.add_argument("--expected-push-endpoint")
     parser.add_argument("--expected-image")
     parser.add_argument("--expected-image-id")
     parser.add_argument("--expected-version")

@@ -36,10 +36,10 @@ def validate(root: Path) -> None:
     require(docker.get("automatic_major_upgrade") is False, "automatic Docker major upgrades must stay disabled")
 
     coolify = policy.get("coolify", {})
-    require(coolify.get("current_supported") == "4.1.2", "current supported Coolify must match the pinned M9 version")
-    require(coolify.get("previous_supported") == "4.1.1", "previous supported Coolify must be explicit")
+    require(coolify.get("current_supported") == "4.3.21", "current supported Coolify must match the promoted pin")
+    require(coolify.get("previous_supported") == "4.1.2", "previous supported Coolify must be explicit")
     upgrade = coolify.get("supported_upgrade", {})
-    require(upgrade.get("from") == "4.1.1" and upgrade.get("to") == "4.1.2", "exact previous -> current Coolify path missing")
+    require(upgrade.get("from") == "4.1.2" and upgrade.get("to") == "4.3.21", "exact previous -> current Coolify path missing")
     for key in (
         "exact_target_artifacts",
         "require_local_control_plane_checkpoint",
@@ -70,8 +70,10 @@ def validate(root: Path) -> None:
     )
 
     coolify_defaults = read(root / "ansible/roles/coolify/defaults/main.yml")
-    require('solo_vps_coolify_previous_supported_version: "4.1.1"' in coolify_defaults, "Coolify previous supported version missing")
-    require('solo_vps_coolify_version: "4.1.2"' in coolify_defaults, "Coolify current supported version must not follow an unproven candidate")
+    require('solo_vps_coolify_previous_supported_version: "4.1.2"' in coolify_defaults, "Coolify previous supported version missing")
+    require('solo_vps_coolify_version: "4.3.21"' in coolify_defaults, "Coolify promoted version missing")
+    require('solo_vps_coolify_expected_image: "docker.io/coollabsio/coolify:' in coolify_defaults, "Coolify promoted image registry missing")
+    require('/data/coolify/images' in coolify_defaults, "Coolify promoted image storage missing")
     require('solo_vps_coolify_upgrade_pending_marker: /data/coolify/.solo-vps-upgrading' in coolify_defaults, "Coolify upgrade transaction marker missing")
     require("solo_vps_coolify_supported_docker_majors:\n  - 29" in coolify_defaults, "Coolify readiness must inherit the Docker 29 support boundary")
 
@@ -93,12 +95,19 @@ def validate(root: Path) -> None:
         "Promote the verified target Coolify release artifacts",
         "Pin the target Coolify image and keep automatic upgrades disabled",
         "Verify the upgraded Coolify runtime before committing the version marker",
-        "Remove the Coolify upgrade transaction marker after successful verification",
+        "Remove the Coolify upgrade transaction marker after full verification",
     ):
         require(token in apply, f"Coolify upgrade apply flow missing: {token}")
     require("curl -fsSL" not in apply and "install.sh" not in apply, "project-owned upgrade must not call the upstream installer")
+    require(apply.index("Verify the current supported Coolify installation") < apply.index("Remove the Coolify upgrade transaction marker after full verification"), "full verification must precede transaction marker removal")
     require("previous_supported" in resume and "current_supported" in resume, "upgrade resume must bind the same exact version pair")
     require("automatic downgrade" in resume.lower(), "upgrade resume must reject automatic downgrade semantics")
+    require(resume.index("Run full current supported Coolify verification") < resume.index("Remove the interrupted Coolify upgrade marker only after full verification"), "resume must retain transaction marker until full verification")
+    require("verify-sentinel.yml" in preflight, "supported upgrade must verify Sentinel before mutation")
+    supported_sentinel = read(root / "ansible/roles/coolify/tasks/verify-sentinel.yml")
+    for token in ("--expected-image", "--expected-version", "port: 8888"):
+        require(token in supported_sentinel, f"supported Sentinel boundary missing: {token}")
+    require("ansible_facts.architecture == 'x86_64'" in supported_sentinel, "x86_64 Sentinel content pin must not be imposed on aarch64")
 
     makefile = read(root / "Makefile")
     for target in (
@@ -210,8 +219,8 @@ def validate(root: Path) -> None:
     for phrase in (
         "Docker 29.x",
         "Docker 30",
-        "previous supported Coolify: `4.1.1`",
-        "current supported Coolify: `4.1.2`",
+        "previous supported Coolify: `4.1.2`",
+        "current supported Coolify: `4.3.21`",
         "make coolify-upgrade-preflight",
         "make coolify-upgrade",
         "make coolify-upgrade-resume",
@@ -234,8 +243,7 @@ def main() -> int:
         return 2
     print(
         "PASS platform lifecycle contract: Docker 29.x fail-closed window, "
-        "supported Coolify 4.1.1 -> 4.1.2 lifecycle, and isolated 4.3.21/Sentinel "
-        "disposable evaluation are explicit"
+        "supported Coolify 4.1.2 -> 4.3.21 lifecycle and Sentinel boundary are explicit"
     )
     return 0
 
