@@ -119,7 +119,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-012 CI deployment transport | DEFERRED | restricted SSH tunnel remains the proven default |
 | CRIT-013 recovery priority | CLOSED | recovery path implemented before optional observability expansion |
 | CRIT-014 private security channel | PARTIAL | GitHub Private Vulnerability Reporting enabled; independent reporter-path test pending |
-| CRIT-015 external outage detection | DONE / V3 | Provider-level VPS shutdown/restart produced real DOWN/UP emails; exact alert latency was not measured |
+| CRIT-015 external outage detection | PARTIAL V3 | Provider-level VPS shutdown/restart produced real DOWN/UP emails; the required reviewed alert interval is not proven from the approximate stop time |
 | CRIT-016 migration safety | DONE / V2 | app-owned preflight and image-only rollback boundary |
 | CRIT-017 release/upgrade story | PARTIAL | tagged-source contract documented; first tag and lifecycle proof pending |
 | CRIT-018 documentation duplication | DONE / V2 | user, architecture, plan and evidence roles separated |
@@ -196,7 +196,7 @@ The maintained product topology remains one VPS.
 
 - three-day Grafana marker lookup;
 - supported Coolify pin/source change and same-host verification;
-- replacement-host retained-log proof and supported-pin verification;
+- replacement-host retained-log proof, supported-pin verification and a trustworthy whole-host alert-interval record;
 - exact-candidate owner replay;
 - independent private-reporting path test, release-commit hosted CI and immutable release identity.
 
