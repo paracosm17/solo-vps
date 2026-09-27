@@ -269,7 +269,7 @@ The Coolify source path supports only the previous-supported `4.1.2` → current
 
 The disposable lifecycle exercise is **V3 PASS**: the exact `4.1.2` → `4.3.21` upgrade, an interrupted transaction with forward resume, Sentinel on the supported current release, and the replacement-host recovery path were exercised before `4.3.21` was promoted in source. The remaining V4 release gate is a clean fresh-user replay of the exact Solo VPS release candidate, not another lifecycle ceremony.
 
-The promoted-source maintained-host checkpoint is also **V3 PASS for the installed/current no-op boundary**:
+The promoted-source checkpoint on the recovered disposable host is also **V3 PASS for the installed/current no-op boundary**:
 
 ```bash
 make verify-docker

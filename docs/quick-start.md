@@ -354,7 +354,7 @@ The example is `coolify.example.com`. With Cloudflare, select **DNS only**. Add 
 
 **In Coolify:**
 
-1. Select **Settings with the gear icon near the bottom of the left sidebar**.
+1. Select **Settings** in the left sidebar.
 2. Open **Configuration → General**.
 3. Set **URL** to `https://coolify.example.com`, replacing the domain with yours.
 4. Select **Save**.

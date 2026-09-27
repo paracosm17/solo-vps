@@ -14,6 +14,8 @@ from scripts.coolify_deploy_api import (
     APPLY_CONFIRMATION,
     apply_deployment,
     build_plan,
+    load_deploy_token_from_environment,
+    load_read_write_token_from_environment,
     normalize_base_url,
     recover_known_good,
     require_apply_confirmation,
@@ -62,6 +64,21 @@ class CoolifyDeployApiContractTests(unittest.TestCase):
             resource_uuid=RESOURCE_UUID,
             image_ref=IMAGE_REF,
         )
+
+    def test_split_tokens_do_not_fall_back_to_legacy_token(self) -> None:
+        with mock.patch.dict("os.environ", {"COOLIFY_API_TOKEN": "legacy-broad-token"}, clear=True):
+            with self.assertRaisesRegex(CoolifyDeployError, "COOLIFY_API_TOKEN_RW"):
+                load_read_write_token_from_environment()
+            with self.assertRaisesRegex(CoolifyDeployError, "COOLIFY_API_TOKEN_DEPLOY"):
+                load_deploy_token_from_environment()
+
+        with mock.patch.dict(
+            "os.environ",
+            {"COOLIFY_API_TOKEN_RW": "rw-token", "COOLIFY_API_TOKEN_DEPLOY": "deploy-token"},
+            clear=True,
+        ):
+            self.assertEqual(load_read_write_token_from_environment(), "rw-token")
+            self.assertEqual(load_deploy_token_from_environment(), "deploy-token")
 
     def test_plan_uses_exact_loopback_api_and_proven_digest_fields(self) -> None:
         self.assertEqual(self.plan.base_url, "http://127.0.0.1:8000/api/v1")

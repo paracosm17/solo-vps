@@ -345,11 +345,11 @@ def require_apply_confirmation() -> None:
         )
 
 
-def _load_token(primary_name: str, *, legacy_name: str = "COOLIFY_API_TOKEN") -> str:
-    token = os.environ.get(primary_name, "") or os.environ.get(legacy_name, "")
+def _load_token(name: str) -> str:
+    token = os.environ.get(name, "")
     if not token:
         raise CoolifyDeployError(
-            f"{primary_name} is required; supply it through the environment and do not put it on the command line"
+            f"{name} is required; supply it through the environment and do not put it on the command line"
         )
     return token
 
@@ -360,11 +360,6 @@ def load_read_write_token_from_environment() -> str:
 
 def load_deploy_token_from_environment() -> str:
     return _load_token("COOLIFY_API_TOKEN_DEPLOY")
-
-
-def load_token_from_environment() -> str:
-    """Legacy helper retained for maintainer callers during the 4.3.21 transition."""
-    return _load_token("COOLIFY_API_TOKEN")
 
 
 def check_application(client: CoolifyApiClient, plan: DeploymentPlan) -> dict[str, Any]:
