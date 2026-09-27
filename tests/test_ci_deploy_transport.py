@@ -131,7 +131,8 @@ class CiDeployTransportTests(unittest.TestCase):
         rendered = repr(plan)
         self.assertNotIn("PRIVATE KEY", rendered)
         self.assertNotIn("Bearer ", rendered)
-        self.assertIn("COOLIFY_API_TOKEN", rendered)
+        self.assertIn("COOLIFY_API_TOKEN_RW", rendered)
+        self.assertIn("COOLIFY_API_TOKEN_DEPLOY", rendered)
 
     def test_makefile_requires_explicit_transport_mutation_confirmation(self):
         makefile = (pathlib.Path(__file__).resolve().parents[1] / "Makefile").read_text(encoding="utf-8")

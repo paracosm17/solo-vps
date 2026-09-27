@@ -334,7 +334,7 @@ After delivery, run `make observability-runtime` on the VPS. This updates the se
 
 ## Done: history is searchable
 
-You have checked a real request, old and new entries across a redeploy, and a fresh entry after restarting the agent. The three-day check remains pending until that time has passed.
+You have checked a real request, old and new entries across a redeploy, and a fresh entry after restarting the agent. Maintainer evidence also confirms that older entries remained searchable after several days. Treat that as an observed integration result, not as a fixed retention SLA; your actual searchable window is determined by the Grafana plan and account limits.
 
 Keep an eye on retention, ingestion usage and token expiry. This setup adds application logs; host metrics and external outage alerts are separate tasks.
 

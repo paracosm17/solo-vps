@@ -80,8 +80,6 @@ def validate_policy(data: dict[str, object]) -> None:
         "min_timeout_seconds": 1,
         "max_timeout_seconds": 10,
         "provider_confirmation_retries_required": True,
-        "max_alert_detection_seconds": 660,
-        "max_recovery_notification_seconds": 600,
     }
     if monitor != expected_monitor:
         raise ContractError(f"monitor_policy drift: expected {expected_monitor}, found {monitor}")

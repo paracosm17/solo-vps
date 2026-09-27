@@ -1,6 +1,8 @@
-# Stable-alpha release plan
+# Stable-alpha release plan (historical)
 
-This document is the short execution plan from the current PRE-ALPHA state to the first public Solo VPS alpha. It exists to keep the release path aligned with the product premise: **one operator workstation + one compute VPS**, with optional managed external services for artifacts, backup and monitoring.
+> **Superseded planning record.** This file preserves the earlier alpha-validation plan and the Coolify versions that were current when those phases were designed. It is excluded from the public documentation site. For the current `v0.1.0` release state and remaining gates, use `ROADMAP.md` and `RELEASE_READINESS_PLAN.md`.
+
+This document records the original execution plan from the earlier PRE-ALPHA state to the first public Solo VPS alpha. It exists to preserve the reasoning behind the validation sequence and the product premise: **one operator workstation + one compute VPS**, with optional managed external services for artifacts, backup and monitoring.
 
 ## Why a temporary second VPS can appear in testing
 

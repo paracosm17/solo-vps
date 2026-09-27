@@ -219,7 +219,7 @@ ghcr.io/<github-user>/hello-app@sha256:<digest>
 
 Docker reported the same digest and the runner smoke container passed the exact fixture health contract on attempt 2. Because the smoke command uses `--pull never`, that health result is evidence for the already-pulled immutable artifact rather than a second mutable lookup.
 
-The separate M11 Docker Image handoff is now maintainer integration PASS. `scripts/validate_coolify_image_handoff.py` still validates only canonical GHCR `name@sha256:digest` references and reproduces the pinned v4.1.2 creation-UI double-`@sha256` defect, while `maintainer image-handoff proof` proves the corrected General-form pair deploys the exact digest with no Git/VPS build, returns a healthy container, keeps 8080 Docker-internal, and preserves a passing audit.
+The separate M11 Docker Image handoff is now maintainer integration PASS. `scripts/validate_coolify_image_handoff.py` still validates only canonical GHCR `name@sha256:digest` references and reproduces the historical v4.1.2 creation-UI double-`@sha256` defect, while `maintainer image-handoff proof` proves the corrected General-form pair deploys the exact digest with no Git/VPS build, returns a healthy container, keeps 8080 Docker-internal, and preserves a passing audit.
 
 A maintainer API run closes the loopback API semantics proof: full `make validate` passes, read-only API state validation passes, exact-digest PATCH/start returns deployment UUID `<deployment-uuid>`, deployment reaches `finished`, application reaches `running:healthy`, Docker still reports the exact immutable digest, host 8080 remains absent, and both `make verify-coolify` and `make audit` pass.
 
@@ -244,11 +244,9 @@ make test-external-uptime
 make uptime-plan UPTIME_HEALTH_URL='https://app.example.com/healthz'
 ```
 
-The source contract is deliberately provider-neutral and performs no provider/network write. It requires a public HTTPS application health endpoint, normal port 443, HTTP 200, five-minute interval, ten-second timeout, two consecutive failures, an off-VPS notification destination, provider test notification, outage alert, and recovery notification. It explicitly rejects same-VPS monitoring and raw Coolify management ports as evidence for total-host loss.
+The source contract is deliberately provider-neutral and performs no provider/network write. It requires a public HTTPS application health endpoint, normal port 443, HTTP 200, the reviewed monitor interval/timeout, provider confirmation retries, an off-VPS notification destination, provider test notification, outage alert, and recovery notification. It explicitly rejects same-VPS monitoring and raw Coolify management ports as evidence for total-host loss. Provider notification timing may be recorded for diagnosis, but there is no fixed alert-latency release SLA.
 
-V2 source evidence does **not** promote CRIT-015 to integration proof. V3 requires an external service to observe a controlled whole-target shutdown, deliver the outage notification inside the reviewed latency bound, observe recovery, and deliver a recovery notification. The preferred target is the later disposable/final-validation VPS rather than intentionally powering off a real maintained production host. `make uptime-evidence` stores only an operator-attested sanitized summary outside the checkout; provider UI/event artifacts still need maintainer review before the result is accepted as V3.
-
-The maintained-controller CRIT-015 source checkpoint is V2 PASS: contract/tests, the real public application `/healthz` endpoint returning HTTP 200, full `ci-fast-source`, and pinned `qa-static` all passed. This still does not prove external notification delivery or total-host loss.
+CRIT-015 is now **V3 PASS**. An external service observed a controlled whole-target shutdown and recovery, and real DOWN/UP notifications were delivered outside the VPS. The operator observed delivery within a few minutes. That proves independent total-host outage detection; Solo VPS does **not** claim or release-gate a precise provider notification-latency SLA. `make uptime-evidence` remains the sanitized maintainer capture path when another outage exercise is performed.
 
 ## CRIT-011 Docker/Coolify lifecycle
 
@@ -267,11 +265,11 @@ make coolify-upgrade-preflight
 
 The Docker contract accepts only major 29 for this alpha line, rejects an unsupported existing Engine before M7 repository/daemon/service mutation, and rejects an unsupported fresh APT candidate before package installation. `state: present` remains intentional, so M7 does not silently advance an already-installed Engine.
 
-The Coolify source path supports only `4.1.1` → `4.1.2`: preflight must prove the exact managed version/image, Docker 29.x, M7 daemon ownership, disabled autoupdate, health, and loopback 8000/6001/6002. Mutation additionally requires `make backup-check` and independent confirmation of the off-site Coolify instance-database backup. A transaction marker is written before canonical runtime mutation. Failure recovery is explicit forward resume or M16 restore; no automatic downgrade is claimed after possible database migrations.
+The Coolify source path supports only the previous-supported `4.1.2` → current-supported `4.3.21` lifecycle. Preflight proves the exact managed version/image, Docker 29.x, M7 daemon ownership, disabled autoupdate, health, loopback 8000/6001/6002 and the release-artifact/Sentinel prerequisites for this transition. Mutation additionally requires the documented backup safety gates. A transaction marker is written before canonical runtime mutation. Failure recovery is explicit forward resume or M16 restore; no automatic downgrade is claimed after possible database migrations.
 
-The current CRIT-011 source checkpoint is **V2 PASS** on the maintained controller: the lifecycle, Docker, and upgrade-guide regression suites pass; the bounded `ci-fast-source` gate passes; and pinned `qa-static` completes with zero ansible-lint failures/warnings. This proves the source/QA boundary, not the upgrade itself.
+The disposable lifecycle exercise is **V3 PASS**: the exact `4.1.2` → `4.3.21` upgrade, an interrupted transaction with forward resume, Sentinel on the supported current release, and the replacement-host recovery path were exercised before `4.3.21` was promoted in source. The remaining V4 release gate is a clean fresh-user replay of the exact Solo VPS release candidate, not another lifecycle ceremony.
 
-The maintained-host read-only checkpoint is now **V3 PASS for the installed/current no-op boundary**:
+The promoted-source maintained-host checkpoint is also **V3 PASS for the installed/current no-op boundary**:
 
 ```bash
 make verify-docker
@@ -281,11 +279,9 @@ make verify
 make audit
 ```
 
-The real run verifies an installed Docker Engine inside the supported 29.x window with `changed=0`, then recognizes already-current Coolify `4.1.2` with `upgrade_required: false` and `mutation: false`. M7 Docker ownership remains authoritative, automatic Coolify updates remain disabled, management ports remain loopback-only, Coolify health/readiness checks pass, aggregate host verification is unchanged, and the security audit reports no clear violations or warnings.
+The real run verifies an installed Docker Engine inside the supported 29.x window with `changed=0`, recognizes already-current Coolify `4.3.21` with no upgrade mutation, and keeps M7 Docker ownership authoritative. Automatic Coolify updates remain disabled, management ports remain loopback-only, Coolify health/readiness and Sentinel checks pass, aggregate host verification is unchanged, and the security audit remains green.
 
-This V3 evidence is deliberately narrow: it proves that an already-supported current installation is accepted **without mutation** and remains healthy under all read-only lifecycle checks. It still does **not** satisfy the previous-supported → current-supported upgrade acceptance criterion. Do not run `make coolify-upgrade` or `make coolify-upgrade-resume` on the maintained production host solely to manufacture proof.
-
-Real upgrade evidence remains pending until one disposable Ubuntu 24.04 target is established at previous-supported `4.1.1`, upgraded to current-supported `4.1.2`, verified, and subjected to a controlled interrupted-upgrade/recovery exercise.
+This checkpoint proves that the promoted source accepts the supported current installation **without mutation** after the lifecycle and recovery exercises. Do not rerun `make coolify-upgrade` or `make coolify-upgrade-resume` solely to manufacture duplicate evidence. The release candidate still needs the separate clean Ubuntu 24.04 fresh-user replay required by the release-readiness plan.
 
 ## CRIT-003 workstation SSH onboarding/recovery
 

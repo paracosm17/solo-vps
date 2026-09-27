@@ -182,7 +182,8 @@ class TransportPlan:
             "github_environment": "production",
             "github_environment_secrets": [
                 "SOLO_VPS_DEPLOY_SSH_KEY",
-                "COOLIFY_API_TOKEN",
+                "COOLIFY_API_TOKEN_RW",
+                "COOLIFY_API_TOKEN_DEPLOY",
             ],
             "github_environment_variables": [
                 "SOLO_VPS_DEPLOY_HOST",
@@ -233,7 +234,7 @@ def main() -> int:
     print("  runner_ssh_command:")
     print(f"    {shell_join_preserving_runner_temp(runner_ssh_argv(plan.server_host))}")
     print("  GitHub environment: production")
-    print("  environment secrets: SOLO_VPS_DEPLOY_SSH_KEY, COOLIFY_API_TOKEN")
+    print("  environment secrets: SOLO_VPS_DEPLOY_SSH_KEY, COOLIFY_API_TOKEN_RW, COOLIFY_API_TOKEN_DEPLOY")
     print("  environment vars: SOLO_VPS_DEPLOY_HOST, SOLO_VPS_SSH_KNOWN_HOSTS, COOLIFY_RESOURCE_UUID")
     print("  mutation: none; this helper only defines the transport contract")
     return 0

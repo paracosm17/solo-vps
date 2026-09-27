@@ -37,13 +37,14 @@ The project is **PRE-ALPHA** and has not published a supported release. Changes 
 - Distinguish a deployment rejected before mutation from a failed deployment that requires rollback.
 - Prevent expected Docker API proxy `403` responses after reboot from being misclassified as Grafana provider-auth failures.
 - Align the retained-log and metrics walkthroughs with the operator-verified Grafana Cloud UI.
+- Align the first-app and CI authorization flow with Coolify `4.3.21`: use separate `read` + `write` and deploy-only API tokens because the current non-root token UI makes `deploy` exclusive; refresh the affected Coolify UI labels and remove the stale `4.1.2` creation-form workaround.
 
 ### Security and recovery boundaries
 
 - CRIT-005 is closed at V3: Repository-managed Alloy uses a protected Unix socket and a restricted Docker API proxy; unrelated host users cannot use the collector boundary.
 - Image rollback is container-image-only and never claims to reverse database migrations, data changes or external side effects.
 - Real Backblaze B2 PostgreSQL restore, restic snapshot/freshness/temporary restore-test and planned reboot recovery are integration-proven.
-- Disposable lost-VPS reconstruction and whole-host DOWN/UP notification passed. The supported Coolify lifecycle, measured alert interval and exact-candidate owner replay remain release gates.
+- Disposable lost-VPS reconstruction, the supported Coolify lifecycle and whole-host DOWN/UP notification passed. Retained logs were also observed again after several days. The remaining runtime release gate is the exact-candidate clean-user replay; no alert-latency or log-retention SLA is claimed.
 - No supported release tag exists yet.
 
 [Unreleased]: ./ROADMAP.md

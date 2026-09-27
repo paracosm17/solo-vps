@@ -753,7 +753,7 @@ plan-coolify-deploy-api: ## Print the exact loopback Coolify API mutation plan w
 check-coolify-deploy-api: ## Read-only validate the isolated Docker Image resource through loopback Coolify API
 	@test -n "$(COOLIFY_RESOURCE_UUID)" || { printf '%s\n' 'ERROR: COOLIFY_RESOURCE_UUID is required.' >&2; exit 2; }
 	@test -n "$(COOLIFY_IMAGE_REF)" || { printf '%s\n' 'ERROR: COOLIFY_IMAGE_REF is required.' >&2; exit 2; }
-	@test -n "$$COOLIFY_API_TOKEN" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN must be exported for API check; do not put it on the command line.' >&2; exit 2; }
+	@test -n "$$COOLIFY_API_TOKEN_RW" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN_RW must be exported for API check; do not put it on the command line.' >&2; exit 2; }
 	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) $(COOLIFY_DEPLOY_API) --base-url "$(COOLIFY_API_BASE_URL)" --resource-uuid "$(COOLIFY_RESOURCE_UUID)" --image-ref "$(COOLIFY_IMAGE_REF)" --check
 
 check-coolify-api-deploy-confirm: ## Refuse loopback Coolify API mutation without explicit operator confirmation
@@ -766,14 +766,16 @@ check-coolify-api-deploy-confirm: ## Refuse loopback Coolify API mutation withou
 deploy-coolify-image-api: check-coolify-api-deploy-confirm ## Deploy one exact immutable GHCR digest through loopback Coolify API
 	@test -n "$(COOLIFY_RESOURCE_UUID)" || { printf '%s\n' 'ERROR: COOLIFY_RESOURCE_UUID is required.' >&2; exit 2; }
 	@test -n "$(COOLIFY_IMAGE_REF)" || { printf '%s\n' 'ERROR: COOLIFY_IMAGE_REF is required.' >&2; exit 2; }
-	@test -n "$$COOLIFY_API_TOKEN" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN must be exported for API deployment; do not put it on the command line.' >&2; exit 2; }
+	@test -n "$$COOLIFY_API_TOKEN_RW" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN_RW must be exported for API deployment; do not put it on the command line.' >&2; exit 2; }
+	@test -n "$$COOLIFY_API_TOKEN_DEPLOY" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN_DEPLOY must be exported for API deployment; do not put it on the command line.' >&2; exit 2; }
 	@COOLIFY_API_DEPLOY_CONFIRM="$(COOLIFY_API_DEPLOY_CONFIRM)" PYTHONDONTWRITEBYTECODE=1 $(PYTHON) $(COOLIFY_DEPLOY_API) --base-url "$(COOLIFY_API_BASE_URL)" --resource-uuid "$(COOLIFY_RESOURCE_UUID)" --image-ref "$(COOLIFY_IMAGE_REF)" --apply
 
 # Maintainer-only destructive proof. Intentionally hidden from `make help` because
 # it starts one failed deployment before requiring automatic rollback to known-good.
 prove-coolify-deploy-rollback:
 	@test -n "$(COOLIFY_RESOURCE_UUID)" || { printf '%s\n' 'ERROR: COOLIFY_RESOURCE_UUID is required.' >&2; exit 2; }
-	@test -n "$$COOLIFY_API_TOKEN" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN must be exported for rollback proof; do not put it on the command line.' >&2; exit 2; }
+	@test -n "$$COOLIFY_API_TOKEN_RW" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN_RW must be exported for rollback proof; do not put it on the command line.' >&2; exit 2; }
+	@test -n "$$COOLIFY_API_TOKEN_DEPLOY" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN_DEPLOY must be exported for rollback proof; do not put it on the command line.' >&2; exit 2; }
 	@test "$(COOLIFY_ROLLBACK_PROOF_CONFIRM)" = "$(COOLIFY_ROLLBACK_PROOF_CONFIRM_REQUIRED)" || { \
 		printf '%s\n' 'ERROR: rollback proof deliberately starts a failed deployment.' \
 		  'Re-run with COOLIFY_ROLLBACK_PROOF_CONFIRM=$(COOLIFY_ROLLBACK_PROOF_CONFIRM_REQUIRED)' >&2; \

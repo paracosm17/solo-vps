@@ -128,14 +128,12 @@ An interrupted unmarked first install is a recovery case, not a normal rerun. Us
 
 ## Upgrades
 
-A normal `make platform` does not upgrade Coolify. The only supported alpha lifecycle currently distinguishes `4.1.1` and `4.1.2`; use [Upgrade guide](upgrades.md) for the safety-gated procedure.
+A normal `make platform` does not upgrade Coolify. The supported alpha lifecycle is previous-supported `4.1.2` → current-supported `4.3.21`; use the [Upgrade guide](upgrades.md) for the safety-gated procedure.
 
 ## Related
 
 - [Deploy your first application](operations/first-app.md)
 - [Daily operator UI](operations/operator-ui.md)
 - [Architecture](architecture.md)
-
-On repeated `make platform`, first-install readiness is skipped for a completed platform. Its own interrupted install with `.solo-vps-installing` resumes automatically, preserving existing secrets and the SSH key. Older transactions use the bounded recovery path. If the marker is absent or identity differs, inspect the original revision/config; unknown `/data/coolify` is not adopted. Interrupted upgrades require the separate `make coolify-upgrade-resume` path.
 
 On repeated `make platform`, first-install readiness is skipped for a completed platform. Its own interrupted install with `.solo-vps-installing` resumes automatically, preserving existing secrets and the SSH key. Older transactions use the bounded recovery path. If the marker is absent or identity differs, inspect the original revision/config; unknown `/data/coolify` is not adopted. Interrupted upgrades require the separate `make coolify-upgrade-resume` path.

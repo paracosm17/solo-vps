@@ -61,7 +61,8 @@ Secrets:
 
 ```text
 SOLO_VPS_DEPLOY_SSH_KEY
-COOLIFY_API_TOKEN
+COOLIFY_API_TOKEN_RW
+COOLIFY_API_TOKEN_DEPLOY
 ```
 
 Variables:
@@ -75,7 +76,7 @@ COOLIFY_RESOURCE_UUID
 
 Use the dedicated `solo-vps-ci` private key. The server receives only the public half. Pin the server Ed25519 host key from a trusted operator channel; the workflow intentionally refuses dynamic `ssh-keyscan` trust.
 
-The Coolify API token needs only the deployment abilities (`read`, `write`, `deploy`). Do not use `root` or `read:sensitive`.
+Coolify 4.3.21 requires two non-root API tokens for this workflow: one with `read` + `write`, and a separate deploy-only token. Do not use `root` or `read:sensitive`.
 
 ## Security contract
 

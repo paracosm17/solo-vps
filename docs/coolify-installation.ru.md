@@ -128,14 +128,12 @@ make verify-coolify
 
 ## Обновления
 
-Обычный `make platform` не обновляет Coolify. Поддерживаемый alpha lifecycle сейчас различает только `4.1.1` и `4.1.2`; safety-gated procedure описана в [руководстве по обновлению](upgrades.md).
+Обычный `make platform` не обновляет Coolify. Поддерживаемый alpha lifecycle: previous-supported `4.1.2` → current-supported `4.3.21`; safety-gated procedure описана в [руководстве по обновлению](upgrades.md).
 
 ## Связанные страницы
 
 - [Первое приложение](operations/first-app.md)
 - [Ежедневная работа](operations/operator-ui.md)
 - [Архитектура](architecture.md)
-
-При повторном `make platform` readiness первой установки пропускается для готовой платформы. Своя прерванная установка с marker `.solo-vps-installing` продолжается автоматически: существующие секреты и SSH-ключ сохраняются. Для старой незавершённой установки используется ограниченный recovery. Если marker отсутствует или identity не совпадает, исследуйте исходную ревизию/конфиг; чужой `/data/coolify` не принимается. Прерванное обновление требует отдельного `make coolify-upgrade-resume`.
 
 При повторном `make platform` readiness первой установки пропускается для готовой платформы. Своя прерванная установка с marker `.solo-vps-installing` продолжается автоматически: существующие секреты и SSH-ключ сохраняются. Для старой незавершённой установки используется ограниченный recovery. Если marker отсутствует или identity не совпадает, исследуйте исходную ревизию/конфиг; чужой `/data/coolify` не принимается. Прерванное обновление требует отдельного `make coolify-upgrade-resume`.

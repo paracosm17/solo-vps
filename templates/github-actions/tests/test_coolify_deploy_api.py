@@ -74,6 +74,10 @@ class CoolifyDeployApiContractTests(unittest.TestCase):
         self.assertEqual(self.plan.start_url, f"http://127.0.0.1:8000/api/v1/applications/{RESOURCE_UUID}/start")
         self.assertEqual(self.plan.as_dict()["rollback_scope"], "container-image-only")
         self.assertFalse(self.plan.as_dict()["database_schema_rollback"])
+        self.assertEqual(
+            self.plan.as_dict()["required_token_permissions"],
+            {"read_write_token": ["read", "write"], "deploy_token": ["deploy"]},
+        )
 
     def test_direct_and_fixed_runner_tunnel_loopback_urls_are_accepted(self) -> None:
         self.assertEqual(
@@ -183,6 +187,42 @@ class CoolifyDeployApiContractTests(unittest.TestCase):
         self.assertEqual([call[0] for call in calls], ["GET", "PATCH", "GET", "POST", "GET", "GET", "GET", "GET", "GET"])
         self.assertEqual(calls[1][2], self.plan.update_payload)
         self.assertIsNone(calls[3][2])
+
+    def test_apply_uses_deploy_only_client_only_for_start(self) -> None:
+        read_write_calls = []
+        deploy_calls = []
+        read_write_responses = [
+            app_state(),
+            {"uuid": RESOURCE_UUID},
+            app_state(),
+            {"deployment_uuid": "deployment123", "status": "finished"},
+            app_state(),
+        ]
+        deploy_responses = [{"deployment_uuid": "deployment123"}]
+
+        class ReadWriteClient:
+            def request(self, method, url, payload=None):
+                read_write_calls.append((method, url, payload))
+                return read_write_responses.pop(0)
+
+        class DeployClient:
+            def request(self, method, url, payload=None):
+                deploy_calls.append((method, url, payload))
+                return deploy_responses.pop(0)
+
+        evidence = apply_deployment(
+            ReadWriteClient(),
+            self.plan,
+            deploy_client=DeployClient(),
+            poll_interval=0,
+            poll_timeout=10,
+            sleeper=lambda _: None,
+            monotonic=lambda: 0.0,
+        )
+        self.assertEqual(evidence["deployment_status"], "finished")
+        self.assertEqual([call[0] for call in read_write_calls], ["GET", "PATCH", "GET", "GET", "GET"])
+        self.assertEqual([call[0] for call in deploy_calls], ["POST"])
+        self.assertEqual(deploy_calls[0][1], self.plan.start_url)
 
     def test_apply_fails_closed_on_bad_persisted_digest(self) -> None:
         previous_digest = "6" * 64
