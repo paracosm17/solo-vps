@@ -305,12 +305,11 @@ If `solo-vps` already exists locally, choose another empty destination directory
 
 ```bash
 make platform
-make verify
 ```
 
-The first command installs Coolify, prepares the localhost server and proxy, and verifies them. The second checks the configured host once as a whole.
+This installs Coolify, prepares the localhost server and proxy, and verifies the bootstrap runtime. Full verification follows dashboard and Sentinel onboarding in step 10.
 
-Wait for `PASS Solo VPS application platform`, followed by verification completing without errors. You do not need to repeat the installation.
+Wait for `PASS Solo VPS Coolify bootstrap`. You do not need to repeat the installation.
 
 ## 9. Register in Coolify
 
@@ -364,6 +363,16 @@ The example is `coolify.example.com`. With Cloudflare, select **DNS only**. Add 
 These are instance settings. **Servers → localhost → IP Address/Domain** is the SSH connection address; it remains `host.docker.internal`.
 
 The dashboard should open over HTTPS with a valid certificate. Use its domain for everyday access. You can close the tunnel with **Ctrl+C** in its terminal.
+
+**In Coolify → Servers → localhost → Sentinel → Configuration**, set **Coolify URL** to the same HTTPS dashboard URL, leave debug off, save, enable Sentinel and sync it. Wait for **Sentinel In Sync**. Do not expose raw ports `8000` or `8888` to make this work. Then, on the VPS as the administrator, run:
+
+```bash
+make verify-coolify
+make verify
+make audit
+```
+
+The verifier requires the pinned Coolify and Sentinel images, healthy runtime, HTTPS Sentinel endpoint, and private management ports. If Sentinel is not yet in sync, finish the Coolify setup before proceeding.
 
 ## Done: the server and dashboard are ready
 

@@ -131,12 +131,12 @@ def validate(root: Path) -> None:
     for quick in quick_starts:
         ordered = (
             "make setup", "make human-admin-key-stdin", "make apply",
-            "sudo -n id -u", "make secure", "make platform", "make verify", "Skip Setup",
+            "sudo -n id -u", "make secure", "make platform", "Skip Setup", "Sentinel In Sync", "make verify",
         )
         for command in ordered:
             require(quick, command, "EN/RU Quick Start")
         if [quick.index(command) for command in ordered] != sorted(quick.index(command) for command in ordered):
-            raise ContractError("Quick Start must verify admin login before hardening, then install and register Coolify")
+            raise ContractError("Quick Start must install Coolify, complete HTTPS/Sentinel onboarding, then verify")
         for phrase in ("UTC", "~/.local/share/solo-vps", "config.yml", "private_key_received: false", "~/solo-vps", "operations/first-app.md"):
             require(quick, phrase, "EN/RU Quick Start")
 

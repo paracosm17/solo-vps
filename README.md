@@ -6,7 +6,7 @@
 
 You do not have to design the infrastructure or compare ten tools first. Solo VPS chooses one practical stack, provides the settings and automation, and shows you how to deploy, inspect and recover your applications. After setup, you can return to writing code instead of assembling a server by hand.
 
-> **Status:** PRE-ALPHA — **not production-ready**. Use a test VPS. The basic VPS → Coolify → first application → automatic deployment path has real operator evidence. The exact release candidate still needs a clean-host replay plus recovery/maintenance exercises. Off-site backups and Grafana remain optional profiles.
+> **Status:** PRE-ALPHA — **not production-ready**. Use a test VPS. The basic VPS → Coolify → first application → automatic deployment path and a separate replacement-host recovery exercise have real operator evidence. The promoted Coolify 4.3.21 source passed same-host verification; the exact release candidate still needs a clean user replay. Off-site backups and Grafana remain optional profiles.
 
 ```text
 your computer
@@ -53,7 +53,7 @@ Solo VPS is for one server. It is **not** Kubernetes, a multi-node orchestrator,
 
 ## Current status
 
-Host, SSH, Docker, Coolify, CI and bounded image rollback are implemented in source. A test VPS has operator evidence for fresh Ubuntu 24.04 setup, host apply, admin handoff, SSH hardening, Coolify installation, the first application, automatic post-merge deployment, runtime ENV changes and live application logs. This is not yet the final exact-revision clean replay. Interrupted-install recovery, the real Coolify upgrade path, the three-day retained-log follow-up and full lost-VPS recovery still have separate acceptance work. PostgreSQL restore, off-site backup/restore and Grafana host metrics/alerting are now operator-proven, as is immediate Grafana log delivery across an application redeploy and Alloy restart.
+Host, SSH, Docker, Coolify, CI and bounded image rollback are implemented in source. Test VPS evidence covers fresh Ubuntu 24.04 setup, the first application, automatic deployment, interrupted Coolify upgrade/resume to `4.3.21`, whole-host DOWN/UP emails and recovery after reimaging from off-site inputs. The promoted source passed ordinary Coolify/platform verification and security audit on the recovered host. This is not the final exact-revision clean replay: the delayed retained-log lookup and a measured whole-host alert interval remain open. PostgreSQL and restic restore, Grafana host metrics/alerting and immediate log delivery across redeploy and Alloy restart have separate operator evidence.
 
 Until those proofs exist, treat local/static validation as development evidence rather than a production guarantee.
 
@@ -86,7 +86,7 @@ The host commands are `make setup → make apply → make secure → make platfo
 
 Basic setup ends after part two. Off-site backups, external alerts and retained logs are subsequent tasks, linked at its end.
 
-**Alpha limits:** the exact release revision still needs a clean-host replay, Coolify lifecycle/interruption proof, whole-host alert test, delayed log-retention check, and lost-VPS recovery exercise. Use a disposable VPS; do not treat the source checks or earlier operator exercises as production approval.
+**Alpha limits:** the exact release revision still needs a clean-host owner replay, a measured whole-host alert interval and the delayed log-retention check. The supported Coolify `4.3.21` source passed same-host checks after the candidate upgrade and lost-VPS recovery exercises; these do not approve the project for production use.
 
 ## Safety boundaries
 

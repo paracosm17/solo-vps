@@ -5,8 +5,8 @@ Solo VPS устанавливает Coolify, не передавая upstream in
 ## Текущая зафиксированная платформа
 
 ```text
-Coolify:           4.1.2
-image:             ghcr.io/coollabsio/coolify:4.1.2
+Coolify:           4.3.21
+image:             docker.io/coollabsio/coolify:4.3.21
 Docker support:    29.x
 management bind:   127.0.0.1
 management ports:  8000, 6001, 6002
@@ -42,7 +42,7 @@ Fresh-install path ожидает, что `/data/coolify` не использу�
 make platform
 ```
 
-`make platform` выполняет readiness checks, устанавливает/reconciles зафиксированный release Coolify и запускает `make verify-coolify`.
+На чистом VPS `make platform` проверяет готовность, устанавливает зафиксированный release и проверяет первоначальный запуск и закрытые порты. Создайте первый аккаунт, настройте HTTPS-панель и Sentinel перед `make verify-coolify`. На уже управляемом VPS `make platform` также выполняет полную проверку.
 
 Отдельный proxy Traefik публикует только **TCP 80/443**. Solo VPS устанавливает постоянный Compose override портов до первого запуска Coolify. Host-порт 8080 и UDP 443 не публикуются; HTTP/3 не входит в базовый сетевой профиль. Маршрутизацией, сертификатами и основным конфигом proxy продолжает управлять Coolify.
 
@@ -82,7 +82,7 @@ http://127.0.0.1:18000
 
 Оставьте терминал туннеля открытым: `-N` не запускает удалённую оболочку, поэтому ожидание без приглашения — нормально. Если SSH сообщает об ошибке перенаправления, устраните конфликт локального порта до открытия страницы. Создайте первый аккаунт через этот приватный path.
 
-Когда позже появится обычный HTTPS domain панели, raw management ports всё равно должны оставаться приватными. См. [домен панели Coolify и browser terminal](operations/coolify-dashboard-domain.md).
+После настройки HTTPS-домена панели укажите этот адрес в **Servers → localhost → Sentinel → Configuration → Coolify URL**, оставьте debug выключенным, включите Sentinel и выполните Sync. Дождитесь **Sentinel In Sync**. Raw management ports и порт Sentinel `8888` остаются приватными. См. [домен панели Coolify и browser terminal](operations/coolify-dashboard-domain.md).
 
 ## Проверьте Coolify
 
@@ -93,7 +93,7 @@ make verify-coolify
 make audit
 ```
 
-Verification проверяет managed marker, pinned image/artifacts, health endpoints, localhost SSH integration, bounded filesystem permissions, Docker daemon ownership boundary и loopback-only publications, не печатая секретные значения.
+Запускайте проверку после настройки Sentinel. Она проверяет managed marker, зафиксированные образы Coolify и Sentinel, health endpoints, HTTPS-настройку Sentinel, localhost SSH integration, ограниченные права на файлы, Docker daemon ownership и закрытые management ports, не печатая секретные значения. В панели отдельно подтвердите **Sentinel In Sync**.
 
 ## Второй idempotent run
 

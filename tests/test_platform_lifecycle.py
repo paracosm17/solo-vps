@@ -16,7 +16,7 @@ class PlatformLifecycleTests(unittest.TestCase):
         self.assertFalse(plan["network_request"])
         self.assertFalse(plan["mutation"])
         self.assertTrue(plan["docker"]["supported"])
-        self.assertEqual(plan["coolify"]["upgrade_path"], "4.1.1 -> 4.1.2")
+        self.assertEqual(plan["coolify"]["upgrade_path"], "4.1.2 -> 4.3.21")
         self.assertFalse(plan["coolify"]["fresh_restic_backup_required"])
         self.assertFalse(plan["coolify"]["offsite_instance_database_backup_required"])
         self.assertTrue(plan["coolify"]["local_control_plane_checkpoint_required"])

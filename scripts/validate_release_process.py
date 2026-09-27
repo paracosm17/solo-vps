@@ -36,8 +36,8 @@ def validate(root: Path) -> list[str]:
         "CRIT-011 Coolify lifecycle evidence" in docs
         and "previous-supported" in docs
         and "current-supported" in docs
-        and "4.1.1" in docs
-        and "4.1.2" in docs,
+        and "4.1.2" in docs
+        and "4.3.21" in docs,
         "Coolify lifecycle release gate missing",
     )
     require("explicitly approved" in docs or "explicit approval" in docs, "explicit publish approval boundary missing")

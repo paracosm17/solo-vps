@@ -1,0 +1,27 @@
+---
+- name: Inspect the supported Sentinel without exposing its token
+  ansible.builtin.script:
+    cmd: >-
+      {{ (role_path ~ '/../../../scripts/inspect_coolify_sentinel.py') | quote }}
+      --docker {{ solo_vps_coolify_docker_binary | quote }}
+      --expected-image {{ solo_vps_coolify_sentinel_image | quote }}
+      {{ ('--expected-image-id ' ~ (solo_vps_coolify_sentinel_image_id_x86_64 | quote)) if ansible_facts.architecture == 'x86_64' else '' }}
+      --expected-version {{ solo_vps_coolify_sentinel_version | quote }}
+      {{ ('--expected-push-endpoint ' ~ (solo_vps_coolify_sentinel_expected_url | quote)) if solo_vps_coolify_sentinel_expected_url | default('') | length > 0 else '' }}
+    executable: /usr/bin/python3
+  changed_when: false
+  register: solo_vps_coolify_sentinel_verify_raw
+
+- name: Verify Sentinel API has no public controller listener
+  ansible.builtin.wait_for:
+    host: "{{ ansible_host }}"
+    port: 8888
+    state: stopped
+    connect_timeout: 1
+    timeout: 3
+  delegate_to: localhost
+  become: false
+
+- name: Report the supported Sentinel trust boundary
+  ansible.builtin.debug:
+    msg: "{{ solo_vps_coolify_sentinel_verify_raw.stdout | from_json }}"

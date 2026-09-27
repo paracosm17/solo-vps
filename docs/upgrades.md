@@ -25,28 +25,23 @@ A previous project checkout is **not** a generic runtime rollback. Reverting sou
 
 Solo VPS source is updated by opening a **new checkout of a reviewed release**, not by running `git pull` in the active checkout. Installation-specific config, inventory and encrypted operator state live outside the source tree, so both checkouts use the same persistent state.
 
-No release tag exists while the project is PRE-ALPHA. Until the first release is published, use only the reviewed commit or archive supplied for a test. After a release is published, use its exact tag:
+No release tag exists while the project is PRE-ALPHA. Until the first release is published, use only the reviewed commit or archive supplied for a test. After a release is published, run this in the **old checkout**, replacing the example with the exact published target tag:
 
 ```bash
-REPOSITORY_URL='https://github.com/paracosm17/solo-vps.git'
-RELEASE_VERSION='v0.1.0'
-git clone --branch "$RELEASE_VERSION" --depth 1 "$REPOSITORY_URL" "solo-vps-${RELEASE_VERSION}"
-cd "solo-vps-${RELEASE_VERSION}"
-test "$(git describe --tags --exact-match)" = "$RELEASE_VERSION"
+make source-update-prepare RELEASE_VERSION=v0.2.3
+cd ../solo-vps-v0.2.3
 ```
 
-Then verify the new source before it changes the VPS:
+The command refuses a dirty old checkout or an existing target directory, clones the exact tag into a sibling directory, and verifies that tag. It does not modify the VPS. Then verify the new source before it changes the VPS:
 
 ```bash
 make setup
 make paths
 make validate
 make doctor
-make verify
-make audit
 ```
 
-Compare the `make paths` output with the old checkout. The config and inventory paths must be identical. Read the target release notes and run only the explicit subsystem migration or lifecycle command required by that release. A source update alone does not require `make secure`, a Docker upgrade, or a Coolify upgrade.
+Compare the `make paths` output with the old checkout. The config and inventory paths must be identical. Read the target release notes and run only the explicit subsystem migration or lifecycle command required by that release. If the installed Coolify is the target source's previous supported version, run its read-only `make coolify-upgrade-preflight` before the explicit upgrade; the new source's `make verify` will correctly reject that old runtime until the transition finishes. If runtime already matches the new source, run `make verify` directly. Finish with `make verify` and `make audit`. A source update alone does not require `make secure`, a Docker upgrade, or a Coolify upgrade.
 
 Keep the previous checkout until the new source passes verification and the application remains healthy. Returning to it restores only the previous automation source; it does not undo runtime mutations already performed by a subsystem upgrade.
 
@@ -115,9 +110,9 @@ Solo VPS manages Coolify through a pinned, reviewed integration. It keeps owners
 The supported lifecycle pair in this source revision is:
 
 ```text
-previous supported Coolify: `4.1.1`
-current supported Coolify: `4.1.2`
-transition:                 4.1.1 -> 4.1.2
+previous supported Coolify: `4.1.2`
+current supported Coolify: `4.3.21`
+transition:                 4.1.2 -> 4.3.21
 AUTOUPDATE=false
 ```
 
@@ -125,13 +120,13 @@ AUTOUPDATE=false
 
 ### Preflight
 
-Before the supported transition:
+Before the supported transition, configure **Servers → localhost → Sentinel → Configuration → Coolify URL** to the working HTTPS dashboard URL in Coolify `4.1.2`, enable and sync Sentinel, and confirm **Sentinel In Sync**. Keep raw management port `8000` and Sentinel port `8888` private. Then run:
 
 ```bash
-make coolify-upgrade-preflight
+COOLIFY_SENTINEL_URL=https://coolify.example.com make coolify-upgrade-preflight
 ```
 
-The preflight checks the managed installation, exact version pair, Docker support window, current runtime health, loopback-only management ports, `AUTOUPDATE=false`, and the absence of an unresolved install/upgrade transaction.
+The preflight checks the managed installation, exact version pair, Docker support window, current runtime health, loopback-only management ports, the reviewed HTTPS Sentinel endpoint and privileged boundary, `AUTOUPDATE=false`, and the absence of an unresolved install/upgrade transaction. The Sentinel inspector checks local health and configuration; confirm **Sentinel In Sync** in the UI to prove delivery.
 
 ### Upgrade
 
@@ -139,12 +134,13 @@ The mutating path is intentionally confirmation-gated:
 
 ```bash
 COOLIFY_UPGRADE_CONFIRM=I_HAVE_REVIEWED_THE_COOLIFY_UPGRADE_PLAN \
+COOLIFY_SENTINEL_URL=https://coolify.example.com \
 make coolify-upgrade
 ```
 
 Before mutation, the upgrade automatically creates a local checkpoint under `/var/lib/solo-vps/checkpoints/coolify-*`: a custom-format Coolify database dump, an archive of `source` (including `.env`), SSH keys and the ownership marker, plus SHA-256 metadata. `pg_restore --list` validates the dump; failure prevents the upgrade. Only root can access it. The checkpoint survives success/failure and its path is recorded in `.solo-vps-upgrading`. S3 and restic are not required.
 
-This copy contains secrets and excludes application data. It cannot survive VPS loss; archive inspection is not a restore test. Pause deployments and UI/ENV changes before upgrading. If forward resume is unsafe, preserve the checkpoint and investigate recovery on a separate test instance at the original version. Automated restore of this local checkpoint is not provided yet. Remove old checkpoints manually only after upgrade verification and your chosen retention period.
+This copy contains secrets and excludes application data. It cannot survive VPS loss; archive inspection is not a restore test. Pause deployments and UI/ENV changes before upgrading. For installations with off-site backup enabled, also run `make backup-now`, `make backup-check`, `make backup-restore-test` and verify a fresh Coolify instance database backup before mutation. If forward resume is unsafe, preserve the checkpoint and investigate recovery on a separate test instance at the original version. Automated restore of this local checkpoint is not provided yet. Remove old checkpoints manually only after upgrade verification and your chosen retention period.
 
 ### Interrupted upgrade
 
@@ -248,9 +244,9 @@ At this PRE-ALPHA checkpoint:
 
 - the tagged-checkout source-update contract is documented, but no public release channel or release tag exists yet;
 - Docker support is intentionally limited to 29.x rather than generic package auto-upgrades;
-- only the Coolify 4.1.1 -> 4.1.2 transition is represented by the current lifecycle source;
-- source-level implementation does not substitute for disposable upgrade/recovery evidence;
-- off-site backup and isolated restore are integration-proven, but full lost-VPS reconstruction still needs a clean replacement-host exercise;
+- only the Coolify 4.1.2 -> 4.3.21 transition is represented by the current lifecycle source;
+- disposable upgrade and replacement-host recovery passed, but the promoted source still needs ordinary verifier and clean-install replay evidence;
+- the existing database-backup API helper fails closed on 4.3.21; use Coolify UI and a separate B2 restore for this version;
 - optional modules retain separate lifecycle contracts.
 
 See [Disaster recovery](disaster-recovery.md) before any change that can affect data or control-plane recovery.

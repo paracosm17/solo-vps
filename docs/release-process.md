@@ -37,14 +37,14 @@ A public release is blocked unless all applicable checks below are true:
 6. the **latest disposable clean-target core evidence** for the candidate source proves Ubuntu 24.04 bootstrap, SSH hardening, audit, and an idempotency rerun with `changed=0`; this host proof does not replace the self-repository `fast-source` prerequisite;
 7. Solo VPS has been published to its own upstream repository, and that repository's `fast-source` **required status check** exists for the default branch and **must be green** for the release commit; consumer-application checks never satisfy this prerequisite;
 8. the latest CRIT-015 external-uptime evidence proves a whole-target outage was detected from outside the VPS, an off-VPS alert arrived inside the reviewed interval, and a recovery notification arrived after the endpoint returned;
-9. **CRIT-011 Coolify lifecycle evidence** proves the reviewed previous-supported `4.1.1` → current-supported `4.1.2` transition on a disposable Ubuntu 24.04 VPS, including fresh backup prerequisites, preflight, exact target artifacts, post-upgrade `verify-coolify`/`verify`/`audit`, and one documented forward-resume-or-M16 recovery exercise;
+9. **CRIT-011 Coolify lifecycle evidence** proves the reviewed previous-supported `4.1.2` → current-supported `4.3.21` transition on a disposable Ubuntu 24.04 VPS, including fresh backup prerequisites, Sentinel HTTPS readiness, preflight, exact target artifacts, post-upgrade `verify-coolify`/`verify`/`audit`, and one documented forward-resume-or-M16 recovery exercise;
 10. the release notes preserve current PRE-ALPHA limitations and ROADMAP blockers;
 11. the exact set of Git refs/history intended for publication has been scanned for local state and private-key material, followed by an independent secret scanner such as Gitleaks before the first push;
 12. the requested tag does not already exist;
 13. `make release-dry-run RELEASE_VERSION=v0.x.y` passes;
 14. the owner explicitly approves the actual tag/release/publish action.
 
-The v0.1.0 candidate also needs the ROADMAP gates that a source dry run cannot prove: full lost-VPS reconstruction, exact-candidate replay from the rendered public docs without maintainer assistance, a successful GitHub Pages deployment with correct EN/RU links, and an enabled/tested private vulnerability-reporting channel. Validate the accepted Coolify target on a disposable host before changing supported pins; the current `4.1.1` → `4.1.2` source policy and the `4.3.21` evaluation candidate are distinct.
+The v0.1.0 candidate also needs the ROADMAP gates that a source dry run cannot prove: full lost-VPS reconstruction, exact-candidate replay from the rendered public docs without maintainer assistance, a successful GitHub Pages deployment with correct EN/RU links, and an enabled/tested private vulnerability-reporting channel. The `4.1.2` → `4.3.21` transition and replacement-host recovery have disposable evidence; the promoted source passed ordinary verifiers on that host and still needs a clean-install replay.
 
 The dry-run does not weaken these gates merely to make PRE-ALPHA publishing easier.
 

@@ -24,6 +24,15 @@
     msg: "Local control-plane checkpoint: {{ (solo_vps_coolify_upgrade_checkpoint.stdout | from_json).checkpoint }}"
   when: solo_vps_coolify_upgrade_required
 
+- name: Create storage required by the promoted Coolify release
+  ansible.builtin.file:
+    path: "{{ solo_vps_coolify_data_root }}/images"
+    state: directory
+    owner: "9999"
+    group: "0"
+    mode: "0700"
+  when: solo_vps_coolify_upgrade_required
+
 - name: Remove stale target staging only before a new reviewed transaction
   ansible.builtin.file:
     path: "{{ solo_vps_coolify_upgrade_staging_dir }}"
@@ -192,17 +201,17 @@
       localhost_user={{ admin.user }}
   when: solo_vps_coolify_upgrade_required
 
-- name: Remove the Coolify upgrade staging directory after successful verification
+- name: Verify the current supported Coolify installation after lifecycle handling
+  ansible.builtin.import_tasks: verify.yml
+
+- name: Remove the Coolify upgrade staging directory after full verification
   ansible.builtin.file:
     path: "{{ solo_vps_coolify_upgrade_staging_dir }}"
     state: absent
   when: solo_vps_coolify_upgrade_required
 
-- name: Remove the Coolify upgrade transaction marker after successful verification
+- name: Remove the Coolify upgrade transaction marker after full verification
   ansible.builtin.file:
     path: "{{ solo_vps_coolify_upgrade_pending_marker }}"
     state: absent
   when: solo_vps_coolify_upgrade_required
-
-- name: Verify the current supported Coolify installation after lifecycle handling
-  ansible.builtin.import_tasks: verify.yml

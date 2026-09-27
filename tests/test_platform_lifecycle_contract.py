@@ -23,6 +23,7 @@ class PlatformLifecycleContractTests(unittest.TestCase):
             "ansible/roles/coolify/tasks/upgrade.yml", "ansible/roles/coolify/tasks/upgrade-resume.yml",
             "ansible/roles/coolify/tasks/evaluation-preflight.yml",
             "ansible/roles/coolify/tasks/evaluate-sentinel.yml",
+            "ansible/roles/coolify/tasks/verify-sentinel.yml",
             "ansible/playbooks/coolify-4.3.21-evaluation-vars.yml",
             "ansible/playbooks/coolify-evaluate-4-3-21-preflight.yml",
             "ansible/playbooks/coolify-evaluate-4-3-21-upgrade.yml",
@@ -63,7 +64,7 @@ class PlatformLifecycleContractTests(unittest.TestCase):
 
     def test_coolify_previous_version_drift_is_rejected(self) -> None:
         root = self.fixture()
-        self.mutate(root, "ansible/roles/coolify/defaults/main.yml", 'solo_vps_coolify_previous_supported_version: "4.1.1"', 'solo_vps_coolify_previous_supported_version: "4.1.0"')
+        self.mutate(root, "ansible/roles/coolify/defaults/main.yml", 'solo_vps_coolify_previous_supported_version: "4.1.2"', 'solo_vps_coolify_previous_supported_version: "4.1.0"')
         with self.assertRaises(ContractError):
             validate(root)
 

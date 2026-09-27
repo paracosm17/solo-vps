@@ -202,6 +202,53 @@ class CoolifyInstanceRestoreTests(unittest.TestCase):
                         runner=self.fake_pg_restore_runner,
                     )
 
+    def test_archive_inspection_uses_running_coolify_db_when_host_pg_restore_missing(self):
+        seen = {}
+
+        def runner(command, **kwargs):
+            seen["command"] = command
+            seen["stdin_open"] = not kwargs["stdin"].closed
+            seen["docker_host"] = kwargs["env"]["DOCKER_HOST"]
+            seen["docker_context_present"] = "DOCKER_CONTEXT" in kwargs["env"]
+            return subprocess.CompletedProcess(command, 0, stdout=b"; header\n1; 1259 1234 TABLE public.demo postgres\n", stderr=b"")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "coolify.dmp"
+            self.private_file(archive, "archive\n")
+            def which(name):
+                return "/usr/bin/docker" if name == "docker" else None
+            with mock.patch.object(restore.shutil, "which", side_effect=which):
+                with mock.patch.dict(restore.os.environ, {"DOCKER_CONTEXT": "remote", "DOCKER_HOST": "tcp://example.invalid:2375"}):
+                    self.assertEqual(restore.inspect_archive(archive, runner=runner), 1)
+        self.assertEqual(seen["command"], ["/usr/bin/docker", "--host", "unix:///var/run/docker.sock", "exec", "-i", "coolify-db", "pg_restore", "--list"])
+        self.assertTrue(seen["stdin_open"])
+        self.assertEqual(seen["docker_host"], "unix:///var/run/docker.sock")
+        self.assertFalse(seen["docker_context_present"])
+
+    def test_archive_inspection_rejects_container_pg_restore_failure(self):
+        def runner(command, **kwargs):
+            return subprocess.CompletedProcess(command, 1, stdout=b"", stderr=b"bad archive")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "coolify.dmp"
+            self.private_file(archive, "archive\n")
+            def which(name):
+                return "/usr/bin/docker" if name == "docker" else None
+            with mock.patch.object(restore.shutil, "which", side_effect=which):
+                with self.assertRaisesRegex(restore.CoolifyInstanceRestoreError, "bad archive"):
+                    restore.inspect_archive(archive, runner=runner)
+
+    def test_inspect_cli_reports_missing_pg_restore_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "coolify.dmp"
+            self.private_file(archive, "archive\n")
+            with mock.patch.object(restore.shutil, "which", return_value=None):
+                with mock.patch.object(restore.sys, "argv", ["restore", "inspect", "--archive", str(archive)]):
+                    with mock.patch("sys.stderr", new_callable=io.StringIO) as stderr:
+                        self.assertEqual(restore.main(), 2)
+            self.assertIn("pg_restore or a running Coolify database container is required", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
+
     def test_archive_inspection_rejects_empty_archive_listing(self):
         def runner(command, **kwargs):
             return subprocess.CompletedProcess(command, 0, stdout="; header only\n", stderr="")

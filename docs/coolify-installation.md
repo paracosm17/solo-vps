@@ -5,8 +5,8 @@ Solo VPS installs Coolify without giving the upstream installer ownership of SSH
 ## Current pinned platform
 
 ```text
-Coolify:           4.1.2
-image:             ghcr.io/coollabsio/coolify:4.1.2
+Coolify:           4.3.21
+image:             docker.io/coollabsio/coolify:4.3.21
 Docker support:    29.x
 management bind:   127.0.0.1
 management ports:  8000, 6001, 6002
@@ -42,7 +42,7 @@ The fresh-install path expects `/data/coolify` to be unused by an unrelated Cool
 make platform
 ```
 
-`make platform` performs readiness checks, installs/reconciles the pinned Coolify release, and runs `make verify-coolify`.
+On a fresh host, `make platform` performs readiness checks, installs the pinned release and verifies its bootstrap health and private ports. Complete the first account, HTTPS dashboard and Sentinel setup before `make verify-coolify`. On a previously managed host, `make platform` also runs the full verification.
 
 The separate Coolify Traefik proxy is restricted to public **TCP 80/443**. Solo VPS installs a persistent Compose port override before the first Coolify start. Host port 8080 and UDP 443 are not published; HTTP/3 is outside this core network profile. Coolify continues to own routing, certificates and the base proxy configuration.
 
@@ -82,7 +82,7 @@ http://127.0.0.1:18000
 
 Keep the tunnel terminal open; `-N` does not open a remote shell, so waiting without a prompt is normal. If SSH reports a forwarding error, resolve the local port conflict before opening the page. Create the first account through this private path.
 
-After you later configure a normal HTTPS dashboard domain, the raw management ports should still remain private. See [Coolify dashboard domain and browser terminal](operations/coolify-dashboard-domain.md).
+After you configure a normal HTTPS dashboard domain, set **Servers → localhost → Sentinel → Configuration → Coolify URL** to that URL, leave debug off, enable and sync Sentinel, and wait for **Sentinel In Sync**. Raw management ports and Sentinel port `8888` remain private. See [Coolify dashboard domain and browser terminal](operations/coolify-dashboard-domain.md).
 
 ## Verify Coolify
 
@@ -93,7 +93,7 @@ make verify-coolify
 make audit
 ```
 
-Verification checks the managed marker, pinned image/artifacts, health endpoints, localhost SSH integration, bounded filesystem permissions, Docker daemon ownership boundary, and loopback-only publications without printing secret values.
+Run this after Sentinel onboarding. Verification checks the managed marker, pinned Coolify and Sentinel identities, health endpoints, HTTPS Sentinel push configuration, localhost SSH integration, bounded filesystem permissions, Docker daemon ownership boundary, and loopback-only publications without printing secret values. Confirm **Sentinel In Sync** in the dashboard as the final delivery check.
 
 ## Idempotent second run
 

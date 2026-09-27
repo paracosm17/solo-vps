@@ -65,7 +65,6 @@ def validate(root: Path) -> None:
         "$(MAKE) --no-print-directory ssh-harden",
         "$(MAKE) --no-print-directory verify-ssh",
         "$(MAKE) --no-print-directory coolify",
-        "$(MAKE) --no-print-directory verify-coolify",
         "$(MAKE) --no-print-directory backup-now",
         "$(MAKE) --no-print-directory backup-check",
     ):
@@ -74,6 +73,10 @@ def validate(root: Path) -> None:
     platform_body = makefile.split("\nplatform:", 1)[1].split("\nbackup:", 1)[0]
     if "coolify-readiness" in platform_body:
         raise ContractError("platform must let the Coolify playbook select first-install readiness by state")
+    if "$(MAKE) --no-print-directory verify-coolify" in platform_body:
+        raise ContractError("fresh platform bootstrap must leave Sentinel verification until after HTTPS onboarding")
+    if "make verify-coolify" not in runbook or "Sentinel In Sync" not in runbook:
+        raise ContractError("Quick Start must complete Sentinel onboarding before full Coolify verification")
     recover_body = makefile.split("recover:", 1)[1].split("\nupdate:", 1)[0]
     if "$(ANSIBLE_PLAYBOOK)" in recover_body or "coolify-instance-restore-apply" in recover_body or "backup-restore-staging" in recover_body:
         raise ContractError("make recover must remain a non-mutating recovery entry point")
