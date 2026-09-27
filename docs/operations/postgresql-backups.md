@@ -28,7 +28,7 @@ You can delete the second resource after the exercise.
 **In Coolify:**
 
 1. Open the project and environment that contain the demo application.
-2. Select **New Resource → Databases → PostgreSQL**.
+2. Open the environment's new-resource picker and choose **PostgreSQL** from **Databases**.
 3. Choose the same server and destination.
 4. Use standard PostgreSQL without extra extensions and record the selected **major version**; the restore target will use the same one.
 5. Name the resource `solo-vps-db-demo`.

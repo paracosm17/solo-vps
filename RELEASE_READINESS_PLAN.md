@@ -1,6 +1,6 @@
 # Plan for the first public release
 
-Updated: 2026-09-17. This is a maintainer/operator work plan, not another public installation guide. Current status remains in ROADMAP.md.
+Updated: 2026-09-27. This is a maintainer/operator work plan, not another public installation guide. Current status remains in ROADMAP.md.
 
 ## Goal and working agreement
 
@@ -15,13 +15,13 @@ At each stage, the engineer first checks implementation and prepares a complete 
 | Stage | Engineering and documentation work | Operator exercise | Completion evidence |
 | --- | --- | --- | --- |
 | 0. Daily use | Replace jargon-heavy operator UI page with a visual explanation of code → PR → merge → image → running container, ENV, logs and incidents | Read it against the completed version-2 release | Reader can identify where each operation happens and distinguish successful build, deployment and business behavior |
-| 1. Retained logs — immediate path verified | Rewrite Grafana guide from account setup through credentials, agent start, exact search, time range and export; check Docker labels on pinned Coolify | Generate a unique benign request; find it in Grafana; redeploy and find old and new entries; repeat the search after three days | Application-specific search works; old container logs remain searchable; retention and usage limits are understood; collection resumes after restart |
+| 1. Retained logs — verified | Rewrite Grafana guide from account setup through credentials, agent start, exact search, time range and export; check Docker labels on pinned Coolify | Generate a unique benign request; find it in Grafana; redeploy/restart the collector and find earlier entries; later confirm older entries are still searchable | Application-specific search works; old container logs remain searchable in the operator's later check; collection resumes after restart; no fixed retention-duration SLA is claimed |
 | 2. PostgreSQL and local recovery — verified | Prepare a complete Coolify-native local-backup guide; current database API helper requires S3, so use a verified UI path or extend the helper without another scheduler | Create an isolated test DB and known rows; confirm persistence after restart; run a local backup and scheduled execution; restore into another empty test DB | Restored data matches; original DB untouched; schedule, timezone, local retention and actual file availability verified |
-| 3. External outage alerts — verified | Rewrite guide for one chosen external provider, endpoint and notification channel | Receive a test notification; cause a short agreed outage of the demo; recover it | Both outage and recovery messages arrive outside the VPS; detection interval and scope understood |
+| 3. External outage alerts — verified | Rewrite guide for one chosen external provider, endpoint and notification channel | Receive a test notification; cause a short agreed outage of the demo; recover it | Both outage and recovery messages arrive outside the VPS; provider scope is understood; no precise notification-time SLA is required or claimed |
 | 4. Off-site backups and recovery kit — verified | Guide external storage, app DB copy, Coolify control-plane backup, required files and separately protected keys; verify retrieval and retention | Retrieve a real external backup; restore into an isolated target and check application data | Recovery input independently available outside the VPS; include Coolify state and application files, not only DB rows |
 | 5. Failed releases and maintenance — maintained-host path verified | Incident/maintenance guide and guarded rollback proof are implemented; pre-mutation authorization failures are distinguished from rollback failures | Maintained VPS proved failed-image rollback, log/metrics restarts and a required planned reboot; disposable target still covers interruption/resume and supported Coolify upgrade | App/data preserved where promised; public app, Coolify, logs, metrics and backup runtime recovered after reboot; upgrade recovery remains a disposable-target gate |
 | 6. Useful metrics — verified | Separate non-root Alloy host-metrics service and metrics-only credentials are live; current Grafana alert/editor and email-member restrictions are documented | Operator verified Metrics Drilldown, CPU/RAM queries, a real `Firing` disk alert with email delivery, then restored the production `15%` / `5m` configuration | Metrics, alert delivery and production threshold restoration proven on the maintained VPS |
-| 7. Documentation and clean rehearsal | Complete docs cleanup, package candidate, run Linux/Ansible/Docker checks and scan source/archive/history for private data | Install exact candidate on temporary clean Ubuntu using public docs only; restore demo and check its data | No chat-only steps; installation and recovery work; UI labels, EN/RU commands and package match the tested revision |
+| 7. Documentation and clean rehearsal | Complete docs cleanup, package candidate, run Linux/Ansible/Docker checks and scan source/archive/history for private data | Install exact candidate on temporary clean Ubuntu using public docs only, including the two scoped Coolify API tokens and automatic deployment; run verification, audit and idempotency checks | No chat-only steps; installation and deployment work; UI labels, EN/RU commands and package match the tested revision |
 | 8. GitHub publication | Prepare README, license, versions, release notes, limitations, immutable release identity, security reporting and hosted CI | Review concrete candidate; publish only when authorized | Source CI passes on candidate; final hosted checks run when repository is available; demo CI is not confused with Solo VPS CI |
 
 Retained logs come first because the current demo has no database and the owner needs investigation across deployments. Once a database holds valuable data, backup/restore takes priority over extra dashboards. External monitoring follows early so incidents become visible without opening Grafana.
@@ -32,11 +32,11 @@ The implemented path is Alloy → Grafana Cloud through a restricted local Docke
 
 Before creating credentials, establish whether an account/stack exists, its retention and usage limits, and whether sending application logs there is acceptable. Reuse existing workstation encryption keys. The free offering checked during planning advertises 14-day retention and 50 GB/month for logs; recheck the live plan before relying on those limits. A month of uptime does not require month-long retention to investigate an error three days old, but an error a month old does.
 
-Do not promise recovery of entries deleted before collection began. Do not declare a three-day history test passed immediately: record a unique marker/time and search after the actual interval. Test container replacement independently now. A collector restart test does not prove lossless buffering across every outage; record delivery gaps.
+Do not promise recovery of entries deleted before collection began or a fixed provider retention duration. Test container replacement and collector restart independently; a collector restart test does not prove lossless buffering across every outage, so record any observed delivery gaps.
 
 The live Windows walkthrough on 2026-09-11/12 caught four workstation-specific failures before Grafana credentials were installed: downloaded PowerShell helpers retained the Internet-origin mark, `age-keygen` informational stderr became a terminating `NativeCommandError`, a stale public SOPS policy could survive replacement of the age private key, and a legitimate encrypted bundle from an earlier walkthrough made the recovery-only reset path unusable for a clean documentation rerun. The public guide now uses `Unblock-File`; the age-key helper is idempotent and restricts the private-key ACL; repeated secret initialization reuses a decryptable bundle; and `init-sops-policy.ps1 -StartFresh` archives old public state plus active ciphertext before creating a clean policy for the current key. Keep replaying the real Windows path; static Linux CI is not sufficient evidence for these helpers.
 
-The same walkthrough then completed Grafana credential delivery and the real Alloy runtime on the target. The operator found `solo-vps-log-check-before`, `solo-vps-log-check-after` after a Coolify redeploy, and `solo-vps-log-check-restarted` after restarting Alloy. The post-restart read-only runtime verification also passed. This closes the immediate retained-log path at V3; the deliberately time-dependent three-day retention lookup remains open. Browser feedback also showed that current Grafana Cloud makes **Drilldown → Logs** the clearest beginner path, while the old guide incorrectly required **Explore → Code**. Chapter 3 now uses Drilldown, distinguishes the server-side Line filter from client-side search, and keeps LogQL/Explore optional.
+The same walkthrough then completed Grafana credential delivery and the real Alloy runtime on the target. The operator found `solo-vps-log-check-before`, `solo-vps-log-check-after` after a Coolify redeploy, and `solo-vps-log-check-restarted` after restarting Alloy. The post-restart read-only runtime verification also passed. This closes the retained-log path at V3. The owner later confirmed that older entries remained searchable after several days; that observation is recorded as evidence, not as a retention SLA. Browser feedback also showed that current Grafana Cloud makes **Drilldown → Logs** the clearest beginner path, while the old guide incorrectly required **Explore → Code**. Chapter 3 now uses Drilldown, distinguishes the server-side Line filter from client-side search, and keeps LogQL/Explore optional.
 
 Planning sources: [Grafana pricing](https://grafana.com/pricing/), [Coolify local and S3 backups](https://next.coolify.io/docs/databases/backups), repository Alloy configuration and database API helper. Verify concrete UI commands against pinned Coolify before the operator exercise.
 
@@ -56,7 +56,7 @@ The owner completed a separate review of the rendered documentation and the rema
 
 Before the exact-candidate rehearsal, do one deliberate documentation/productization pass: replace confusing hard-coded sample identity/address values in the guided route with semantic variables, move incident/maintenance material out of the numbered setup chapters, make chapters 1–7 visually dominant over reference trees, remove development-time troubleshooting chronology, and soften the documentation palette. Then run the full owner walkthrough from scratch using only the rendered docs and no ChatGPT.
 
-The first release also needs an explicit lifecycle decision before freezing the candidate. The source currently pins Coolify `4.1.2`, while the maintained instance reports a much newer available release. Do not upgrade the maintained instance merely for freshness; review upstream changes, select the release baseline intentionally, and prove install/upgrade/recovery on the disposable target. In parallel, document a tagged Solo VPS source-update path instead of teaching users to `git pull` an active checkout blindly.
+The Coolify lifecycle decision is complete for this release: current-supported is `4.3.21`, previous-supported is `4.1.2`, and the disposable upgrade/interruption/recovery exercise passed before promotion. The tagged Solo VPS source-update path is documented so users do not `git pull` over an active installation checkout.
 
 ## Resource and release boundaries
 
@@ -84,88 +84,32 @@ The same post-proof audit reported `reboot_required: true` from Ubuntu security-
 
 ## Immediate owner sequence for `v0.1.0`
 
-This sequence is deliberately linear. Do not combine stages to save a VPS rental day, and do not upgrade the maintained server while the disposable lifecycle gate is open. Each stage ends with a concrete report or committed candidate before the next one starts.
+The earlier Coolify qualification, whole-host outage, lost-VPS reconstruction, retained-log checks, backup/restore exercises and GitHub security-channel setup are already evidence. Do not rerun them merely to satisfy ceremony. The remaining sequence is intentionally short.
 
-### 1. Review the rendered documentation at the current candidate commit
+### 1. Freeze the source/documentation candidate
 
-Review the current candidate before disposable testing.
+Review the rendered EN/RU Home, Quick Start, first-application guide, daily operations, upgrade and recovery pages. Fix stale UI labels, contradictory version statements, duplicated text and development-history wording. Run the documentation/release validators and strict MkDocs build.
 
-1. Confirm the documentation baseline is in the current history and the checkout is clean:
+### 2. Run one exact-candidate fresh-user rehearsal
 
-   ```bash
-   git rev-parse HEAD
-   git status --short
-   ```
+Reimage the existing disposable test VPS to clean Ubuntu 24.04. From one clean candidate commit, follow only the published Quick Start as a new user: bootstrap the host, establish the administrator and hardened SSH path, install/onboard Coolify `4.3.21` and Sentinel, deploy the demo application, configure the restricted CI path and prove one automatic deployment. Finish with the documented `verify-coolify`, full `verify` and `audit` checks plus an idempotent second `make platform` run.
 
-   Expected: record the SHA from `git rev-parse HEAD`; `git status --short` produces no output. Review the rendered documentation for that exact revision.
+Do not reuse old controller state, Coolify data, shell history or chat-only instructions. Optional Grafana/B2 chapters already have separate V3 evidence and are not repeated unless the clean replay exposes a dependency on them. Any missing value, renamed Coolify control or undocumented recovery step found here is a release defect: fix the source/docs and repeat the affected section.
 
-2. From Linux or WSL, start the documentation preview:
+### 3. Validate the exact release commit on GitHub
 
-   ```bash
-   make docs
-   ```
+Push/merge the candidate only with explicit owner authorization. Require the hosted `Repository CI / fast-source` check and documentation deployment to pass for the exact release commit. Confirm Pages renders the same EN/RU instructions. Repeat the built-in exact-ref/archive inspection and an independent Gitleaks scan against the refs that will be released.
 
-   Open `http://127.0.0.1:8000/`. Keep the command running while reviewing. Use `Ctrl+C` when finished.
+Private Vulnerability Reporting is already enabled and the public GitHub security page exposes **Report a vulnerability**. A synthetic report from a second account is optional maintainer testing, not a Solo VPS release gate.
 
-3. Review the English route first, then switch to Russian and inspect the same pages:
+### 4. Prepare and publish `v0.1.0`
 
-   - Home and Quick Start;
-   - chapters 1–7 under the guided setup route;
-   - Daily operations and Failures and maintenance;
-   - Upgrade guide and Lost VPS recovery;
-   - mobile/narrow browser width for the navigation and code blocks.
+Move the release contents from `Unreleased` into a dated `0.1.0` changelog section, leave a fresh `Unreleased` section above it, and run:
 
-4. Check only reader-facing quality at this stage:
+```bash
+make release-dry-run RELEASE_VERSION=v0.1.0
+```
 
-   - the first action on each page is obvious;
-   - commands say where they run;
-   - placeholders such as `<SERVER_IP>` and `<ADMIN_USER>` are unambiguous;
-   - chapters 1–7 are visually dominant, while reference material is quieter;
-   - chapter 8 is no longer presented as another installation chapter;
-   - colors, callouts, tables and code blocks remain readable;
-   - Russian and English pages do not contradict each other;
-   - no paragraph sounds like internal debugging history or generated filler.
+Review the exact clean commit and release notes. Only after explicit owner approval create the immutable annotated tag and GitHub Release. Do not move or replace the published tag.
 
-5. Return findings in the form `page -> fragment -> desired change`. Screenshots are useful for layout problems. If there are no findings, report `documentation review PASS`.
-
-Do not follow the VPS commands during this stage. The maintained server already proves chapters 1–7; this pass reviews the release-candidate reading experience.
-
-### 2. Freeze the documentation candidate
-
-The engineer incorporates the review, runs the documentation/release validators and strict MkDocs builds, and commits the result. The owner then checks only changed pages. Completion evidence is a clean committed tree and owner approval of the rendered candidate.
-
-### 3. Qualify Coolify `4.3.21` and Sentinel on a disposable VPS
-
-This happens before any maintained-server upgrade. Sentinel is a Coolify-managed metrics/API agent container, not a server operating mode and not Redis Sentinel. The previously tested `4.1.2` setup disabled the optional agent because its Docker bridge could not reach the loopback-only Coolify endpoint. Since Coolify `4.3.19`, Sentinel is mandatory on regular servers, so the old "container absent" state is historical evidence rather than the future Solo VPS contract.
-
-Before asking the owner to rent or reset a target, the engineer must commit automation and an exact exercise sheet that covers:
-
-- a fresh `4.1.2` baseline from the candidate source;
-- a reviewed `4.1.2 -> 4.3.21` upgrade with a fresh backup and no active deployment;
-- Sentinel image/version, health, token-authenticated communication, Docker socket mount, host mounts, published ports and Docker-network reachability;
-- proof that management endpoints remain outside the public Internet;
-- `make verify-coolify`, `make verify`, `make audit`, application health, CI deployment, logs, metrics and backups after the upgrade;
-- one interrupted upgrade followed by documented forward resume or recovery;
-- deletion of the disposable server after evidence is exported and secrets are revoked.
-
-The committed procedure is [`docs/coolify-4.3.21-evaluation.md`](docs/coolify-4.3.21-evaluation.md). Follow it in order and stop on the first unexpected result; it is not a maintained-server upgrade guide.
-
-The acceptance decision is not "make Sentinel disappear." Accept it only if its required access is explicit, its API is authenticated, no unintended public port appears, and Solo VPS verification/backup/recovery understand the component. Otherwise keep the maintained server on the old supported pin and record `4.3.21` as rejected or blocked.
-
-### 4. Reconstruct a lost VPS on a replacement target
-
-Use a new or wiped target, the exported recovery kit, off-site restic data and Coolify/database backups. Follow only the committed lost-VPS guide. The restored application must contain the known data marker; public HTTPS, Coolify state, deployment, logs/metrics and backup scheduling must be re-verified. Record every undocumented dependency as a release blocker, fix it, commit it, and repeat the failed section.
-
-### 5. Run the exact-candidate clean rehearsal without ChatGPT
-
-Create a fresh Ubuntu 24.04 VPS and use only the public rendered documentation from one clean commit. Do not reuse shell history, local config, an existing Coolify database or chat instructions. Complete setup, application deployment, CI/CD, observability, backup and restore. During this target's lifetime, perform the whole-VPS outage test and confirm both external DOWN and recovery notifications.
-
-### 6. Configure the GitHub release surface
-
-The first public source push is complete at `https://github.com/paracosm17/solo-vps`. The exported tree and published history passed Gitleaks. `main` is the default branch and is protected by a required `Repository CI / fast-source` check; that hosted check passed on `3217146`. Pages deploys from GitHub Actions, and the deployed EN/RU and edit links were verified. Private Vulnerability Reporting is enabled. Still test vulnerability reporting from a reporter account, rerun hosted CI on the eventual release commit, and repeat exact-ref history and archive scans before any release tag. A demo application's CI result does not satisfy the repository CI gate.
-
-### 7. Package and publish only after every prior stage passes
-
-Prepare the dated `CHANGELOG.md` entry, run `make release-dry-run RELEASE_VERSION=v0.1.0` from a clean tree, review the resulting commit, then explicitly approve the annotated tag and GitHub Release. Do not move or replace the published tag afterward.
-
-The chapter-3 three-day Grafana marker remains a separate time-dependent check. It may run in parallel with the documentation review, but its result must be recorded before the release candidate is frozen.
+The project makes no precise UptimeRobot notification-latency SLA and no fixed Grafana Cloud retention SLA; those provider-dependent measurements are not release gates.

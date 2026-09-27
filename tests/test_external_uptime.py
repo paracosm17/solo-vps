@@ -94,7 +94,7 @@ class ExternalUptimeTests(unittest.TestCase):
         self.assertFalse(evidence["acceptance"]["crit015_v3_acceptance_candidate"])
         self.assertFalse(evidence["exercise"]["total_host_loss_proven"])
 
-    def test_late_alert_is_recorded_as_failed_policy(self) -> None:
+    def test_notification_latency_is_observed_but_not_a_release_sla(self) -> None:
         evidence = build_evidence(
             proof_id="crit015-slow",
             health_url="https://app.example.com/healthz",
@@ -107,8 +107,9 @@ class ExternalUptimeTests(unittest.TestCase):
             service_restored_at="2026-08-17T20:20:00Z",
             recovery_received_at="2026-08-17T20:22:00Z",
         )
-        self.assertFalse(evidence["exercise"]["alert_within_policy"])
-        self.assertFalse(evidence["acceptance"]["crit015_v3_acceptance_candidate"])
+        self.assertEqual(evidence["exercise"]["alert_detection_seconds"], 720)
+        self.assertIsNone(evidence["exercise"]["notification_latency_sla"])
+        self.assertTrue(evidence["acceptance"]["crit015_v3_acceptance_candidate"])
 
     def test_timestamp_order_is_fail_closed(self) -> None:
         with self.assertRaisesRegex(UptimeError, "before outage_started_at"):

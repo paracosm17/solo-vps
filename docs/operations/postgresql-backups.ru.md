@@ -28,7 +28,7 @@
 **В Coolify:**
 
 1. Откройте проект и environment, где находится демо-приложение.
-2. Нажмите **New Resource → Databases → PostgreSQL**.
+2. Откройте в environment меню создания нового ресурса и выберите **PostgreSQL** в разделе **Databases**.
 3. Выберите тот же сервер и destination.
 4. Используйте обычный PostgreSQL без дополнительных расширений и запомните выбранную **major version** — для restore создадим такую же.
 5. Назовите ресурс `solo-vps-db-demo`.

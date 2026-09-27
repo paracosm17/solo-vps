@@ -24,6 +24,8 @@ https://coolify.example.com
 
 Используйте этот HTTPS-домен для обычной панели, live logs, realtime features и browser terminal.
 
+Необязательная настройка интерфейса: в **Settings → Configuration → Advanced** установите **Sponsorship reminders** в **Disabled**, если не хотите видеть периодическое sponsor-окно Coolify. Это только настройка панели; она не связана с **Anonymous telemetry** / Do Not Track и не меняет поведение Solo VPS.
+
 ## Контракт безопасности
 
 Предполагаемая exposure остаётся такой:
@@ -82,4 +84,4 @@ Server-side readiness PASS при ошибке browser websocket указыва�
 ## Справка
 
 - Coolify DNS configuration: <https://coolify.io/docs/knowledge-base/dns-configuration>
-- Coolify terminal documentation: <https://coolify.io/docs/knowledge-base/internal/terminal>
+- Coolify terminal documentation: <https://coolify.io/docs/core/infrastructure/servers/web-terminal>

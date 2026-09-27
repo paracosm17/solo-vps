@@ -155,8 +155,8 @@ class DeploymentPlan:
 
     @property
     def update_payload(self) -> dict[str, str]:
-        # The integration v4.1.2 proof established that this General-form pair
-        # reconstructs repository@sha256:<digest> without the creation-UI double marker.
+        # The supported Coolify 4.3.21 lifecycle keeps Docker Image desired state
+        # as repository plus the sha256-* tag/hash field used by the API.
         return {
             "docker_registry_image_name": self.handoff.preferred_ui_image_name,
             "docker_registry_image_tag": self.handoff.preferred_ui_image_tag,
@@ -175,7 +175,10 @@ class DeploymentPlan:
             "application_url": self.application_url,
             "start_url": self.start_url,
             "update_payload": self.update_payload,
-            "required_token_permissions": ["read", "write", "deploy"],
+            "required_token_permissions": {
+                "read_write_token": ["read", "write"],
+                "deploy_token": ["deploy"],
+            },
             **rollback_boundary_evidence(),
         }
 
@@ -342,13 +345,21 @@ def require_apply_confirmation() -> None:
         )
 
 
-def load_token_from_environment() -> str:
-    token = os.environ.get("COOLIFY_API_TOKEN", "")
+def _load_token(name: str) -> str:
+    token = os.environ.get(name, "")
     if not token:
         raise CoolifyDeployError(
-            "COOLIFY_API_TOKEN is required for --check/--apply; read it interactively so it is not stored in shell history"
+            f"{name} is required; supply it through the environment and do not put it on the command line"
         )
     return token
+
+
+def load_read_write_token_from_environment() -> str:
+    return _load_token("COOLIFY_API_TOKEN_RW")
+
+
+def load_deploy_token_from_environment() -> str:
+    return _load_token("COOLIFY_API_TOKEN_DEPLOY")
 
 
 def check_application(client: CoolifyApiClient, plan: DeploymentPlan) -> dict[str, Any]:
@@ -362,12 +373,14 @@ def _deploy_exact_image(
     plan: DeploymentPlan,
     desired: ImmutableImageState,
     *,
+    deploy_client: CoolifyApiClient | None = None,
     operation: str,
     poll_interval: float,
     poll_timeout: float,
     sleeper: Callable[[float], None],
     monotonic: Callable[[], float],
 ) -> dict[str, Any]:
+    deploy_client = deploy_client or client
     try:
         update_response = client.request("PATCH", plan.application_url, desired.update_payload)
     except CoolifyDeployError as exc:
@@ -381,7 +394,7 @@ def _deploy_exact_image(
     validate_persisted_image_state(persisted, plan, desired)
 
     try:
-        start_response = client.request("POST", plan.start_url)
+        start_response = deploy_client.request("POST", plan.start_url)
     except CoolifyDeployError as exc:
         raise DeploymentOutcomeUnknown(f"{operation} start outcome is unknown; inspect Coolify before recovery") from exc
     deployment_uuid = _clean_optional(start_response.get("deployment_uuid"))
@@ -474,6 +487,7 @@ def apply_deployment(
     client: CoolifyApiClient,
     plan: DeploymentPlan,
     *,
+    deploy_client: CoolifyApiClient | None = None,
     poll_interval: float = 2.0,
     poll_timeout: float = 180.0,
     sleeper: Callable[[float], None] = time.sleep,
@@ -489,6 +503,7 @@ def apply_deployment(
             plan,
             candidate,
             operation="candidate",
+            deploy_client=deploy_client,
             poll_interval=poll_interval,
             poll_timeout=poll_timeout,
             sleeper=sleeper,
@@ -514,6 +529,7 @@ def apply_deployment(
                 plan,
                 previous,
                 operation="rollback",
+                deploy_client=deploy_client,
                 poll_interval=poll_interval,
                 poll_timeout=poll_timeout,
                 sleeper=sleeper,
@@ -559,6 +575,7 @@ def recover_known_good(
     client: CoolifyApiClient,
     plan: DeploymentPlan,
     *,
+    deploy_client: CoolifyApiClient | None = None,
     poll_interval: float = 2.0,
     poll_timeout: float = 180.0,
     sleeper: Callable[[float], None] = time.sleep,
@@ -574,6 +591,7 @@ def recover_known_good(
         plan,
         desired,
         operation="known-good recovery",
+        deploy_client=deploy_client,
         poll_interval=poll_interval,
         poll_timeout=poll_timeout,
         sleeper=sleeper,
@@ -600,7 +618,7 @@ def _print_plan(plan: DeploymentPlan, as_json: bool) -> None:
     print(f"  image_ref: {plan.handoff.image_ref}")
     print(f"  expected_internal_port: {plan.expected_port}")
     print(f"  public_domain_allowed: {'yes' if plan.allow_domain else 'no'}")
-    print("  required_token_permissions: read, write, deploy")
+    print("  required_token_permissions: read+write token; separate deploy-only token")
     print("  update_payload:")
     print(json.dumps(plan.update_payload, indent=4, sort_keys=True))
     print("  rollback: --apply requires and restores the previous immutable desired digest on failure")
@@ -613,7 +631,7 @@ def _print_plan(plan: DeploymentPlan, as_json: bool) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Plan/check/apply an immutable GHCR deployment through the loopback-only Coolify v4.1.2 API."
+        description="Plan/check/apply an immutable GHCR deployment through the loopback-only Coolify 4.3.21 API."
     )
     parser.add_argument("--resource-uuid", required=True)
     parser.add_argument("--image-ref", required=True)
@@ -657,8 +675,11 @@ def main() -> int:
 
         if args.apply or args.recover_known_good:
             require_apply_confirmation()
-        token = load_token_from_environment()
-        client = CoolifyApiClient(token)
+        read_write_token = load_read_write_token_from_environment()
+        client = CoolifyApiClient(read_write_token)
+        deploy_client = None
+        if args.apply or args.recover_known_good:
+            deploy_client = CoolifyApiClient(load_deploy_token_from_environment())
         if args.check:
             application = check_application(client, plan)
             evidence = {
@@ -680,6 +701,7 @@ def main() -> int:
                 apply_deployment(
                     client,
                     plan,
+                    deploy_client=deploy_client,
                     poll_interval=args.poll_interval,
                     poll_timeout=args.poll_timeout,
                 )
@@ -690,6 +712,7 @@ def main() -> int:
                 recover_known_good(
                     client,
                     plan,
+                    deploy_client=deploy_client,
                     poll_interval=args.poll_interval,
                     poll_timeout=args.poll_timeout,
                 )
@@ -729,7 +752,7 @@ def main() -> int:
             if exc.outcome == "DEPLOY_FAILED_ROLLBACK_FAILED":
                 print(
                     "  recovery_note: run recovery_command on the VPS only after exporting a reviewed short-lived "
-                    "COOLIFY_API_TOKEN; do not put the token on the command line.",
+                    "COOLIFY_API_TOKEN_RW and COOLIFY_API_TOKEN_DEPLOY; do not put tokens on the command line.",
                     file=sys.stderr,
                 )
         return 3 if exc.outcome == "DEPLOY_FAILED_ROLLBACK_FAILED" else 2

@@ -29,7 +29,8 @@ try:
         ImmutableImageState,
         apply_deployment,
         build_plan,
-        load_token_from_environment,
+        load_deploy_token_from_environment,
+        load_read_write_token_from_environment,
         normalize_base_url,
         validate_application_state,
         validate_persisted_image_state,
@@ -43,7 +44,8 @@ except ModuleNotFoundError:  # Direct execution as scripts/prove_coolify_deploy_
         ImmutableImageState,
         apply_deployment,
         build_plan,
-        load_token_from_environment,
+        load_deploy_token_from_environment,
+        load_read_write_token_from_environment,
         normalize_base_url,
         validate_application_state,
         validate_persisted_image_state,
@@ -112,6 +114,7 @@ def sentinel_candidate_ref(known_good: ImmutableImageState) -> str:
 def prove_rollback(
     client: CoolifyApiClient,
     *,
+    deploy_client: CoolifyApiClient | None = None,
     base_url: str,
     resource_uuid: str,
     expected_port: str = "8080",
@@ -139,6 +142,7 @@ def prove_rollback(
         apply_deployment(
             client,
             candidate_plan,
+            deploy_client=deploy_client,
             poll_interval=poll_interval,
             poll_timeout=poll_timeout,
         )
@@ -197,9 +201,11 @@ def main() -> int:
         if args.poll_timeout <= 0 or args.poll_interval < 0:
             raise CoolifyDeployError("poll timeout must be > 0 and poll interval must be >= 0")
         require_proof_confirmation()
-        token = load_token_from_environment()
+        read_write_client = CoolifyApiClient(load_read_write_token_from_environment())
+        deploy_client = CoolifyApiClient(load_deploy_token_from_environment())
         evidence = prove_rollback(
-            CoolifyApiClient(token),
+            read_write_client,
+            deploy_client=deploy_client,
             base_url=args.base_url,
             resource_uuid=args.resource_uuid,
             expected_port=args.expected_port,
@@ -233,7 +239,7 @@ def main() -> int:
                 print(f"  {key}: {value}", file=sys.stderr)
         print(
             "  recovery_note: automatic rollback failed; if the application is not running:healthy, "
-            "export a reviewed short-lived COOLIFY_API_TOKEN and use the printed recovery_command on the VPS.",
+            "export reviewed short-lived COOLIFY_API_TOKEN_RW and COOLIFY_API_TOKEN_DEPLOY values and use the printed recovery_command on the VPS.",
             file=sys.stderr,
         )
         return 3

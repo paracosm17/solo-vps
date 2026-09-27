@@ -22,8 +22,6 @@ POLICY = {
     "min_timeout_seconds": 1,
     "max_timeout_seconds": 10,
     "provider_confirmation_retries_required": True,
-    "max_alert_detection_seconds": 660,
-    "max_recovery_notification_seconds": 600,
 }
 CONFIRM_REQUIRED = "I_HAVE_REVIEWED_THE_EXTERNAL_UPTIME_PROOF"
 ARTIFACT_CONFIRM_REQUIRED = "I_HAVE_REVIEWED_THE_EXTERNAL_PROVIDER_EVENT_ARTIFACT"
@@ -127,9 +125,8 @@ def build_plan(
             "recovery_notification_required": True,
         },
         "acceptance": {
-            "max_alert_detection_seconds": POLICY["max_alert_detection_seconds"],
-            "max_recovery_notification_seconds": POLICY["max_recovery_notification_seconds"],
             "crit015_v3_requires_whole_target_shutdown": True,
+            "notification_latency_sla": None,
         },
         "provider_credentials_required": False,
         "network_request": False,
@@ -198,13 +195,11 @@ def build_evidence(
 
     alert_latency = int((alert_received - outage_started).total_seconds())
     recovery_latency = int((recovery_received - service_restored).total_seconds())
-    alert_within_policy = alert_latency <= POLICY["max_alert_detection_seconds"]
-    recovery_within_policy = recovery_latency <= POLICY["max_recovery_notification_seconds"]
     alert_before_restore = alert_received <= service_restored
     total_host_loss_proven = exercise_mode == "whole-target-shutdown"
-    crit015_v3_acceptance_candidate = (
-        alert_within_policy and recovery_within_policy and alert_before_restore and total_host_loss_proven
-    )
+    # Notification timing is recorded as diagnostic evidence only. Provider timing is
+    # not a Solo VPS release SLA; V3 proves independent whole-host detection and recovery.
+    crit015_v3_acceptance_candidate = alert_before_restore and total_host_loss_proven
 
     target = plan["target"]
     assert isinstance(target, dict)
@@ -237,9 +232,8 @@ def build_evidence(
             "recovery_received_at": _iso(recovery_received),
             "alert_detection_seconds": alert_latency,
             "recovery_notification_seconds": recovery_latency,
-            "alert_within_policy": alert_within_policy,
             "alert_before_service_restore": alert_before_restore,
-            "recovery_within_policy": recovery_within_policy,
+            "notification_latency_sla": None,
             "total_host_loss_proven": total_host_loss_proven,
         },
         "acceptance": {

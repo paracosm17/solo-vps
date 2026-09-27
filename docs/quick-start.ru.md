@@ -354,7 +354,7 @@ Solo VPS уже создал этот сервер. Ожидайте **Server is
 
 **В Coolify:**
 
-1. Нажмите **Settings со значком шестерёнки внизу левого меню**.
+1. Нажмите **Settings** в левом меню.
 2. Откройте **Configuration → General**.
 3. В поле **URL** укажите `https://coolify.example.com`, заменив домен своим.
 4. Нажмите **Save**.

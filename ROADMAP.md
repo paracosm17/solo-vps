@@ -29,7 +29,7 @@ Ubuntu 24.04 host
 → failed-image rollback and planned reboot recovery
 ```
 
-A disposable Ubuntu 24.04 VPS has V3 evidence for clean host setup, Coolify `4.1.2` → `4.3.21` forward-resume upgrade, Sentinel, HTTPS demo CI/CD, and real application and whole-host DOWN/UP emails. After reimaging that VPS, the replacement-host exercise restored the Coolify instance and identity, PostgreSQL from B2, and the immutable demo image; public HTTPS, security audit, a new restic snapshot, its restore-test, and the daily backup timer passed. The promoted `4.3.21` source then passed ordinary `verify-coolify`, full `verify` and `audit` on this recovered host. This is not V4: retained logs on the replacement and final owner-only public-doc replay remain open. No precise alert-latency claim is made from the approximate provider stop time.
+A disposable Ubuntu 24.04 VPS has V3 evidence for clean host setup, Coolify `4.1.2` → `4.3.21` forward-resume upgrade, Sentinel, HTTPS demo CI/CD, and real application and whole-host DOWN/UP emails. After reimaging that VPS, the replacement-host exercise restored the Coolify instance and identity, PostgreSQL from B2, and the immutable demo image; public HTTPS, security audit, a new restic snapshot, its restore-test, and the daily backup timer passed. The promoted `4.3.21` source then passed ordinary `verify-coolify`, full `verify` and `audit` on this recovered host. The operator also confirmed retained logs remained searchable days later and whole-host notifications arrived within a few minutes. This is still V3 evidence, not an alert-latency or retention SLA. The remaining V4 gate is the final exact-candidate fresh-user replay from public docs.
 
 ### Validation levels
 
@@ -62,9 +62,9 @@ The public route now treats chapters 1–7 as the guided setup sequence. Failure
 
 Remaining proof is the exact-candidate owner replay without ChatGPT. Any hidden value, missing UI action, or undocumented recovery step found there is a release defect.
 
-### Time-dependent evidence
+### Observability evidence
 
-The immediate retained-log path is V3: entries survived application redeploy and Alloy restart. Repository-managed Alloy runs non-root and remains the maintained log-delivery path. The deliberately delayed three-day marker lookup is still pending and can now be performed.
+Retained logs are V3: entries survived application redeploy and Alloy restart, and the operator later confirmed that older entries were still searchable after several days. Repository-managed Alloy runs non-root and remains the maintained log-delivery path. This is sufficient for the documented capability; Solo VPS does not claim a fixed retention-duration SLA.
 
 ### Coolify lifecycle
 
@@ -74,7 +74,7 @@ Sentinel is a Coolify-managed Linux/Docker metrics agent. The old verified "Sent
 
 ### Publication
 
-The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or earlier published history. No release tag exists. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`; the deployed EN/RU home and Quick Start language links resolve under `/solo-vps/`, and both edit links target the right source file. Private Vulnerability Reporting is enabled; an independent reporter-path test remains. Hosted `Repository CI / fast-source` is required by the protected `main` branch. PR [#9](https://github.com/paracosm17/solo-vps/pull/9) carries the promoted `4.3.21` source; hosted checks on the final release commit and exact-ref scanning remain before tagging.
+The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or earlier published history. No release tag exists. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`; the deployed EN/RU home and Quick Start language links resolve under `/solo-vps/`, and both edit links target the right source file. Private Vulnerability Reporting is enabled, and the public repository security page exposes **Report a vulnerability** to an unauthenticated visitor; a synthetic report from another account is not a Solo VPS runtime gate. Hosted `Repository CI / fast-source` is required by the protected `main` branch. PR [#9](https://github.com/paracosm17/solo-vps/pull/9) is merged into `main` at `5c7122d`; hosted checks on the eventual release commit and exact-ref scanning remain before tagging.
 
 ---
 
@@ -82,14 +82,10 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 
 ### Must pass before `v0.1.0`
 
-1. Complete the delayed three-day retained-log lookup.
-2. Choose and implement the reviewed Coolify release/lifecycle target.
-3. On one disposable Ubuntu 24.04 VPS, prove clean install, second-run idempotency, supported Coolify upgrade/interruption recovery, whole-host DOWN/UP notification, and full lost-VPS reconstruction.
-4. Replay the exact candidate using only rendered public documentation and no ChatGPT or maintainer notes.
-5. Require a green hosted `Repository CI / fast-source` check for the release commit.
-6. Test the enabled private vulnerability-reporting path from a reporter account.
-7. Before the release tag, repeat exact-ref history and archive scans for secrets and owner-specific state with the built-in check and an independent scanner.
-8. Prepare a dated `0.1.0` changelog entry, clean release dry-run, immutable tag and release notes.
+1. Replay the exact candidate on a freshly installed Ubuntu 24.04 VPS as a new user, using only the rendered public Quick Start and no ChatGPT or maintainer notes; complete the core setup, first application and automatic deployment, then rerun the documented verification/audit commands.
+2. Require a green hosted `Repository CI / fast-source` check and successful documentation deployment for that exact release commit.
+3. Before the release tag, repeat exact-ref history and archive scans for secrets and owner-specific state with the built-in check and an independent scanner.
+4. Prepare a dated `0.1.0` changelog entry, run the clean release dry-run, review the immutable commit, then create the tag and GitHub Release only with explicit owner approval.
 
 ### Explicitly deferred
 
@@ -118,8 +114,8 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-011 Docker/Coolify lifecycle | PARTIAL V3 | Supported `4.3.21` source passes same-host verification after `4.1.2` → `4.3.21` interruption/resume; clean-source install pending, API backup adoption remains fail-closed |
 | CRIT-012 CI deployment transport | DEFERRED | restricted SSH tunnel remains the proven default |
 | CRIT-013 recovery priority | CLOSED | recovery path implemented before optional observability expansion |
-| CRIT-014 private security channel | PARTIAL | GitHub Private Vulnerability Reporting enabled; independent reporter-path test pending |
-| CRIT-015 external outage detection | PARTIAL V3 | Provider-level VPS shutdown/restart produced real DOWN/UP emails; the required reviewed alert interval is not proven from the approximate stop time |
+| CRIT-014 private security channel | DONE | GitHub Private Vulnerability Reporting enabled; public **Report a vulnerability** entry verified |
+| CRIT-015 external outage detection | DONE / V3 | Provider-level VPS shutdown/restart produced real DOWN/UP emails outside the VPS; operator observed delivery within a few minutes, with no latency SLA claimed |
 | CRIT-016 migration safety | DONE / V2 | app-owned preflight and image-only rollback boundary |
 | CRIT-017 release/upgrade story | PARTIAL | tagged-source contract documented; first tag and lifecycle proof pending |
 | CRIT-018 documentation duplication | DONE / V2 | user, architecture, plan and evidence roles separated |
@@ -144,7 +140,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M8 — Optional Tailscale Administrative Plane | P3 | DEFERRED | post-release optional work |
 | M9 — Coolify Installation Backend | P1 | DONE | supported `4.3.21` same-host verification V3; clean-source install V4 pending |
 | M10 — First End-to-End Application | P1 | DONE | V3 |
-| M11 — GitHub Actions + GHCR Template | P1 | DONE | consumer repository V3 |
+| M11 — GitHub Actions + GHCR Template | P1 | SOURCE DONE | Coolify `4.3.21` split read/write + deploy token path is source-tested; exact-candidate consumer replay pending |
 | M12 — Dependency & Image Hygiene | P2 | DONE | V2 |
 | M13 — Infrastructure Secrets with SOPS + age | P1 | DONE | V3 |
 | M14 — Off-Site Restic Backup | P1 | DONE | B2 snapshot/freshness/restore-test V3 |
@@ -161,7 +157,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M25 — PostgreSQL Application UX / Guidance | P3 | DEFERRED | optional DB administration work |
 | M26 — Public README & Quick Start | P1 | SOURCE DONE | release productization V2; owner-only V4 replay pending |
 | M27 — Architecture Documentation & ADR | P2 | DONE | V2 |
-| M28 — SECURITY / CONTRIBUTING / LICENSE | P2 | DONE | V2; private reporting enabled, independent reporter test pending |
+| M28 — SECURITY / CONTRIBUTING / LICENSE | P2 | DONE | V2; private reporting enabled and public reporter entry verified |
 | M29 — Upgrade Guide | P2 | SOURCE DONE | tagged-source contract documented; supported Coolify target has same-host V3 proof, V4 replay pending |
 | M30 — Release Process | P2 | SOURCE DONE | hosted dry-run and public release pending |
 
@@ -171,13 +167,9 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 
 Use one temporary Ubuntu 24.04 VPS and reimage it between scenarios:
 
-1. clean install and second-run `changed=0`, `failed=0`;
-2. supported Coolify install/upgrade and controlled interrupted-transition recovery;
-3. whole-target external outage and recovery notification;
-4. complete lost-VPS reconstruction from off-site recovery inputs;
-5. final exact-candidate first-user replay.
+The disposable lifecycle, whole-target outage and lost-VPS reconstruction scenarios are already V3 evidence. Reimage the same temporary VPS once more for the remaining release exercise: the final exact-candidate first-user replay.
 
-The maintained product topology remains one VPS.
+The maintained product topology remains one VPS; another permanent or additional validation server is not required.
 
 ---
 
@@ -194,10 +186,8 @@ The maintained product topology remains one VPS.
 
 ### Remaining blockers
 
-- three-day Grafana marker lookup;
-- supported Coolify pin/source change and same-host verification;
-- replacement-host retained-log proof, supported-pin verification and a trustworthy whole-host alert-interval record;
-- exact-candidate owner replay;
-- independent private-reporting path test, release-commit hosted CI and immutable release identity.
+- exact-candidate fresh-user Quick Start replay on a clean Ubuntu 24.04 VPS;
+- release-commit hosted CI/Pages checks and exact-ref secret/state scans;
+- dated changelog, clean release dry-run and immutable `v0.1.0` release identity.
 
 **Target validation:** V3 for individual real integrations; V4 only after the complete clean-user replay.
