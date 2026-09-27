@@ -57,7 +57,7 @@ Solo VPS is for one server. It is **not** Kubernetes, a multi-node orchestrator,
 
 ## Current status
 
-Host, SSH, Docker, Coolify, CI and bounded image rollback are implemented in source. The owner has now followed the public first two chapters on a clean Ubuntu 24.04 VPS and reported a working HTTPS application and automatic deployment; the supplied logs show the host checks and CI setup, but do not identify the exact source commit. Separate operator exercises cover the `4.1.2` → `4.3.21` Coolify upgrade/resume, lost-VPS recovery from off-site inputs, PostgreSQL and restic restore, Grafana metrics/alerting, retained logs and whole-host DOWN/UP delivery. The final release candidate still needs its exact revision and remaining release checks confirmed before tagging.
+Host, SSH, Docker, Coolify, CI and bounded image rollback are implemented in source. The owner followed the public first two chapters on a clean Ubuntu 24.04 VPS using Solo VPS commit `0fdba7f` and reported a working HTTPS application and automatic deployment. The supplied logs show host setup, `verify-coolify`, `verify` and `audit` with no failed Ansible tasks. Subsequent changes through `bf02b74` affect documentation and release metadata, not runtime code or workflows. The logs do not show the required second `make platform` run with `changed=0`. Separate operator exercises cover the `4.1.2` → `4.3.21` Coolify upgrade/resume, lost-VPS recovery, PostgreSQL and restic restore, Grafana metrics/alerting, retained logs and whole-host DOWN/UP delivery.
 
 Until those proofs exist, treat local/static validation as development evidence rather than a production guarantee.
 
@@ -90,7 +90,7 @@ The host commands are `make setup → make apply → make secure → make platfo
 
 Basic setup ends after part two. Off-site backups, external alerts and retained logs are subsequent tasks, linked at its end.
 
-**Alpha limits:** the clean-host first-user path has been exercised, but the supplied logs do not record the exact Solo VPS commit used. The supported Coolify `4.3.21` source passed same-host checks after upgrade and recovery exercises; external DOWN/UP delivery and retained-log lookup have operator evidence, but Solo VPS does not promise an alert-latency or log-retention SLA.
+**Alpha limits:** the clean-host route used `0fdba7f`; its idempotent platform rerun and the final release checks remain open. The supported Coolify `4.3.21` source passed same-host checks after upgrade and recovery exercises; external DOWN/UP delivery and retained-log lookup have operator evidence, but Solo VPS does not promise an alert-latency or log-retention SLA.
 
 ## Safety boundaries
 
