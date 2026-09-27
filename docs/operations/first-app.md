@@ -51,6 +51,28 @@ Keep this tab open. Use a new empty repository: an older project's files and rul
 
 Wait for `Created application:` and the new directory path before continuing. If the destination exists, the helper does not overwrite it: choose a different unused name and use that name in subsequent steps.
 
+Before committing, make sure Git has a global author name and email for the new application repository. The following commands ask only for missing values on your workstation:
+
+=== "Windows PowerShell"
+
+    ```powershell
+    if (-not (git config --global user.name)) { git config --global user.name (Read-Host 'Git author name') }
+    if (-not (git config --global user.email)) { git config --global user.email (Read-Host 'Git author email') }
+    ```
+
+=== "Linux"
+
+    ```bash
+    if ! git config --global user.name >/dev/null; then
+      read -r -p 'Git author name: ' GIT_AUTHOR_NAME
+      git config --global user.name "$GIT_AUTHOR_NAME"
+    fi
+    if ! git config --global user.email >/dev/null; then
+      read -r -p 'Git author email: ' GIT_AUTHOR_EMAIL
+      git config --global user.email "$GIT_AUTHOR_EMAIL"
+    fi
+    ```
+
 **In the same workstation terminal, PowerShell or Linux:**
 
 ```bash
@@ -66,11 +88,23 @@ Your separate repository now contains the application, Dockerfile and complete w
 
 **On your workstation, in solo-vps-demo:**
 
-```bash
-APPLICATION_REPOSITORY_URL='YOUR_APPLICATION_REPOSITORY_URL'
-git remote add origin "$APPLICATION_REPOSITORY_URL"
-git push -u origin main
-```
+=== "Windows PowerShell"
+
+    ```powershell
+    $ApplicationRepositoryUrl = Read-Host 'New application repository URL'
+    git remote add origin $ApplicationRepositoryUrl
+    git push -u origin main
+    ```
+
+=== "Linux"
+
+    ```bash
+    read -r -p 'New application repository URL: ' APPLICATION_REPOSITORY_URL
+    git remote add origin "$APPLICATION_REPOSITORY_URL"
+    git push -u origin main
+    ```
+
+If `origin` already exists after a retry, inspect it with `git remote -v` instead of adding it again. Continue only when it points to your new application repository.
 
 **On GitHub, in solo-vps-demo → Actions:**
 
@@ -117,13 +151,13 @@ The example is `app.example.com`. With Cloudflare, select **DNS only**. Add an A
 | --- | --- |
 | Name | `solo-vps-demo` |
 | Docker Image | The published reference before `@`: `ghcr.io/<github-owner>/solo-vps-demo` |
-| Docker Image Tag or Hash | `sha256-` followed by all 64 characters after `sha256:` in the published reference |
+| Docker Image Tag or Hash | Copy the `sha256:...` part of the published reference and replace only `:` with `-`, producing `sha256-...` |
 | Domains | `https://app.example.com`, replacing the domain |
 | Ports Exposes | `8080` |
 | Ports Mappings | Leave empty |
 | Custom Docker Options | Leave empty |
 
-**Docker Image Tag or Hash** needs a **hyphen** after `sha256`, not a colon. Set the immutable digest explicitly in **Configuration → General** after creating the resource so the first deployment and later CI updates use the same two-field image contract.
+For example, `@sha256:1234...` in the published image reference becomes `sha256-1234...` in **Docker Image Tag or Hash**. Keep the full digest; the shortened example is only to show the change of separator. Set this field in **Configuration → General** after creating the resource so the first deployment and later CI updates use the same image reference.
 
 Leave the additional Coolify **Health Check** disabled: the Dockerfile already checks `/healthz`. Port `8080` is inside the container; HTTPS access does not require `8080:8080` in Ports Mappings.
 
@@ -166,8 +200,8 @@ GitHub Actions will use this key. Your personal administrator key is not needed 
     Transfer only the public part to the VPS:
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
-    $AdminUser = 'YOUR_ADMIN_USER'
+    $ServerIp = Read-Host 'VPS IPv4 address'
+    $AdminUser = Read-Host 'Linux administrator username'
     scp "$CiKey.pub" "${AdminUser}@${ServerIp}:/home/${AdminUser}/.ssh/solo-vps-demo-ci.pub"
     ```
 
@@ -184,8 +218,8 @@ GitHub Actions will use this key. Your personal administrator key is not needed 
     Transfer only the public part to the VPS:
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
-    ADMIN_USER='YOUR_ADMIN_USER'
+    read -r -p 'VPS IPv4 address: ' SERVER_IP
+    read -r -p 'Linux administrator username: ' ADMIN_USER
     scp ~/.ssh/solo-vps-demo-ci.pub "${ADMIN_USER}@${SERVER_IP}:/home/${ADMIN_USER}/.ssh/solo-vps-demo-ci.pub"
     ```
 
@@ -198,16 +232,16 @@ The private file without `.pub` stays on your workstation.
 === "Windows PowerShell"
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
-    $AdminUser = 'YOUR_ADMIN_USER'
+    $ServerIp = Read-Host 'VPS IPv4 address'
+    $AdminUser = Read-Host 'Linux administrator username'
     ssh "${AdminUser}@${ServerIp}"
     ```
 
 === "Linux"
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
-    ADMIN_USER='YOUR_ADMIN_USER'
+    read -r -p 'VPS IPv4 address: ' SERVER_IP
+    read -r -p 'Linux administrator username: ' ADMIN_USER
     ssh "${ADMIN_USER}@${SERVER_IP}"
     ```
 
@@ -230,7 +264,7 @@ If that section already exists, edit its field instead of adding a duplicate. A 
 **On the VPS as the administrator, in the same directory:**
 
 ```bash
-SERVER_IP='YOUR_SERVER_IP'
+read -r -p 'VPS IPv4 address: ' SERVER_IP
 make plan-ci-deploy-transport CI_DEPLOY_SERVER_HOST="$SERVER_IP" CI_DEPLOY_PUBLIC_KEY_FILE="$HOME/.ssh/solo-vps-demo-ci.pub"
 ```
 
@@ -261,7 +295,7 @@ The command prints only the ready-to-use `SHA256:...` value. Copy it **in full, 
 **Second — `SOLO_VPS_SSH_KNOWN_HOSTS`, the server's own key line:**
 
 ```bash
-SERVER_IP='YOUR_SERVER_IP'
+read -r -p 'VPS IPv4 address: ' SERVER_IP
 awk -v host="$SERVER_IP" '{print host " " $1 " " $2}' /etc/ssh/ssh_host_ed25519_key.pub
 ```
 

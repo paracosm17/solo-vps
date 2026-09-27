@@ -8,7 +8,7 @@ Follow the steps in order. Each command block says where to run it: **workstatio
 
 Prepare:
 
-- a fresh **Ubuntu 24.04 LTS** VPS with **2 vCPU**, **2 GiB RAM** and at least **30 GiB free disk**;
+- a fresh **Ubuntu 24.04 LTS** VPS with at least **2 vCPU, 2 GiB RAM and 30 GiB free disk**; these are the minimum supported resources;
 - SSH access as `root` and access to the provider's recovery console;
 - inbound TCP ports **22, 80, 443** allowed by the provider;
 - a Windows PowerShell or Linux workstation with `ssh` and `scp`;
@@ -17,7 +17,7 @@ Prepare:
 
 **PRE-ALPHA:** use a disposable VPS for now. The [source repository](https://github.com/paracosm17/solo-vps) is public, but there is no validated release yet. The command below clones the current `main`; `git rev-parse HEAD` reports its exact revision automatically if you need it for an evidence report.
 
-This is the supported one-VPS alpha setup. Make/Ansible run on the VPS in the steps below; Windows PowerShell handles workstation SSH/SCP. If you run Linux-side project tools on Windows, use WSL. The exact release revision has not yet passed the clean-host and recovery gates; do not use this path as a production guarantee.
+This is the supported one-VPS alpha setup. Make/Ansible run on the VPS in the steps below; Windows PowerShell handles workstation SSH/SCP. Linux examples use Bash, including in WSL on Windows. The owner has completed the first two chapters on a clean VPS; `v0.1.0` has not been released or approved for production.
 
 Choose these values before you start:
 
@@ -26,9 +26,8 @@ Choose these values before you start:
 | `SERVER_IP` | Your VPS IPv4 address |
 | `ADMIN_USER` | The Linux administrator name you want Solo VPS to create |
 | `COOLIFY_DOMAIN` | Your Coolify dashboard domain, for example `coolify.example.com` |
-| `REPOSITORY_URL` | `https://github.com/paracosm17/solo-vps.git` |
 
-The project directory remains `solo-vps`. Commands below define their variables before use; replace every `YOUR_...` value. External backup storage, Grafana and another server are not required.
+The project directory remains `solo-vps`. Copyable command blocks ask for the VPS address and administrator name when needed. The YAML example below still shows fields to edit in the config file. External backup storage, Grafana and another server are not required.
 
 ## 1. Connect to the fresh server
 
@@ -37,14 +36,14 @@ The project directory remains `solo-vps`. Commands below define their variables 
 === "Windows PowerShell"
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
+    $ServerIp = Read-Host 'VPS IPv4 address'
     ssh "root@$ServerIp"
     ```
 
 === "Linux"
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
+    read -r -p 'VPS IPv4 address: ' SERVER_IP
     ssh "root@${SERVER_IP}"
     ```
 
@@ -91,14 +90,14 @@ For this test, clone the public `main` branch. Once a release tag exists, use `g
     === "Windows PowerShell"
 
         ```powershell
-        $ServerIp = 'YOUR_SERVER_IP'
+        $ServerIp = Read-Host 'VPS IPv4 address'
         scp solo-vps.zip "root@${ServerIp}:/root/solo-vps.zip"
         ```
 
     === "Linux"
 
         ```bash
-        SERVER_IP='YOUR_SERVER_IP'
+        read -r -p 'VPS IPv4 address: ' SERVER_IP
         scp solo-vps.zip "root@${SERVER_IP}:/root/solo-vps.zip"
         ```
 
@@ -140,13 +139,6 @@ These are fields to edit, not a replacement for the whole file. Preserve the oth
 
 Save the file: **Ctrl+O → Enter → Ctrl+X**.
 
-**Only for a separate disposable 1 vCPU / 20 GiB VPS:** add the following section to the same config file. This permits one vCPU and at least 10 GiB **free** on `/` while retaining the RAM minimum. It is experimental and cannot close release evidence gates for the supported configuration. Watch free disk closely. Omit it on a supported VPS.
-
-```yaml
-evaluation:
-  allow_small_vps: true
-```
-
 ## 4. Send your administrator public key
 
 This key lets you sign in from your workstation as the configured `admin.user`. The private key stays on your workstation.
@@ -172,7 +164,7 @@ This key lets you sign in from your workstation as the configured `admin.user`. 
     If the key already exists, use it without creating another one. Send its public part:
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
+    $ServerIp = Read-Host 'VPS IPv4 address'
     Get-Content -Raw -LiteralPath "$AdminKey.pub" | ssh "root@$ServerIp" 'cd ~/solo-vps && make human-admin-key-stdin'
     ```
 
@@ -189,7 +181,7 @@ This key lets you sign in from your workstation as the configured `admin.user`. 
     If the key already exists, use it without creating another one. Send its public part:
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
+    read -r -p 'VPS IPv4 address: ' SERVER_IP
     cat ~/.ssh/id_ed25519.pub | ssh "root@${SERVER_IP}" 'cd ~/solo-vps && make human-admin-key-stdin'
     ```
 
@@ -219,16 +211,16 @@ Wait for `PASS Solo VPS host apply`.
 === "Windows PowerShell"
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
-    $AdminUser = 'YOUR_ADMIN_USER'
+    $ServerIp = Read-Host 'VPS IPv4 address'
+    $AdminUser = Read-Host 'Linux administrator username'
     ssh "${AdminUser}@${ServerIp}"
     ```
 
 === "Linux"
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
-    ADMIN_USER='YOUR_ADMIN_USER'
+    read -r -p 'VPS IPv4 address: ' SERVER_IP
+    read -r -p 'Linux administrator username: ' ADMIN_USER
     ssh "${ADMIN_USER}@${SERVER_IP}"
     ```
 
@@ -258,16 +250,16 @@ Wait for `PASS Solo VPS SSH security transition`. The command also prepares the 
 === "Windows PowerShell"
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
-    $AdminUser = 'YOUR_ADMIN_USER'
+    $ServerIp = Read-Host 'VPS IPv4 address'
+    $AdminUser = Read-Host 'Linux administrator username'
     ssh "${AdminUser}@${ServerIp}"
     ```
 
 === "Linux"
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
-    ADMIN_USER='YOUR_ADMIN_USER'
+    read -r -p 'VPS IPv4 address: ' SERVER_IP
+    read -r -p 'Linux administrator username: ' ADMIN_USER
     ssh "${ADMIN_USER}@${SERVER_IP}"
     ```
 
@@ -284,16 +276,16 @@ Run subsequent server commands here as the configured administrator.
 === "Windows PowerShell"
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
-    $AdminUser = 'YOUR_ADMIN_USER'
+    $ServerIp = Read-Host 'VPS IPv4 address'
+    $AdminUser = Read-Host 'Linux administrator username'
     scp -r "${AdminUser}@${ServerIp}:solo-vps" .
     ```
 
 === "Linux"
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
-    ADMIN_USER='YOUR_ADMIN_USER'
+    read -r -p 'VPS IPv4 address: ' SERVER_IP
+    read -r -p 'Linux administrator username: ' ADMIN_USER
     scp -r "${ADMIN_USER}@${SERVER_IP}:solo-vps" .
     ```
 
@@ -318,16 +310,16 @@ Wait for `PASS Solo VPS Coolify bootstrap`. You do not need to repeat the instal
 === "Windows PowerShell"
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
-    $AdminUser = 'YOUR_ADMIN_USER'
+    $ServerIp = Read-Host 'VPS IPv4 address'
+    $AdminUser = Read-Host 'Linux administrator username'
     ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:18000:127.0.0.1:8000 -L 127.0.0.1:6001:127.0.0.1:6001 -L 127.0.0.1:6002:127.0.0.1:6002 "${AdminUser}@${ServerIp}"
     ```
 
 === "Linux"
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
-    ADMIN_USER='YOUR_ADMIN_USER'
+    read -r -p 'VPS IPv4 address: ' SERVER_IP
+    read -r -p 'Linux administrator username: ' ADMIN_USER
     ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:18000:127.0.0.1:8000 -L 127.0.0.1:6001:127.0.0.1:6001 -L 127.0.0.1:6002:127.0.0.1:6002 "${ADMIN_USER}@${SERVER_IP}"
     ```
 

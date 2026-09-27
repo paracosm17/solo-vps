@@ -8,7 +8,7 @@
 
 Подготовьте:
 
-- чистый VPS с **Ubuntu 24.04 LTS**, **2 vCPU**, **2 GiB RAM** и минимум **30 GiB свободного места**;
+- чистый VPS с **Ubuntu 24.04 LTS** и минимум **2 vCPU, 2 GiB RAM и 30 GiB свободного места**; это нижняя граница поддерживаемой конфигурации;
 - SSH-доступ под `root` и доступ к консоли восстановления у провайдера;
 - разрешённые у провайдера входящие TCP-порты **22, 80, 443**;
 - компьютер с Windows PowerShell или Linux, командами `ssh` и `scp`;
@@ -17,7 +17,7 @@
 
 **PRE-ALPHA:** пока используйте тестовый VPS. [Репозиторий исходников](https://github.com/paracosm17/solo-vps) открыт, но проверенного релиза ещё нет. Команда ниже берёт текущую ветку `main`; её ревизия будет автоматически видна в `git rev-parse HEAD`, если она понадобится для отчёта.
 
-Это поддерживаемый alpha-путь для одного VPS. В следующих шагах Make/Ansible запускаются на VPS, а Windows PowerShell служит для SSH/SCP с компьютера. Если на Windows нужны локальные Linux-инструменты проекта, используйте WSL. Точная версия релиза ещё не прошла проверки на чистом сервере и восстановления; эта инструкция пока не подтверждает готовность к production.
+Это поддерживаемый alpha-путь для одного VPS. В следующих шагах Make/Ansible запускаются на VPS, а Windows PowerShell служит для SSH/SCP с компьютера. Примеры Linux рассчитаны на Bash, в том числе в WSL на Windows. Автор проекта прошёл первые две главы на чистом VPS; релиз `v0.1.0` ещё не опубликован и не одобрен для production.
 
 До начала выберите значения:
 
@@ -26,9 +26,8 @@
 | `SERVER_IP` | IPv4 вашего VPS |
 | `ADMIN_USER` | Имя Linux-администратора, которого создаст Solo VPS |
 | `COOLIFY_DOMAIN` | Домен панели Coolify, например `coolify.example.com` |
-| `REPOSITORY_URL` | `https://github.com/paracosm17/solo-vps.git` |
 
-Каталог проекта остаётся `solo-vps`. В командах ниже переменные определяются перед использованием; заменяйте все значения `YOUR_...`. Внешнее хранилище резервных копий, Grafana и второй сервер здесь не нужны.
+Каталог проекта остаётся `solo-vps`. Копируемые блоки команд запросят IP сервера и имя администратора, когда они нужны. В примере YAML ниже по-прежнему показаны поля, которые нужно изменить в конфигурации. Внешнее хранилище резервных копий, Grafana и второй сервер здесь не нужны.
 
 ## 1. Подключитесь к чистому серверу
 
@@ -37,14 +36,14 @@
 === "Windows PowerShell"
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
+    $ServerIp = Read-Host 'IPv4 VPS'
     ssh "root@$ServerIp"
     ```
 
 === "Linux"
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
+    read -r -p 'IPv4 VPS: ' SERVER_IP
     ssh "root@${SERVER_IP}"
     ```
 
@@ -91,14 +90,14 @@ apt-get install -y --no-install-recommends make git nano ca-certificates
     === "Windows PowerShell"
 
         ```powershell
-        $ServerIp = 'YOUR_SERVER_IP'
+        $ServerIp = Read-Host 'IPv4 VPS'
         scp solo-vps.zip "root@${ServerIp}:/root/solo-vps.zip"
         ```
 
     === "Linux"
 
         ```bash
-        SERVER_IP='YOUR_SERVER_IP'
+        read -r -p 'IPv4 VPS: ' SERVER_IP
         scp solo-vps.zip "root@${SERVER_IP}:/root/solo-vps.zip"
         ```
 
@@ -140,13 +139,6 @@ admin:
 
 Сохраните файл: **Ctrl+O → Enter → Ctrl+X**.
 
-**Только для отдельного тестового VPS с 1 vCPU и диском 20 GiB:** добавьте в тот же файл раздел ниже. Он допускает 1 vCPU и минимум 10 GiB **свободного** места на `/` при прежнем минимуме RAM. Это экспериментальный путь; такой сервер не закрывает проверку поддерживаемой конфигурации для релиза. Следите за свободным местом. На сервере с поддерживаемыми параметрами этот раздел не нужен.
-
-```yaml
-evaluation:
-  allow_small_vps: true
-```
-
 ## 4. Передайте публичный ключ администратора
 
 С этим ключом вы будете входить с компьютера под пользователем из `admin.user`. Приватный ключ остаётся на компьютере.
@@ -172,7 +164,7 @@ evaluation:
     Если ключ уже существует, используйте его без повторного создания. Передайте публичную часть:
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
+    $ServerIp = Read-Host 'IPv4 VPS'
     Get-Content -Raw -LiteralPath "$AdminKey.pub" | ssh "root@$ServerIp" 'cd ~/solo-vps && make human-admin-key-stdin'
     ```
 
@@ -189,7 +181,7 @@ evaluation:
     Если ключ уже существует, используйте его без повторного создания. Передайте публичную часть:
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
+    read -r -p 'IPv4 VPS: ' SERVER_IP
     cat ~/.ssh/id_ed25519.pub | ssh "root@${SERVER_IP}" 'cd ~/solo-vps && make human-admin-key-stdin'
     ```
 
@@ -219,16 +211,16 @@ make apply
 === "Windows PowerShell"
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
-    $AdminUser = 'YOUR_ADMIN_USER'
+    $ServerIp = Read-Host 'IPv4 VPS'
+    $AdminUser = Read-Host 'Имя администратора Linux'
     ssh "${AdminUser}@${ServerIp}"
     ```
 
 === "Linux"
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
-    ADMIN_USER='YOUR_ADMIN_USER'
+    read -r -p 'IPv4 VPS: ' SERVER_IP
+    read -r -p 'Имя администратора Linux: ' ADMIN_USER
     ssh "${ADMIN_USER}@${SERVER_IP}"
     ```
 
@@ -258,16 +250,16 @@ SSH_HARDENING_CONFIRM=I_HAVE_VERIFIED_PROVIDER_RECOVERY SSH_HARDENING_ADMIN_LOGI
 === "Windows PowerShell"
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
-    $AdminUser = 'YOUR_ADMIN_USER'
+    $ServerIp = Read-Host 'IPv4 VPS'
+    $AdminUser = Read-Host 'Имя администратора Linux'
     ssh "${AdminUser}@${ServerIp}"
     ```
 
 === "Linux"
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
-    ADMIN_USER='YOUR_ADMIN_USER'
+    read -r -p 'IPv4 VPS: ' SERVER_IP
+    read -r -p 'Имя администратора Linux: ' ADMIN_USER
     ssh "${ADMIN_USER}@${SERVER_IP}"
     ```
 
@@ -284,16 +276,16 @@ cd ~/solo-vps
 === "Windows PowerShell"
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
-    $AdminUser = 'YOUR_ADMIN_USER'
+    $ServerIp = Read-Host 'IPv4 VPS'
+    $AdminUser = Read-Host 'Имя администратора Linux'
     scp -r "${AdminUser}@${ServerIp}:solo-vps" .
     ```
 
 === "Linux"
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
-    ADMIN_USER='YOUR_ADMIN_USER'
+    read -r -p 'IPv4 VPS: ' SERVER_IP
+    read -r -p 'Имя администратора Linux: ' ADMIN_USER
     scp -r "${ADMIN_USER}@${SERVER_IP}:solo-vps" .
     ```
 
@@ -318,16 +310,16 @@ make platform
 === "Windows PowerShell"
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
-    $AdminUser = 'YOUR_ADMIN_USER'
+    $ServerIp = Read-Host 'IPv4 VPS'
+    $AdminUser = Read-Host 'Имя администратора Linux'
     ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:18000:127.0.0.1:8000 -L 127.0.0.1:6001:127.0.0.1:6001 -L 127.0.0.1:6002:127.0.0.1:6002 "${AdminUser}@${ServerIp}"
     ```
 
 === "Linux"
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
-    ADMIN_USER='YOUR_ADMIN_USER'
+    read -r -p 'IPv4 VPS: ' SERVER_IP
+    read -r -p 'Имя администратора Linux: ' ADMIN_USER
     ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:18000:127.0.0.1:8000 -L 127.0.0.1:6001:127.0.0.1:6001 -L 127.0.0.1:6002:127.0.0.1:6002 "${ADMIN_USER}@${SERVER_IP}"
     ```
 

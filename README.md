@@ -2,11 +2,11 @@
 
 [English](README.md) · [Русский](README.ru.md)
 
-**Turn a clean Ubuntu VPS into a ready-to-use server for your applications.** Follow the guide and run a small set of commands. Solo VPS configures Linux, SSH, the firewall, Docker and Coolify, then checks that everything works.
+**A repeatable setup for the VPS you rarely set up.** Solo VPS configures an Ubuntu 24.04 host, SSH, the firewall, Docker and Coolify. The guide takes you through the remaining GitHub and Coolify steps for automatic application deployment.
 
-You do not have to design the infrastructure or compare ten tools first. Solo VPS chooses one practical stack, provides the settings and automation, and shows you how to deploy, inspect and recover your applications. After setup, you can return to writing code instead of assembling a server by hand.
+I built it because each new server used to mean looking up the same SSH-key, administrator, security and Docker commands again. The setup was infrequent enough to forget, yet important enough to get right each time.
 
-> **Status:** PRE-ALPHA — **not production-ready**. Use a test VPS. The basic VPS → Coolify → first application → automatic deployment path and a separate replacement-host recovery exercise have real operator evidence. The promoted Coolify 4.3.21 source passed same-host verification; the exact release candidate still needs a clean user replay. Off-site backups and Grafana remain optional profiles.
+> **Status:** PRE-ALPHA — **not production-ready**. Use a test VPS. The project owner has completed the public setup and automatic deployment guide on a clean VPS without assistance; replacement-host recovery has separate operator evidence. The exact `v0.1.0` release has not been published. Off-site backups and Grafana remain optional profiles.
 
 ```text
 your computer
@@ -23,11 +23,15 @@ SOPS + age → infrastructure/recovery secrets
 Optional: restic → managed off-site object storage
 ```
 
+## Why this exists
+
+My old release routine was `git push` on the computer, then SSH to the server for `git pull`, `docker compose down` and `docker compose up`. With Solo VPS, GitHub Actions checks and builds the application, GHCR stores the image, and Coolify deploys it. A push can now start the delivery flow without running the build on the VPS or logging in for every update. Coolify provides the UI for deployments, variables and live logs.
+
+Solo VPS does not invent CI/CD. It joins established tools into one documented setup for a solo developer or small project, with explicit boundaries for security, backups and recovery.
+
 ## What Solo VPS is
 
-Solo VPS is a ready-made server setup for solo developers and small projects. It is both automation and a step-by-step guide: you start with a fresh **Ubuntu 24.04 LTS** VPS and finish with a secured server, a deployment panel and a clear path for CI/CD, logs, backups and recovery.
-
-It is deliberately opinionated. Instead of giving you a box of unrelated options, it answers the important questions up front: which operating system to use, how to secure access, how to run containers, where to deploy applications, where to keep images and how to back up the server.
+Starting from a fresh **Ubuntu 24.04 LTS** VPS, the automation configures the host and checks it. The guide then takes you through Coolify, a first application and its GitHub Actions deployment. Logs, off-site backups and recovery have separate instructions.
 
 After the basic setup you can:
 
@@ -53,7 +57,7 @@ Solo VPS is for one server. It is **not** Kubernetes, a multi-node orchestrator,
 
 ## Current status
 
-Host, SSH, Docker, Coolify, CI and bounded image rollback are implemented in source. Test VPS evidence covers fresh Ubuntu 24.04 setup, the first application, automatic deployment, interrupted Coolify upgrade/resume to `4.3.21`, whole-host DOWN/UP emails and recovery after reimaging from off-site inputs. The promoted source passed ordinary Coolify/platform verification and security audit on the recovered host. This is not the final exact-revision clean replay: the remaining release proof is a fresh-user run of the exact candidate through the public Quick Start. PostgreSQL and restic restore, Grafana host metrics/alerting, retained logs across redeploy/restart and whole-host DOWN/UP delivery have separate operator evidence.
+Host, SSH, Docker, Coolify, CI and bounded image rollback are implemented in source. The owner has now followed the public first two chapters on a clean Ubuntu 24.04 VPS and reported a working HTTPS application and automatic deployment; the supplied logs show the host checks and CI setup, but do not identify the exact source commit. Separate operator exercises cover the `4.1.2` → `4.3.21` Coolify upgrade/resume, lost-VPS recovery from off-site inputs, PostgreSQL and restic restore, Grafana metrics/alerting, retained logs and whole-host DOWN/UP delivery. The final release candidate still needs its exact revision and remaining release checks confirmed before tagging.
 
 Until those proofs exist, treat local/static validation as development evidence rather than a production guarantee.
 
@@ -86,7 +90,7 @@ The host commands are `make setup → make apply → make secure → make platfo
 
 Basic setup ends after part two. Off-site backups, external alerts and retained logs are subsequent tasks, linked at its end.
 
-**Alpha limits:** the exact release revision still needs a clean-host fresh-user replay of the public Quick Start. The supported Coolify `4.3.21` source passed same-host checks after the upgrade and lost-VPS recovery exercises; external DOWN/UP delivery and retained-log lookup have V3 operator evidence, but Solo VPS does not promise an alert-latency or log-retention SLA.
+**Alpha limits:** the clean-host first-user path has been exercised, but the supplied logs do not record the exact Solo VPS commit used. The supported Coolify `4.3.21` source passed same-host checks after upgrade and recovery exercises; external DOWN/UP delivery and retained-log lookup have operator evidence, but Solo VPS does not promise an alert-latency or log-retention SLA.
 
 ## Safety boundaries
 

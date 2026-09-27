@@ -51,6 +51,28 @@
 
 Дождитесь `Created application:` с путём нового каталога. Только после этого переходите дальше. Если каталог уже существует, helper ничего не перезаписывает: выберите другое свободное имя и используйте его в последующих шагах.
 
+Перед коммитом задайте глобальные имя и email автора Git для нового репозитория приложения. Следующие команды спросят только отсутствующие значения на компьютере:
+
+=== "Windows PowerShell"
+
+    ```powershell
+    if (-not (git config --global user.name)) { git config --global user.name (Read-Host 'Имя автора Git') }
+    if (-not (git config --global user.email)) { git config --global user.email (Read-Host 'Email автора Git') }
+    ```
+
+=== "Linux"
+
+    ```bash
+    if ! git config --global user.name >/dev/null; then
+      read -r -p 'Имя автора Git: ' GIT_AUTHOR_NAME
+      git config --global user.name "$GIT_AUTHOR_NAME"
+    fi
+    if ! git config --global user.email >/dev/null; then
+      read -r -p 'Email автора Git: ' GIT_AUTHOR_EMAIL
+      git config --global user.email "$GIT_AUTHOR_EMAIL"
+    fi
+    ```
+
 **В том же терминале компьютера, PowerShell или Linux:**
 
 ```bash
@@ -66,11 +88,23 @@ git commit -m "Create demo application"
 
 **На компьютере, в каталоге solo-vps-demo:**
 
-```bash
-APPLICATION_REPOSITORY_URL='YOUR_APPLICATION_REPOSITORY_URL'
-git remote add origin "$APPLICATION_REPOSITORY_URL"
-git push -u origin main
-```
+=== "Windows PowerShell"
+
+    ```powershell
+    $ApplicationRepositoryUrl = Read-Host 'URL нового репозитория приложения'
+    git remote add origin $ApplicationRepositoryUrl
+    git push -u origin main
+    ```
+
+=== "Linux"
+
+    ```bash
+    read -r -p 'URL нового репозитория приложения: ' APPLICATION_REPOSITORY_URL
+    git remote add origin "$APPLICATION_REPOSITORY_URL"
+    git push -u origin main
+    ```
+
+Если при повторе Git сообщает, что `origin` уже существует, проверьте его через `git remote -v` и не добавляйте ещё раз. Продолжайте, только если он указывает на новый репозиторий приложения.
 
 **На GitHub, в репозитории solo-vps-demo → Actions:**
 
@@ -117,13 +151,13 @@ ghcr.io/<github-owner>/solo-vps-demo@sha256:<64-hex-digest>
 | --- | --- |
 | Name | `solo-vps-demo` |
 | Docker Image | Имя из опубликованной ссылки до `@`: `ghcr.io/<github-owner>/solo-vps-demo` |
-| Docker Image Tag or Hash | `sha256-`, затем все 64 символа после `sha256:` в опубликованной ссылке |
+| Docker Image Tag or Hash | Скопируйте часть `sha256:...` из опубликованной ссылки и замените только `:` на `-`, чтобы получилось `sha256-...` |
 | Domains | `https://app.example.com`, замените домен своим |
 | Ports Exposes | `8080` |
 | Ports Mappings | Оставьте пустым |
 | Custom Docker Options | Оставьте пустым |
 
-В поле **Docker Image Tag or Hash** нужен **дефис** после `sha256`, а не двоеточие. После создания ресурса явно задайте immutable digest в **Configuration → General**, чтобы первый деплой и последующие CI-обновления использовали один и тот же двухполевый контракт образа.
+Например, `@sha256:1234...` в ссылке на опубликованный образ превращается в `sha256-1234...` в поле **Docker Image Tag or Hash**. Скопируйте хеш целиком: короткий пример показывает только замену разделителя. Задайте это поле в **Configuration → General** после создания ресурса, чтобы первый деплой и последующие обновления CI использовали тот же образ.
 
 Дополнительный **Health Check** Coolify оставьте выключенным: Dockerfile уже проверяет `/healthz`. Порт `8080` используется внутри контейнера; приложение будет доступно через HTTPS без `8080:8080` в Ports Mappings.
 
@@ -166,8 +200,8 @@ ghcr.io/<github-owner>/solo-vps-demo@sha256:<64-hex-digest>
     Передайте на VPS только публичную часть:
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
-    $AdminUser = 'YOUR_ADMIN_USER'
+    $ServerIp = Read-Host 'IPv4 VPS'
+    $AdminUser = Read-Host 'Имя администратора Linux'
     scp "$CiKey.pub" "${AdminUser}@${ServerIp}:/home/${AdminUser}/.ssh/solo-vps-demo-ci.pub"
     ```
 
@@ -184,8 +218,8 @@ ghcr.io/<github-owner>/solo-vps-demo@sha256:<64-hex-digest>
     Передайте на VPS только публичную часть:
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
-    ADMIN_USER='YOUR_ADMIN_USER'
+    read -r -p 'IPv4 VPS: ' SERVER_IP
+    read -r -p 'Имя администратора Linux: ' ADMIN_USER
     scp ~/.ssh/solo-vps-demo-ci.pub "${ADMIN_USER}@${SERVER_IP}:/home/${ADMIN_USER}/.ssh/solo-vps-demo-ci.pub"
     ```
 
@@ -198,16 +232,16 @@ ghcr.io/<github-owner>/solo-vps-demo@sha256:<64-hex-digest>
 === "Windows PowerShell"
 
     ```powershell
-    $ServerIp = 'YOUR_SERVER_IP'
-    $AdminUser = 'YOUR_ADMIN_USER'
+    $ServerIp = Read-Host 'IPv4 VPS'
+    $AdminUser = Read-Host 'Имя администратора Linux'
     ssh "${AdminUser}@${ServerIp}"
     ```
 
 === "Linux"
 
     ```bash
-    SERVER_IP='YOUR_SERVER_IP'
-    ADMIN_USER='YOUR_ADMIN_USER'
+    read -r -p 'IPv4 VPS: ' SERVER_IP
+    read -r -p 'Имя администратора Linux: ' ADMIN_USER
     ssh "${ADMIN_USER}@${SERVER_IP}"
     ```
 
@@ -230,7 +264,7 @@ ci_deploy:
 **На VPS под администратором, в том же каталоге:**
 
 ```bash
-SERVER_IP='YOUR_SERVER_IP'
+read -r -p 'IPv4 VPS: ' SERVER_IP
 make plan-ci-deploy-transport CI_DEPLOY_SERVER_HOST="$SERVER_IP" CI_DEPLOY_PUBLIC_KEY_FILE="$HOME/.ssh/solo-vps-demo-ci.pub"
 ```
 
@@ -261,7 +295,7 @@ ssh-keygen -lf ~/.ssh/solo-vps-demo-ci.pub -E sha256 | awk '{print $2}'
 **Второе — `SOLO_VPS_SSH_KNOWN_HOSTS`, строка ключа самого сервера:**
 
 ```bash
-SERVER_IP='YOUR_SERVER_IP'
+read -r -p 'IPv4 VPS: ' SERVER_IP
 awk -v host="$SERVER_IP" '{print host " " $1 " " $2}' /etc/ssh/ssh_host_ed25519_key.pub
 ```
 
