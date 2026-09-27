@@ -1,11 +1,11 @@
 # Solo VPS — ROADMAP
 
-> **Last updated:** 2026-09-26
+> **Last updated:** 2026-09-27
 > **Project status:** PRE-ALPHA  
 > **Current phase:** first-release productization and runtime evidence
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** prove full lost-host reconstruction from off-site inputs on a clean Ubuntu 24.04 VPS before deciding whether to promote the Coolify `4.3.21` lifecycle pins.
+> **Next action:** review the Coolify `4.3.21` supported-pin change against the completed replacement-host exercise, then verify the changed source on the disposable VPS.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -29,7 +29,7 @@ Ubuntu 24.04 host
 → failed-image rollback and planned reboot recovery
 ```
 
-A separate disposable Ubuntu 24.04 VPS now has V3 evidence for a clean host setup, Coolify `4.1.2` → `4.3.21` forward-resume upgrade, Sentinel, HTTPS demo CI/CD, B2/restic recovery checks, and isolated PostgreSQL restore from B2. Its external monitor delivered real application and whole-host DOWN/UP emails; the whole-host exercise has a private provider screenshot and observation record, while the formal latency summary remains open. This is not V4: complete lost-host reconstruction, retained logs on this target, and the final owner-only public-doc replay remain open.
+A disposable Ubuntu 24.04 VPS has V3 evidence for clean host setup, Coolify `4.1.2` → `4.3.21` forward-resume upgrade, Sentinel, HTTPS demo CI/CD, and real application and whole-host DOWN/UP emails. After reimaging that VPS, the replacement-host exercise restored the Coolify instance and identity, PostgreSQL from B2, and the immutable demo image; public HTTPS, candidate verification, security audit, a new restic snapshot, its restore-test, and the daily backup timer passed. This is not V4: supported-pin verification, retained logs on the replacement, and final owner-only public-doc replay remain open. No precise alert-latency claim is made from the approximate provider stop time.
 
 ### Validation levels
 
@@ -68,9 +68,9 @@ The immediate retained-log path is V3: entries survived application redeploy and
 
 ### Coolify lifecycle
 
-The source still supports only Coolify `4.1.1 → 4.1.2`. Official upstream review on 2026-09-17 selected `4.3.21` as the **disposable evaluation candidate**, not yet as a supported Solo VPS target. That reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data.
+The source still supports only Coolify `4.1.1 → 4.1.2`. Official upstream review on 2026-09-17 selected `4.3.21` as the **disposable evaluation candidate**, not yet as a supported Solo VPS target. That reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data. The 2026-09-27 replacement-host exercise passed on `4.3.21`; supported pins still await a source change and same-host verification.
 
-Do not change pins from research alone. Sentinel is a Coolify-managed Linux/Docker metrics agent, not a Solo VPS server mode and not Redis Sentinel. The old verified "Sentinel absent" result records a `4.1.2` bridge-to-loopback incompatibility; it is not the desired contract for `4.3.19+`. A committed, safety-gated [exercise sheet](docs/coolify-4.3.21-evaluation.md) now proves the exact candidate artifacts, an HTTPS push path, the high-trust Docker/host boundary, absence of unintended public ports and deterministic interruption/forward-resume behavior. The disposable Ubuntu 24.04 evaluation reached `4.3.21` with an intentional interruption and explicit forward resume. Sentinel is healthy; candidate verification passed with `changed=0 failed=0`; the HTTPS demo app passed hosted CI and deployed a new image. The `database-backup-adopt` API helper fails closed because the `4.3.21` schedule API omits the required S3 storage UUID; Coolify UI backup and isolated B2 restore passed instead. The supported `4.1.2` pin remains until the remaining runtime/recovery gates and policy review are complete.
+Do not change pins from research alone. Sentinel is a Coolify-managed Linux/Docker metrics agent, not a Solo VPS server mode and not Redis Sentinel. The old verified "Sentinel absent" result records a `4.1.2` bridge-to-loopback incompatibility; it is not the desired contract for `4.3.19+`. A committed, safety-gated [exercise sheet](docs/coolify-4.3.21-evaluation.md) now proves the exact candidate artifacts, an HTTPS push path, the high-trust Docker/host boundary, absence of unintended public ports and deterministic interruption/forward-resume behavior. The disposable Ubuntu 24.04 evaluation reached `4.3.21` with an intentional interruption and explicit forward resume. Sentinel is healthy; candidate verification passed with `changed=0 failed=0`; the HTTPS demo app passed hosted CI and deployed a new image. The `database-backup-adopt` API helper fails closed because the `4.3.21` schedule API omits the required S3 storage UUID; Coolify UI backup and isolated B2 restore passed instead. The supported `4.1.2` pin remains until the `4.3.21` policy/source change and same-host verification pass.
 
 ### Publication
 
@@ -105,7 +105,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 
 | Finding | State | Current evidence / remaining work |
 | --- | --- | --- |
-| CRIT-001 backup/restore/DR | PARTIAL V3 | Disposable-host B2/restic checks, off-VPS recovery kit verification, and isolated PostgreSQL restore pass; clean replacement-host reconstruction pending |
+| CRIT-001 backup/restore/DR | RECOVERY PASS / V3 | Clean replacement host rebuilt from off-VPS inputs; Coolify, PostgreSQL, immutable app, HTTPS, new restic snapshot and restore-test passed; owner-only V4 replay pending |
 | CRIT-002 failed deploy rollback | DONE / V3 | failed immutable candidate restores the known-good image; database rollback excluded |
 | CRIT-003 workstation admin key | DONE / V3 | independent human key, sudo, root denial and hardening gate proven |
 | CRIT-004 hosted self-CI / clean target | HOSTED CHECK PASS / V3 | `fast-source` is required on `main` and passed on PR #9; disposable host-core execution passed; release-commit run pending |
@@ -119,7 +119,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-012 CI deployment transport | DEFERRED | restricted SSH tunnel remains the proven default |
 | CRIT-013 recovery priority | CLOSED | recovery path implemented before optional observability expansion |
 | CRIT-014 private security channel | PARTIAL | GitHub Private Vulnerability Reporting enabled; independent reporter-path test pending |
-| CRIT-015 external outage detection | PARTIAL V3 | Provider-level VPS shutdown/restart produced real DOWN/UP emails and private evidence; formal latency record remains open |
+| CRIT-015 external outage detection | DONE / V3 | Provider-level VPS shutdown/restart produced real DOWN/UP emails; exact alert latency was not measured |
 | CRIT-016 migration safety | DONE / V2 | app-owned preflight and image-only rollback boundary |
 | CRIT-017 release/upgrade story | PARTIAL | tagged-source contract documented; first tag and lifecycle proof pending |
 | CRIT-018 documentation duplication | DONE / V2 | user, architecture, plan and evidence roles separated |
@@ -149,7 +149,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M13 — Infrastructure Secrets with SOPS + age | P1 | DONE | V3 |
 | M14 — Off-Site Restic Backup | P1 | DONE | B2 snapshot/freshness/restore-test V3 |
 | M15 — Database-Aware Backup Strategy | P1 | DONE | local and off-site isolated restore V3 |
-| M16 — Disaster Recovery & Restore Test | P1 | SOURCE DONE | V2; replacement-host V4 pending |
+| M16 — Disaster Recovery & Restore Test | P1 | DONE | Replacement-host recovery V3; owner-only V4 replay pending |
 | M17 — `make doctor` expansion | P2 | DONE | V2 + maintained-host use |
 | M18 — `make verify` | P2 | DONE | V2 + maintained-host use |
 | M19 — Security Audit | P2 | DONE | V3 |
@@ -195,8 +195,8 @@ The maintained product topology remains one VPS.
 ### Remaining blockers
 
 - three-day Grafana marker lookup;
-- supported Coolify pin decision after lost-host reconstruction and remaining candidate proof;
-- replacement-host recovery and formal whole-host alert timing summary;
+- supported Coolify pin/source change and same-host verification;
+- replacement-host retained-log proof and supported-pin verification;
 - exact-candidate owner replay;
 - independent private-reporting path test, release-commit hosted CI and immutable release identity.
 

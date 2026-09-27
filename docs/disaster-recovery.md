@@ -2,7 +2,7 @@
 
 This is the supported recovery model when the **old VPS is lost** and you must rebuild on a **fresh Ubuntu 24.04** replacement.
 
-> Current status: the source-side procedure is implemented, but the alpha release still needs the complete destroyed-VPS replacement exercise with real off-site data.
+> Current status: a disposable Ubuntu 24.04 VPS was reimaged and rebuilt from off-site inputs on the Coolify `4.3.21` evaluation candidate. Coolify identity, PostgreSQL data, the immutable demo image and public HTTPS were recovered. The supported version pins and final owner-only release replay still need verification.
 
 ## Recovery sequence
 
