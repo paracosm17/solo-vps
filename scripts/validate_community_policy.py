@@ -132,9 +132,18 @@ def validate_community_policy(root: Path) -> None:
         raise ContractError("Project Passport must record the accepted Apache-2.0 decision")
     if not license_path.is_file():
         raise ContractError("root LICENSE is required after the Apache-2.0 owner decision")
-    license_digest = hashlib.sha256(license_path.read_bytes()).hexdigest()
+    license_bytes = license_path.read_bytes()
+    # Apache's application appendix is intended to carry the owner's notice.
+    # Normalize only that filled line; keep every license term byte-for-byte.
+    notice = re.compile(rb"(?m)^([ ]*)Copyright [0-9]{4} [^\[\]\r\n]+$")
+    normalized, count = notice.subn(
+        rb"\1Copyright [yyyy] [name of copyright owner]", license_bytes
+    )
+    if count != 1:
+        raise ContractError("root LICENSE must contain one filled copyright year and owner")
+    license_digest = hashlib.sha256(normalized).hexdigest()
     if license_digest != APACHE_2_LICENSE_SHA256:
-        raise ContractError("root LICENSE must be the canonical unmodified Apache License 2.0 text")
+        raise ContractError("root LICENSE must preserve the canonical Apache License 2.0 terms")
 
     if "SECURITY.md" not in readme or "CONTRIBUTING.md" not in readme or "docs/license-choice.md" not in readme or "[`LICENSE`](LICENSE)" not in readme:
         raise ContractError("README must surface security, contribution, and Apache-2.0 license policy")

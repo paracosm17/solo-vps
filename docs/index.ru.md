@@ -41,10 +41,10 @@ Solo VPS использует следующие компоненты:
 | Область | Кто отвечает |
 | --- | --- |
 | Базовая настройка Ubuntu, SSH, firewall, Docker | **Solo VPS** |
-| Деплой приложений и runtime configuration | **Coolify** |
-| CI и публикация images, если включены | **GitHub Actions / GHCR** |
+| Деплой и настройки приложений | **Coolify** |
+| CI, сборка и публикация образов | **GitHub Actions / GHCR** |
 | Внешнее хранилище и сторонние аккаунты | **Вы** |
-| Процедура восстановления | **Документация Solo VPS + ваши внешние credentials/backups** |
+| Восстановление | **Документация Solo VPS + ваши внешние копии и данные доступа** |
 
 ## Частые задачи
 
@@ -53,7 +53,7 @@ Solo VPS использует следующие компоненты:
 1. [Настройте VPS и Coolify](quick-start.md).
 2. [Запустите приложение и подключите CI/CD](operations/first-app.md).
 3. [Добавьте историю логов](operations/observability.md), если она нужна.
-4. [Настройте backup и restore PostgreSQL](operations/postgresql-backups.md), если используете базу.
+4. [Настройте копии и восстановление PostgreSQL](operations/postgresql-backups.md), если используете базу.
 5. [Подключите внешний uptime-мониторинг](operations/external-uptime.md).
 6. [Вынесите резервные копии с VPS](operations/offsite-backups.md).
 7. [Добавьте метрики VPS](operations/metrics.md), если хотите отслеживать ресурсы.

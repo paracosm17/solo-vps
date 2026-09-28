@@ -125,7 +125,10 @@ def validate(root: Path) -> None:
     positions = [readme_quick.index(command) for command in ("make setup", "make apply", "make secure", "make platform", "make verify")]
     if positions != sorted(positions):
         raise ContractError("README must order setup -> apply -> secure -> platform -> verify")
-    for page in ("docs/quick-start.md", "docs/operations/first-app.md"):
+    for page in (
+        "https://paracosm17.github.io/solo-vps/quick-start/",
+        "https://paracosm17.github.io/solo-vps/operations/first-app/",
+    ):
         require(readme_quick, page, "README runbook links")
     # Detailed commands live in the canonical runbook, not a second README copy.
     for quick in quick_starts:

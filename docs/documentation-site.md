@@ -110,6 +110,12 @@ For the public repository at `https://github.com/paracosm17/solo-vps`:
 
 Do not add a guessed Pages URL or production documentation domain before those resources exist.
 
+## Documentation and release tags
+
+A release tag identifies the whole repository snapshot: code, README, documentation and license. Published tags are not moved to incorporate later edits.
+
+The Pages site is built from `main`, so wording corrections can be published without changing a release tag. The Markdown files at a tag remain the documentation shipped with that release. When a guide changes a command or requirement, state which releases it applies to. A code fix needs a new release if users installing by tag must receive it.
+
 ## Navigation policy
 
 `mkdocs.yml` is task-oriented. New user-facing pages should live under the smallest relevant section rather than mirroring Ansible roles or repository internals.

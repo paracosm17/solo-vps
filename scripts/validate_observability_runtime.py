@@ -292,7 +292,7 @@ def validate(root: Path) -> None:
         req(state, needle, "state-layout docs")
     for needle in ('Repository-managed Alloy', 'Coolify-native Custom FluentBit', 'CRIT-005', 'Unix socket'):
         req(roadmap, needle, "ROADMAP.md")
-    for needle in ('CRIT-005', 'Unix socket'):
+    for needle in ('protected Unix socket', 'restricted Docker API proxy'):
         req(changelog, needle, "CHANGELOG.md")
 
     print('PASS observability runtime contract: non-root Alloy -> restricted Docker API proxy -> Grafana Cloud')

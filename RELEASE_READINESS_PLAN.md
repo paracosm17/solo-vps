@@ -92,7 +92,7 @@ Review the rendered EN/RU Home, Quick Start, first-application guide, daily oper
 
 ### 2. Preserve the completed independent clean-host rehearsal
 
-The owner followed the public first two chapters on a clean Ubuntu 24.04 VPS at Solo VPS commit `0fdba7f` and reported a working application with automatic deployment. Supplied logs show clean bootstrap, administrator/SSH hardening, Coolify `4.3.21`, successful `verify-coolify`, full `verify` and `audit`, and the second `make platform` with `ok=80 changed=0 unreachable=0 failed=0`. This closes the core V4 gate; see [the bounded evidence record](reviews/2026-09-28-clean-user-replay.md). Changes through `659a5a7` touch only documentation, CSS, release metadata and a documentation-validator test. Carry this rehearsal forward while later candidate changes remain operationally equivalent and the rendered guide still matches the route.
+The owner followed the public first two chapters on a clean Ubuntu 24.04 VPS at Solo VPS commit `0fdba7f` and reported a working application with automatic deployment. Supplied logs show clean bootstrap, administrator/SSH hardening, Coolify `4.3.21`, successful `verify-coolify`, full `verify` and `audit`, and the second `make platform` with `ok=80 changed=0 unreachable=0 failed=0`. This closes the core V4 gate; see [the bounded evidence record](reviews/2026-09-28-clean-user-replay.md). Changes through `dabf740` and final release preparation touch documentation, CSS, license/release metadata and documentation/community validators only. Carry this rehearsal forward while later candidate changes remain operationally equivalent and the rendered guide still matches the route.
 
 If later candidate changes alter operational behavior or required clean-install proof is missing, repeat the full public route on a clean Ubuntu 24.04 VPS. A docs-only edit does not itself require reimaging if the executed route is equivalent. On a repeat, do not reuse old controller state, Coolify data, shell history or chat-only instructions. Optional Grafana/B2 chapters already have separate V3 evidence and are not repeated unless the clean replay exposes a dependency on them. Any missing value, renamed Coolify control or undocumented recovery step is a release defect: fix the source/docs and repeat the affected section.
 
@@ -104,12 +104,12 @@ Private Vulnerability Reporting is already enabled and the public GitHub securit
 
 ### 4. Prepare and publish `v0.1.0`
 
-Move the release contents from `Unreleased` into a dated `0.1.0` changelog section, leave a fresh `Unreleased` section above it, and run:
+The dated `0.1.0` changelog and [release notes](releases/v0.1.0.md) are prepared, with a fresh `Unreleased` section for later work. Review the date if publication is postponed and run:
 
 ```bash
 make release-dry-run RELEASE_VERSION=v0.1.0
 ```
 
-Review the exact clean commit and release notes. Only after explicit owner approval create the immutable annotated tag and GitHub Release. Do not move or replace the published tag.
+Review the exact clean commit and release notes. The owner has explicitly deferred the tag and GitHub Release. Create them only after a later publication instruction; do not move or replace a published tag.
 
 The project makes no precise UptimeRobot notification-latency SLA and no fixed Grafana Cloud retention SLA; those provider-dependent measurements are not release gates.
