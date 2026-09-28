@@ -1,13 +1,8 @@
 # Solo VPS
 
-<p class="solo-home-intro" data-solo-home><strong>A new VPS should not mean searching old notes for SSH, Docker and deployment commands.</strong> Solo VPS provides one step-by-step route for Ubuntu 24.04: configure the server, install Coolify and deploy an application from GitHub.</p>
+<p class="solo-home-intro" data-solo-home><strong>Set up an Ubuntu server and deploy applications from GitHub.</strong> Solo VPS configures administrator access, SSH, the firewall and Docker, then installs Coolify. The guides cover the server setup and automatic application delivery.</p>
 
 The commands configure and verify the host; the guide covers the GitHub and Coolify steps. After setup, a `git push` can update the application while its status and logs stay visible in Coolify.
-
-<div class="solo-status">
-  <svg class="solo-status__icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.75 22 20H2L12 2.75Zm0 5.1a1 1 0 0 0-1 1v5.25a1 1 0 1 0 2 0V8.85a1 1 0 0 0-1-1Zm0 9.05a1.15 1.15 0 1 0 0 2.3 1.15 1.15 0 0 0 0-2.3Z"/></svg>
-  <div class="solo-status__body"><strong>PRE-ALPHA</strong>Use a test VPS for now. The basic route has been completed on a clean host; no release has been published yet.</div>
-</div>
 
 ## Start here
 

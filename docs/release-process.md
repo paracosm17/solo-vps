@@ -1,6 +1,6 @@
 # Release process
 
-Solo VPS is **PRE-ALPHA**. This document defines a release process; it does not claim that a release has happened or that the current source tree is production-ready.
+This is the maintainer release procedure. `ROADMAP.md` records current gates and evidence; GitHub Releases records published versions. Preparing a candidate does not publish it.
 
 Canonical state still lives in `ROADMAP.md`. A release must describe the evidence that exists at the tagged commit rather than converting `NOT RUN`, `BLOCKED`, `PENDING`, `WARN`, or `UNAVAILABLE` into PASS.
 
@@ -9,14 +9,14 @@ Canonical state still lives in `ROADMAP.md`. A release must describe the evidenc
 Solo VPS uses normal three-component Semantic Versioning tags with a `v` prefix.
 
 ```text
-v0.MINOR.PATCH   PRE-ALPHA / initial development
+v0.MINOR.PATCH   initial development
 v1.0.0           first stable supported baseline
 ```
 
 For `v0.x.y`, compatibility is not guaranteed. Project convention is:
 
 - increment `MINOR` for a coherent capability/release batch or a meaningful contract change;
-- increment `PATCH` for fixes and documentation/refinement releases within that PRE-ALPHA line;
+- increment `PATCH` for fixes and documentation/refinement releases within that `0.x` line;
 - do not infer a stable public API from either number while the major version is zero.
 
 The first public release, when the project is actually ready to publish one, should start no lower than `v0.1.0`. Pre-release suffixes are intentionally not part of the first release contract; add them only if a concrete release workflow needs them.
@@ -38,7 +38,7 @@ A public release is blocked unless all applicable checks below are true:
 7. Solo VPS has been published to its own upstream repository, and that repository's `fast-source` **required status check** exists for the default branch and **must be green** for the release commit; consumer-application checks never satisfy this prerequisite;
 8. the latest CRIT-015 external-uptime evidence proves a whole-target outage was detected from outside the VPS and both off-VPS DOWN and recovery notifications arrived; no precise delivery-time SLA is required or claimed;
 9. **CRIT-011 Coolify lifecycle evidence** proves the reviewed previous-supported `4.1.2` → current-supported `4.3.21` transition on a disposable Ubuntu 24.04 VPS, including fresh backup prerequisites, Sentinel HTTPS readiness, preflight, exact target artifacts, post-upgrade `verify-coolify`/`verify`/`audit`, and one documented forward-resume-or-M16 recovery exercise;
-10. the release notes preserve current PRE-ALPHA limitations and ROADMAP blockers;
+10. the release notes preserve supported scope, known limitations and ROADMAP blockers;
 11. the exact set of Git refs/history intended for publication has been scanned for local state and private-key material, followed by an independent secret scanner such as Gitleaks before the first push;
 12. the requested tag does not already exist;
 13. `make release-dry-run RELEASE_VERSION=v0.x.y` passes;
@@ -46,7 +46,7 @@ A public release is blocked unless all applicable checks below are true:
 
 The v0.1.0 candidate also needs the ROADMAP gates that a source dry run cannot prove: an independent clean-host replay of the rendered public Quick Start, a successful GitHub Pages deployment with correct EN/RU links, and an enabled private vulnerability-reporting channel whose public **Report a vulnerability** entry point is visible. The [core clean-user replay](https://github.com/paracosm17/solo-vps/blob/main/reviews/2026-09-28-clean-user-replay.md) at `0fdba7f` passed: logged bootstrap, SSH hardening, `verify-coolify`, full `verify`, `audit`, and a second `make platform` with `changed=0`, plus owner-reported HTTPS application and automatic deployment. Changes through `659a5a7` affect documentation, CSS, release metadata and a documentation-validator test only; the core V4 evidence carries forward. Review later candidate diffs for operational equivalence and repeat affected clean-host evidence if operational behavior changes. Lost-VPS reconstruction and the `4.1.2` → `4.3.21` transition retain their separate V3 evidence.
 
-The dry-run does not weaken these gates merely to make PRE-ALPHA publishing easier.
+The dry-run does not weaken these gates merely to make publishing easier.
 
 ## Prepare the changelog
 

@@ -1,13 +1,8 @@
 # Solo VPS
 
-<p class="solo-home-intro" data-solo-home><strong>Новый VPS не должен начинаться с поиска старых заметок про SSH, Docker и деплой.</strong> Solo VPS даёт один пошаговый маршрут для Ubuntu 24.04: настройка сервера, Coolify и автоматический выпуск приложения из GitHub.</p>
+<p class="solo-home-intro" data-solo-home><strong>Настройте сервер Ubuntu и подключите деплой приложений из GitHub.</strong> Solo VPS настраивает администратора, SSH, сетевой экран и Docker, затем устанавливает Coolify. Инструкции проводят через установку и автоматическое обновление приложения.</p>
 
 Команды настраивают и проверяют хост; инструкция показывает, что сделать в GitHub и Coolify. После первого запуска приложение можно обновлять через `git push`, а состояние и логи смотреть в панели.
-
-<div class="solo-status">
-  <svg class="solo-status__icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.75 22 20H2L12 2.75Zm0 5.1a1 1 0 0 0-1 1v5.25a1 1 0 1 0 2 0V8.85a1 1 0 0 0-1-1Zm0 9.05a1.15 1.15 0 1 0 0 2.3 1.15 1.15 0 0 0 0-2.3Z"/></svg>
-  <div class="solo-status__body"><strong>PRE-ALPHA</strong>Пока используйте тестовый VPS. Базовый путь пройден на чистом сервере; релиз ещё не опубликован.</div>
-</div>
 
 ## С чего начать
 

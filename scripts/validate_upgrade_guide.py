@@ -30,7 +30,6 @@ REQUIRED_HEADINGS = (
 )
 
 REQUIRED_SAFETY_PHRASES = (
-    "PRE-ALPHA",
     "controller state is now external to the checkout",
     "make paths",
     "A previous project checkout is **not** a generic runtime rollback.",
@@ -217,8 +216,8 @@ def validate_upgrade_guide(root: Path) -> None:
         if re.search(pattern, code_blocks, flags=re.IGNORECASE):
             raise ContractError(f"upgrade guide contains unsafe executable upgrade shortcut: {pattern}")
 
-    if "](docs/upgrades.md)" not in readme:
-        raise ContractError("README must link docs/upgrades.md")
+    if "https://paracosm17.github.io/solo-vps/upgrades/" not in readme:
+        raise ContractError("README must link the published upgrade guide")
     if "](upgrades.md)" not in docs_index:
         raise ContractError("docs/index.md must link upgrades.md")
     if "M29 — Upgrade Guide" not in roadmap:

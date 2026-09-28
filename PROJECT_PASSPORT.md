@@ -331,7 +331,7 @@ Observability remains optional to the core Quick Start even when an implementati
 
 Document roles are intentionally separated:
 
-- [`README.md`](README.md) — **canonical current user contract**, supported happy path, current blockers;
+- [`README.md`](README.md) — **canonical current user contract**, supported setup and entry points;
 - [`docs/`](docs/index.md) — user operations and reference documentation;
 - [`docs/architecture.md`](docs/architecture.md) + ADRs — current design/ownership truth;
 - [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md) — concise north-star product/architecture boundary;
@@ -343,7 +343,7 @@ The Passport must not duplicate a changing milestone checklist. The ROADMAP must
 
 ### First-run documentation contract
 
-The detailed authoring policy for contributors and AI agents is [`DOCUMENTATION_GUIDE.md`](DOCUMENTATION_GUIDE.md). The base runbook consists of two consecutive pages: VPS/Coolify, then application/CI/CD/ENV/logs. Long instructions are acceptable when each action is simple and complete; mandatory detours and chat-only missing steps are not.
+The detailed authoring policy for contributors and AI agents is [`.github/DOCUMENTATION.md`](.github/DOCUMENTATION.md). The base runbook consists of two consecutive pages: VPS/Coolify, then application/CI/CD/ENV/logs. Long instructions are acceptable when each action is simple and complete; mandatory detours and chat-only missing steps are not.
 
 The canonical Quick Start must be one continuous, numbered journey from `apt-get update` on a fresh VPS to a working HTTPS application. It includes host setup, first Coolify registration and the exact onboarding choice, the existing localhost server, the dashboard domain, a reference GitHub application, Actions/GHCR delivery, the first deployment, a subsequent automatic deployment, basic runtime ENV/secrets handling and live logs. A reader must not have to discover the next required page or infer a missing UI action.
 
@@ -402,7 +402,6 @@ When sources conflict, use:
 4. `README.md` for current supported user contract;
 5. `ROADMAP.md` for current development state;
 6. repository implementation as factual implementation evidence;
-7. `legacy/` only as historical requirements/research.
 
 Implementation facts must not be invented to satisfy an aspirational Passport sentence.
 

@@ -191,7 +191,7 @@ Grafana Cloud  -> optional retained historical application logs
 
 ## Текущая граница evidence
 
-Solo VPS находится в статусе **PRE-ALPHA**. Архитектура описывает intended и source-supported responsibility model; её нельзя читать как production-readiness claim.
+Архитектура описывает границы ответственности. Подтверждение работающих сценариев и результаты проверок находятся в `ROADMAP.md`.
 
 В частности, source validators и local checks слабее clean disposable VPS replay, реального off-site backup/restore, реального PostgreSQL restore или destroy-and-rebuild disaster-recovery exercise. Текущее evidence state находится в `ROADMAP.md`.
 

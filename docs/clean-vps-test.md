@@ -2,7 +2,7 @@
 
 > **Maintainer evidence runbook:** this document intentionally exposes lower-level onboarding/bootstrap/handoff targets so release testing can prove each boundary independently. First-time users should follow the five-command README lifecycle (`setup -> apply -> secure -> platform -> verify`) instead.
 
-This is the PRE-ALPHA operator runbook for the first real Solo VPS integration pass. Use a **fresh disposable Ubuntu 24.04 LTS VPS** with provider console/rescue access. The goal is evidence and bug discovery, not production rollout.
+This is the early-development operator runbook for the first real Solo VPS integration pass. Use a **fresh disposable Ubuntu 24.04 LTS VPS** with provider console/rescue access. The goal is evidence and bug discovery, not production rollout.
 
 Do not reuse a VPS that already contains Docker/Coolify/application data for this first pass.
 
@@ -22,7 +22,7 @@ Useful non-secret evidence includes Ansible task names/errors, `make doctor` out
 
 ## Phase 0 — First-run setup from a fresh root shell
 
-The default guided flow for this PRE-ALPHA test starts exactly where a typical VPS starts: you have a fresh Ubuntu 24.04 LTS server and an initial `root` shell. Running the Solo VPS checkout on that same VPS is supported for this test. A separate controller remains supported, but it is not required for the standard path below.
+The default guided flow for this early-development test starts exactly where a typical VPS starts: you have a fresh Ubuntu 24.04 LTS server and an initial `root` shell. Running the Solo VPS checkout on that same VPS is supported for this test. A separate controller remains supported, but it is not required for the standard path below.
 
 ### 0.1. Put the source on the machine and install GNU Make
 
@@ -186,7 +186,7 @@ The default state survives deletion, replacement, or `git pull` of `~/solo-vps`:
 
 After `make admin-handoff` succeeds, reconnect as `admin.user` and update `/home/<admin.user>/solo-vps` (`~/solo-vps` in the admin shell). The admin account has its own external `~/.local/share/solo-vps/` state.
 
-For an older PRE-ALPHA checkout that still contains `config/config.yml` or `ansible/inventories/local/hosts.yml`, run `make init` once before deleting the old checkout. It copies those legacy files to the external data root when destinations are absent and does not delete the source copies. Verify the printed paths/content before manual cleanup.
+For an older early-development checkout that still contains `config/config.yml` or `ansible/inventories/local/hosts.yml`, run `make init` once before deleting the old checkout. It copies those legacy files to the external data root when destinations are absent and does not delete the source copies. Verify the printed paths/content before manual cleanup.
 
 If an archive overlay is used during development, remember that overlay extraction does not remove stale source files. A final clean-VPS/release evidence run must still use a fresh checkout/archive extraction. Unlike the older layout, replacing the whole source directory no longer requires preserving `.venv`, config, or inventory inside it.
 

@@ -106,8 +106,8 @@ def validate_ansible_lint(path: pathlib.Path) -> None:
     if data.get("offline") is not True:
         raise ContractError("ansible-lint must run offline after QA tooling is bootstrapped")
     excluded = data.get("exclude_paths")
-    if not isinstance(excluded, list) or "legacy/" not in excluded:
-        raise ContractError("legacy/ must remain outside new-implementation ansible-lint scope")
+    if excluded != [".venv/", "ansible/playbooks/coolify-4.3.21-evaluation-vars.yml"]:
+        raise ContractError("ansible-lint may exclude only the virtualenv and evaluation vars file")
 
     skipped = data.get("skip_list")
     expected_skips = ["var-naming[no-role-prefix]"]
@@ -125,8 +125,8 @@ def validate_yamllint(path: pathlib.Path) -> None:
     if data.get("extends") != "default":
         raise ContractError("yamllint must extend the default ruleset")
     ignored = data.get("ignore")
-    if not isinstance(ignored, str) or "legacy/" not in ignored:
-        raise ContractError("legacy/ must remain outside new-implementation yamllint scope")
+    if not isinstance(ignored, str) or ignored.split() != [".venv/"]:
+        raise ContractError("yamllint may exclude only the virtualenv")
     rules = data.get("rules")
     if not isinstance(rules, dict) or rules.get("document-start") != "disable":
         raise ContractError("yamllint document-start policy drift")

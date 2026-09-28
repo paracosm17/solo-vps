@@ -78,7 +78,7 @@ def validate_version(version: str) -> str:
     match = VERSION_RE.fullmatch(version)
     if not match:
         raise ReleaseCheckError(
-            "release version must match PRE-ALPHA tag form v0.MINOR.PATCH; v1+ is blocked by the ROADMAP release gate"
+            "release version must match initial-development tag form v0.MINOR.PATCH; v1+ is blocked by the ROADMAP release gate"
         )
     if int(match.group(1)) == 0:
         raise ReleaseCheckError("the first public release must start no lower than v0.1.0")

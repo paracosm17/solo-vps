@@ -122,7 +122,7 @@ A sensible destination for the current **Failures & maintenance** page is the ex
 
 The repository currently tracks `reviews/critic/` and `.agents/` maintainer/AI-engineering material. They are not in the MkDocs user navigation, but they will still be visible in a public GitHub repository and in a normal source checkout. Before the initial public push, decide intentionally whether they are part of the open-source maintainer surface.
 
-If not, move durable contributor rules into `CONTRIBUTING.md` / `DOCUMENTATION_GUIDE.md`, keep only concise release evidence that benefits contributors, and create the public repository from a clean reviewed tree/history. Do not publish internal process material merely because it happened to be present during development.
+If not, move durable contributor rules into `CONTRIBUTING.md` / `.github/DOCUMENTATION.md`, keep only concise release evidence that benefits contributors, and create the public repository from a clean reviewed tree/history. Do not publish internal process material merely because it happened to be present during development.
 
 Also normalize language in root maintainer contracts: the English `PROJECT_PASSPORT.md` still contains a few Russian sentences/headings.
 

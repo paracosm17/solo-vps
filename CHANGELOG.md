@@ -2,7 +2,7 @@
 
 This file records user-visible Solo VPS changes intended for tagged releases.
 
-The project is **PRE-ALPHA**. The dated `0.1.0` entry is prepared for the first public alpha; publication remains a separate owner action.
+The dated `0.1.0` entry is prepared for publication. Published versions are listed in [GitHub Releases](https://github.com/paracosm17/solo-vps/releases).
 
 ## [Unreleased]
 
@@ -20,6 +20,9 @@ The project is **PRE-ALPHA**. The dated `0.1.0` entry is prepared for the first 
 - A safety-gated Coolify `4.1.2 → 4.3.21` lifecycle with exact release artifacts, Sentinel trust-boundary checks and deterministic interrupted-upgrade recovery. The promoted source passed ordinary verification on a recovered disposable VPS and an independent clean-user core replay.
 
 ### Changed
+
+- Rebuild the EN/RU README around capabilities, requirements and installation, with CI/docs/license badges and a deployment diagram; remove development-status banners from the public guides.
+- Remove obsolete installation notes and duplicated release planning; retain current contributor rules and summarized runtime evidence.
 
 - Rewrite the README and documentation home pages around the maintainer's actual VPS setup and deployment workflow, and present the guided chapters before reference tasks.
 - Ask for server, administrator and application repository values in copyable EN/RU first-run commands; clarify the Coolify image digest field and the Git author setup step.

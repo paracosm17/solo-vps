@@ -526,7 +526,7 @@
 - name: Verify the active Alloy retained-log runtime
   ansible.builtin.import_tasks: verify-runtime.yml
 
-- name: Remove the obsolete PRE-ALPHA Alloy config from the root-only credential tree
+- name: Remove the obsolete Alloy config from the root-only credential tree
   ansible.builtin.file:
     path: "{{ solo_vps_alloy_legacy_config_path }}"
     state: absent

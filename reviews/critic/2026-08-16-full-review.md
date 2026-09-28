@@ -11,9 +11,9 @@
 
 ## 1. Executive verdict
 
-### Вердикт: **REJECT для production / CONDITIONAL PASS как PRE-ALPHA engineering prototype**
+### Вердикт: **REJECT для production / CONDITIONAL PASS как early-development engineering prototype**
 
-README честно говорит, что проект PRE-ALPHA и не production-ready. Это правильная оговорка. Но Passport и сама продуктовая архитектура обещают гораздо более сильный результат: один VPS, production-ready baseline, CI/CD, backups, recovery и минимальный DevOps overhead. На текущем состоянии это обещание не выполняется.
+README честно говорит, что проект early-development и не production-ready. Это правильная оговорка. Но Passport и сама продуктовая архитектура обещают гораздо более сильный результат: один VPS, production-ready baseline, CI/CD, backups, recovery и минимальный DevOps overhead. На текущем состоянии это обещание не выполняется.
 
 Главная проблема проекта не в качестве отдельных Ansible-задач. Во многих местах они аккуратнее среднего: staged SSH hardening, fail-closed guards, persistent state вне checkout, immutable image handoff, checksum-pinned tooling, SOPS/age boundary, read-only verify/audit. Проблема — **приоритет и доказательства**. Проект построил большую систему contract validators, documentation drift tests и observability tooling до того, как доказал базовую вещь: что потерянный единственный VPS можно восстановить, что failed deployment автоматически возвращает известное хорошее приложение, что onboarding не требует скрытой ручной операции с SSH-ключом и что репозиторий сам гоняет свои release gates в CI.
 
@@ -22,7 +22,7 @@ README честно говорит, что проект PRE-ALPHA и не produc
 **Короткий ответ на north-star вопросы:**
 
 - **Доверил бы свой единственный production VPS?** Нет, пока нет реального off-site restore + lost-VPS DR proof и deployment rollback.
-- **Рекомендовал бы другому solo developer?** Только для disposable/test VPS с явным пониманием PRE-ALPHA статуса.
+- **Рекомендовал бы другому solo developer?** Только для disposable/test VPS с явным пониманием early-development статуса.
 - **Может ли человек без DevOps пройти setup без импровизации?** Не полностью: стандартный same-VPS flow содержит скрытую ручную доставку workstation SSH key.
 - **30–60 минут realistic?** Не доказано и по текущему количеству стадий/контекстов выглядит нереалистично для нового пользователя.
 - **Главный UX bottleneck:** identity/workspace transitions + слишком большая командная поверхность.
@@ -1022,7 +1022,7 @@ Current pinned Alloy `1.18.1` is fresh as of review date according to official G
 
 ## What is good
 
-- PRE-ALPHA warning is prominent.
+- early-development warning is prominent.
 - Mutating vs read-only commands are often explicit.
 - `doctor` before mutation is strong.
 - state lives outside Git checkout.
@@ -1329,9 +1329,9 @@ Official sources:
 
 A production release should be rejected until at least CRIT-001 through CRIT-005 are resolved with runtime evidence.
 
-## **CONDITIONAL PASS** — continued PRE-ALPHA development
+## **CONDITIONAL PASS** — continued early-development development
 
-As a PRE-ALPHA engineering project the foundation is credible. The next phase should not be “more platform”. It should be **completion and simplification**:
+As a early-development engineering project the foundation is credible. The next phase should not be “more platform”. It should be **completion and simplification**:
 
 ```text
 backup/restore/DR

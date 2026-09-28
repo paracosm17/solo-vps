@@ -113,8 +113,8 @@ def validate_architecture(root: Path) -> None:
 
     if "This diagram is a responsibility map" not in architecture:
         raise ContractError("architecture diagram must state that it is not implementation evidence")
-    if "PRE-ALPHA" not in architecture:
-        raise ContractError("architecture page must preserve PRE-ALPHA evidence boundary")
+    if "not implementation proof" not in architecture:
+        raise ContractError("architecture page must distinguish design from implementation evidence")
     if "Acceptance establishes the architecture boundary" not in architecture:
         raise ContractError("architecture page must distinguish ADR acceptance from implementation evidence")
 

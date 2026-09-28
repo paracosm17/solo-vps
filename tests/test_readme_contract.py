@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.validate_readme_contract import ContractError, validate_readme
+from scripts.validate_readme_contract import ContractError, link_targets, validate_readme
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,7 +33,7 @@ class ReadmeContractTests(unittest.TestCase):
         # validator checks. The fixture stays representative as navigation evolves.
         for relative in seed_paths[:1] + seed_paths[2:]:
             source_path = ROOT / relative
-            for target in re.findall(r"\]\(([^)]+)\)", source_path.read_text(encoding="utf-8")):
+            for target in link_targets(source_path.read_text(encoding="utf-8")):
                 if target.startswith(("http://", "https://", "mailto:", "#")):
                     continue
                 clean = target.split("#", 1)[0]
@@ -60,9 +60,9 @@ class ReadmeContractTests(unittest.TestCase):
     def test_current_contract_passes(self) -> None:
         validate_readme(ROOT)
 
-    def test_missing_pre_alpha_status_is_rejected(self) -> None:
+    def test_missing_minimum_resources_is_rejected(self) -> None:
         root = self.make_fixture()
-        self.mutate(root, "README.md", "PRE-ALPHA", "EARLY", all_matches=True)
+        self.mutate(root, "README.md", "2 vCPU, 2 GiB RAM and 30 GiB free disk", "any resources")
         with self.assertRaises(ContractError):
             validate_readme(root)
 
@@ -86,7 +86,7 @@ class ReadmeContractTests(unittest.TestCase):
 
     def test_missing_canonical_quick_start_link_is_rejected(self) -> None:
         root = self.make_fixture()
-        self.mutate(root, "README.md", "https://paracosm17.github.io/solo-vps/quick-start/", "https://paracosm17.github.io/solo-vps/preflight/")
+        self.mutate(root, "README.md", "https://paracosm17.github.io/solo-vps/quick-start/", "https://paracosm17.github.io/solo-vps/preflight/", all_matches=True)
         with self.assertRaises(ContractError):
             validate_readme(root)
 
@@ -95,7 +95,7 @@ class ReadmeContractTests(unittest.TestCase):
         path = root / "README.md"
         text = path.read_text(encoding="utf-8")
         start = text.index("## Quick Start")
-        end = text.index("## Safety boundaries")
+        end = text.index("## Documentation")
         section = text[start:end]
         apply = section.index("make apply")
         secure = section.index("make secure")
@@ -110,9 +110,15 @@ class ReadmeContractTests(unittest.TestCase):
         with self.assertRaises(ContractError):
             validate_readme(root)
 
-    def test_missing_coolify_boundary_is_rejected(self) -> None:
+    def test_missing_data_rollback_boundary_is_rejected(self) -> None:
         root = self.make_fixture()
-        self.mutate(root, "README.md", "does not install Coolify", "does not install the application platform")
+        self.mutate(root, "README.md", "does not undo database migrations or data changes", "undoes all changes")
+        with self.assertRaises(ContractError):
+            validate_readme(root)
+
+    def test_missing_header_asset_is_rejected(self) -> None:
+        root = self.make_fixture()
+        self.mutate(root, "README.md", "docs/assets/brand/solo-vps-mark.svg", "docs/assets/brand/missing.svg")
         with self.assertRaises(ContractError):
             validate_readme(root)
 

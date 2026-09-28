@@ -2,7 +2,7 @@
 
 This is the maintainer/integration harness for the controlled clean-target half of CRIT-004. It is deliberately **provider-neutral**: Solo VPS does not create, resize, bill for, snapshot, or destroy cloud servers. The operator first creates one fresh Ubuntu 24.04 VPS in a provider account, then the harness proves the critical host path and emits sanitized evidence.
 
-**Scheduling note:** this harness is source-ready, but the current release plan intentionally does not rent a VPS just for this proof. Run it during the batched external validation window after recovery source work and user-surface simplification are ready; the same short-lived compute can then be reimaged/reused for restore, upgrade and final V4 replay scenarios. See [`alpha-release-plan.md`](alpha-release-plan.md).
+**When to run it:** use this harness when an operational change needs new clean-target evidence. Review the current gates in `ROADMAP.md` and the [release process](release-process.md) first. A temporary VPS can be reimaged and reused for restore, upgrade and clean-user scenarios; documentation-only changes do not require a new server.
 
 The target is **one-shot**. Do not point this command at an existing production/staging host and do not reuse a target that already contains Docker, Coolify, an active UFW policy, the managed admin, or Solo VPS host state.
 

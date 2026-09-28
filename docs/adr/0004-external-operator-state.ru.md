@@ -5,7 +5,7 @@
 
 ## Контекст
 
-Ранние PRE-ALPHA сборки хранили ignored `config.yml`, inventory, controller virtualenv, сгенерированную public SOPS policy и handoff markers внутри checkout Solo VPS. Это делало замену исходников хрупкой: archive/reclone мог незаметно удалить нужные локальные файлы, а будущий Git update осложнялся generated checkout-local state.
+Ранние early-development сборки хранили ignored `config.yml`, inventory, controller virtualenv, сгенерированную public SOPS policy и handoff markers внутри checkout Solo VPS. Это делало замену исходников хрупкой: archive/reclone мог незаметно удалить нужные локальные файлы, а будущий Git update осложнялся generated checkout-local state.
 
 Публичный продукт должен легко обновляться и безопасно re-clone-иться. Per-installation state также должен переживать удаление source tree.
 
@@ -37,7 +37,7 @@ Legacy checkout-local config/inventory могут быть скопирован�
 Компромиссы:
 
 - пользователю нужно знать один persistent data root в дополнение к source checkout;
-- старым PRE-ALPHA установкам требуется одноразовая миграция через `make init`;
+- старым early-development установкам требуется одноразовая миграция через `make init`;
 - пути в документации и contract tests не должны снова drift-ить к checkout-local defaults.
 
 Это решение не добавляет второй controller, VPS, service или configuration database.

@@ -1,5 +1,5 @@
 version: 1
-status: pre-alpha-source-contract
+status: source-contract
 
 docker:
   supported_distribution: Ubuntu

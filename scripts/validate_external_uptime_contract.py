@@ -160,8 +160,7 @@ def validate_docs(root: Path) -> None:
         require(guide, needle, GUIDE)
 
     readme = read(root, README)
-    require(readme, "docs/operations/external-uptime.md", README)
-    require(readme, "External uptime", README)
+    require(readme, "https://paracosm17.github.io/solo-vps/operations/external-uptime/", README)
 
     mkdocs = read(root, MKDOCS)
     require(mkdocs, "operations/external-uptime.md", MKDOCS)

@@ -15,7 +15,7 @@ secrets/**
 !secrets/recipients/production.example.txt
 
 
-# Legacy PRE-ALPHA checkout-local SOPS state. New helpers store this outside the checkout;
+# Legacy early-development checkout-local SOPS state. New helpers store this outside the checkout;
 # keep ignores as a migration safety net so old operator files cannot be committed accidentally.
 /.sops.yaml
 /secrets/recipients/production.txt
@@ -46,7 +46,7 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Legacy PRE-ALPHA checkout-local operator state. `make init` now uses the external data root.
+# Legacy early-development checkout-local operator state. `make init` now uses the external data root.
 config/config.yml
 inventory.yml
 
