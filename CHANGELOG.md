@@ -2,9 +2,14 @@
 
 This file records user-visible Solo VPS changes intended for tagged releases.
 
-The dated `0.1.0` entry is prepared for publication. Published versions are listed in [GitHub Releases](https://github.com/paracosm17/solo-vps/releases).
+Published versions are listed in [GitHub Releases](https://github.com/paracosm17/solo-vps/releases).
 
 ## [Unreleased]
+
+### Changed
+
+- Reframe the post-`v0.1.0` roadmap around security-by-default hardening, safer/faster Coolify lifecycle promotion, Coolify-owned team/prod-dev access boundaries, a standalone LLM-safe `vps-doctor` research track, and optional reversible shell UX.
+- Record that Fail2Ban is not part of the current baseline and must pass Ubuntu 24.04 journal/UFW plus lockout/recovery validation before any default adoption.
 
 ## [0.1.0] - 2026-09-28
 
