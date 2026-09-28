@@ -52,7 +52,7 @@ Additional operations such as backup, recovery, upgrades, diagnostics, and optio
 - people running a few applications on one VPS;
 - operators who want reproducibility without Kubernetes/Nomad-scale complexity.
 
-Team onboarding and role separation are future capabilities, not part of the `v0.1.0` support promise.
+Team onboarding guidance and role separation are future capabilities, not part of the `v0.1.0` support promise. Application-platform membership, roles, projects and dev/prod environments remain Coolify-owned; Solo VPS may document and audit an opinionated least-privilege policy without becoming a second identity/RBAC system.
 
 The normal ownership model is:
 
@@ -118,10 +118,11 @@ Ansible must not become a second application orchestrator beside Coolify.
 - runtime environment variables and application secrets;
 - deployment lifecycle and browser logs;
 - managed databases/services;
+- projects, environments, team membership and application-platform roles;
 - terminals and ordinary day-to-day runtime UI;
 - Coolify-native PostgreSQL logical backup scheduling where selected by ADR.
 
-Host hardening/firewall ownership must not silently migrate into Coolify.
+Host hardening/firewall ownership must not silently migrate into Coolify. Conversely, Solo VPS must not duplicate Coolify's application/team authorization model merely to offer a second place to manage the same access.
 
 ### 4.3. Delivery
 
@@ -237,6 +238,14 @@ Host runtime state remains in normal service locations such as `/etc` and `/data
 
 A source update must not silently overwrite installation-specific configuration or credentials.
 
+### Diagnostic export boundary
+
+The existing Solo VPS `make doctor` is installation-aware preflight/readiness diagnostics. It is not a promise to become a general Linux inventory, support-bundle, topology-inference, or LLM-context product.
+
+A general-purpose `vps-doctor` may exist as a separate standalone utility with an optional Solo VPS integration. If developed, it should remain read-only by default, have no automatic upload/network egress, use a stable versioned machine-readable schema, preserve topology relationships through deterministic redaction/pseudonymization, and make incomplete/permission-denied collection explicit rather than presenting partial context as a clean system.
+
+The core Solo VPS path must not depend on that separate utility.
+
 ---
 
 ## 7. Security boundaries
@@ -274,6 +283,21 @@ Never commit or print:
 - application secrets.
 
 Public examples also avoid operator-specific infrastructure identifiers even when they are not cryptographic secrets.
+
+### Hardening policy
+
+"Secure by default" means a small, justified defense-in-depth baseline, not blindly applying every available hardening tweak.
+
+Before a new host security control becomes part of the default profile, it must:
+
+- address a concrete threat in the one-VPS model;
+- preserve provider/recovery access and have a documented failure/unlock path;
+- be compatible with supported Ubuntu, OpenSSH, UFW, Docker and Coolify behavior;
+- avoid opening new public ports or introducing unnecessary credentials/privileged daemons;
+- expose read-only verification/audit evidence;
+- pass the appropriate disposable-VPS reconnect/reboot/runtime checks when it can affect access or networking.
+
+Community hardening guides are useful research inputs, but adoption decisions should be cross-checked against current distribution/upstream documentation and the Solo VPS threat model. Intrusion-prevention tools such as Fail2Ban may become core defense-in-depth only after that validation; heavier HIDS/IPS/integrity products stay optional unless their operational value clearly justifies the maintenance cost.
 
 ---
 
@@ -377,6 +401,8 @@ A large number of green source-contract tests is not a substitute for these runt
 ---
 
 ## 13. Technology-change rule
+
+Exact version pins and explicit lifecycle transitions are deliberate safety boundaries. Convenience tooling may discover or propose newer upstream versions, but it must not silently mutate a production VPS to an unqualified Docker/Coolify release. Promotion to a new supported platform version requires reviewed artifacts, a bounded upgrade/recovery plan and runtime evidence appropriate to the changed boundary.
 
 Before adding a new technology, answer:
 
