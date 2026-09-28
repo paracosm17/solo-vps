@@ -58,6 +58,12 @@ class RuntimeContractTests(unittest.TestCase):
         result = self.runv(ROOT)
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_rejects_changelog_without_socket_boundary(self):
+        self.assert_rejected('CHANGELOG.md', 'protected Unix socket', 'socket')
+
+    def test_rejects_changelog_without_proxy_boundary(self):
+        self.assert_rejected('CHANGELOG.md', 'restricted Docker API proxy', 'Docker API proxy')
+
     def test_rejects_direct_alloy_docker_socket(self):
         self.assert_rejected('ansible/roles/observability/templates/config.alloy.j2', '{{ solo_vps_alloy_docker_host }}', 'unix:///var/run/docker.sock')
 
