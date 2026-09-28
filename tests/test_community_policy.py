@@ -70,6 +70,19 @@ class CommunityPolicyTests(unittest.TestCase):
         with self.assertRaises(ContractError):
             validate_community_policy(root)
 
+    def test_unfilled_copyright_is_rejected(self) -> None:
+        root = self.make_fixture()
+        self.mutate(root, "LICENSE", "Copyright 2026 Alex (paracosm17)",
+                    "Copyright [yyyy] [name of copyright owner]")
+        with self.assertRaises(ContractError):
+            validate_community_policy(root)
+
+    def test_modified_license_terms_are_rejected(self) -> None:
+        root = self.make_fixture()
+        self.mutate(root, "LICENSE", "Version 2.0, January 2004", "Version 2.0, January 2026")
+        with self.assertRaises(ContractError):
+            validate_community_policy(root)
+
     def test_license_note_without_selected_spdx_is_rejected(self) -> None:
         root = self.make_fixture()
         path = root / "docs" / "license-choice.md"

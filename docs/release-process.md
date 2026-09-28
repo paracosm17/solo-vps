@@ -21,7 +21,7 @@ For `v0.x.y`, compatibility is not guaranteed. Project convention is:
 
 The first public release, when the project is actually ready to publish one, should start no lower than `v0.1.0`. Pre-release suffixes are intentionally not part of the first release contract; add them only if a concrete release workflow needs them.
 
-`v1.0.0` is not a calendar milestone. It requires the v1 release gate in `ROADMAP.md`, including clean-target, deployment, backup, restore, and other required evidence.
+`v1.0.0` is not a calendar milestone. It requires a separately agreed stable support contract and the installation, deployment, backup and recovery evidence described in the v1.0 boundary below.
 
 Reference: [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
@@ -59,12 +59,18 @@ Keep ongoing work under:
 Before a release, move the relevant items into a dated heading whose version does **not** include the `v` prefix:
 
 ```markdown
-## [0.1.0] - 2026-08-11
+## [0.1.0] - 2026-09-28
 ```
 
 Leave a new `Unreleased` section above it for subsequent work.
 
 Release notes should summarize observable capabilities, important security/recovery boundaries, validation actually executed, and known blockers. Do not publish internal private reasoning or pretend source validation is integration evidence.
+
+The prepared first-alpha notes are in `releases/v0.1.0.md`. A dated changelog and prepared notes do not create a tag or publish a release. If publication is postponed, review the date and exact candidate again before tagging.
+
+## Documentation after a release
+
+A tag identifies the complete repository snapshot, including README, docs and license. Keep published tags immutable. Text corrections can be committed to `main` and deployed to Pages without changing the tag; the files at the tag remain unchanged. State release applicability when changing operational instructions. Publish a new patch release when a correction must reach users installing the tagged source.
 
 ## No-publish dry run
 
@@ -122,4 +128,4 @@ A source release does not automatically prove the host/bootstrap/Coolify/backup/
 
 ## v1.0 boundary
 
-Do not publish `v1.0.0` until the ROADMAP v1 release gate is satisfied at the required evidence levels. In particular, written automation alone is not sufficient: the clean-VPS bootstrap, access/recovery behavior, Docker/Coolify path, application deployment, off-site backup, restore/DR, CI, license, and operational verification must be demonstrated rather than inferred.
+Before `v1.0.0`, define a stable support and compatibility contract and record its acceptance gates in ROADMAP. Written automation alone is not sufficient: clean-VPS bootstrap, access/recovery behavior, Docker/Coolify, application deployment, off-site backup, restore/DR, CI, license and operational verification must be demonstrated rather than inferred.

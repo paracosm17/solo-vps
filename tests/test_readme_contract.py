@@ -86,7 +86,7 @@ class ReadmeContractTests(unittest.TestCase):
 
     def test_missing_canonical_quick_start_link_is_rejected(self) -> None:
         root = self.make_fixture()
-        self.mutate(root, "README.md", "docs/quick-start.md", "docs/preflight.md")
+        self.mutate(root, "README.md", "https://paracosm17.github.io/solo-vps/quick-start/", "https://paracosm17.github.io/solo-vps/preflight/")
         with self.assertRaises(ContractError):
             validate_readme(root)
 

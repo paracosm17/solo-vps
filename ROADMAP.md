@@ -5,7 +5,7 @@
 > **Current phase:** first-release productization and runtime evidence
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** prepare the dated `0.1.0` changelog and release notes, then run the final clean release dry-run and exact-ref scans.
+> **Next action:** validate the final clean candidate with the release dry-run, exact-ref scans and hosted CI/Pages; hold the tag and GitHub Release until the owner requests publication.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -62,7 +62,7 @@ V5  real production-use evidence
 
 The public route now treats chapters 1–7 as the guided setup sequence. Failures and maintenance is a separate runbook. Guided commands use semantic `SERVER_IP` / `ADMIN_USER` values, the navigation gives the tutorial more visual weight than reference trees, and the palette is calmer. The upgrade guide defines a new-checkout tagged-source update contract instead of an active-checkout `git pull` workflow.
 
-The owner completed the core public route at `0fdba7f` and reported only first-run wording/input friction. The following merged changes through `659a5a7` contain documentation, CSS, release metadata and one documentation-validator test only. The operational route is equivalent, so clean-user evidence carries forward. Review later candidate changes for the same equivalence.
+The owner completed the core public route at `0fdba7f` and reported only first-run wording/input friction. Changes through `dabf740` contain documentation, CSS, release metadata and documentation-validator tests only. Final preparation fills the license notice, prepares the dated changelog and release notes, and simplifies EN/RU public text. The operational route is equivalent, so clean-user evidence carries forward. Review later candidate changes for the same equivalence.
 
 ### Observability evidence
 
@@ -76,7 +76,7 @@ Sentinel is a Coolify-managed Linux/Docker metrics agent. The old verified "Sent
 
 ### Publication
 
-The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or earlier published history. No release tag exists. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`; the deployed EN/RU home and Quick Start language links resolve under `/solo-vps/`, and both edit links target the right source file. Private Vulnerability Reporting is enabled, and the public repository security page exposes **Report a vulnerability** to an unauthenticated visitor; a synthetic report from another account is not a Solo VPS runtime gate. Hosted `Repository CI / fast-source` is required by the protected `main` branch. Commit `659a5a7` from PR [#12](https://github.com/paracosm17/solo-vps/pull/12) passed hosted CI and Pages deployment; the eventual release commit still needs its own hosted checks and exact-ref scans before tagging.
+The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or earlier published history. No release tag exists. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`; the deployed EN/RU home and Quick Start language links resolve under `/solo-vps/`, and both edit links target the right source file. Private Vulnerability Reporting is enabled, and the public repository security page exposes **Report a vulnerability** to an unauthenticated visitor; a synthetic report from another account is not a Solo VPS runtime gate. Hosted `Repository CI / fast-source` is required by the protected `main` branch. Commit `dabf740` from PR [#13](https://github.com/paracosm17/solo-vps/pull/13) passed hosted CI and Pages deployment; the eventual release commit still needs its own hosted checks and exact-ref scans before tagging.
 
 ---
 
@@ -84,10 +84,10 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 
 ### Must pass before `v0.1.0`
 
-1. Preserve the completed [core V4 clean-user evidence](reviews/2026-09-28-clean-user-replay.md) at `0fdba7f`, including verification/audit and platform idempotency. Changes through `659a5a7` preserve operational equivalence. Review later candidate diffs; operational changes require the affected clean-host evidence to be repeated.
+1. Preserve the completed [core V4 clean-user evidence](reviews/2026-09-28-clean-user-replay.md) at `0fdba7f`, including verification/audit and platform idempotency. Changes through `dabf740` and the final documentation/license preparation preserve operational equivalence. Review later candidate diffs; operational changes require the affected clean-host evidence to be repeated.
 2. Require a green hosted `Repository CI / fast-source` check and successful documentation deployment for that exact release commit.
 3. Before the release tag, repeat exact-ref history and archive scans for secrets and owner-specific state with the built-in check and an independent scanner.
-4. Prepare a dated `0.1.0` changelog entry, run the clean release dry-run, review the immutable commit, then create the tag and GitHub Release only with explicit owner approval.
+4. The dated `0.1.0` changelog entry and [release notes](releases/v0.1.0.md) are prepared. Run the clean release dry-run and review the immutable commit. The owner explicitly deferred the tag and GitHub Release; publication requires a later instruction. Review the changelog date if publication is postponed.
 
 ### Explicitly deferred
 
@@ -190,6 +190,6 @@ The maintained product topology remains one VPS; another permanent or additional
 
 - preserve operational equivalence with the tested source while preparing the release;
 - release-commit hosted CI/Pages checks and exact-ref secret/state scans;
-- dated changelog, clean release dry-run and immutable `v0.1.0` release identity.
+- clean release dry-run and final candidate review; tag/publication held at the owner's request.
 
 **Current validation:** V4 for the core clean-user route; V3 for separate optional integrations, lifecycle and recovery exercises.

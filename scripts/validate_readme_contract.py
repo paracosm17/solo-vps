@@ -93,8 +93,8 @@ def validate_readme(root: Path) -> None:
     readme_quick_start = readme[quick_start_pos:safety_pos]
 
     for link in (
-        "[Set up the VPS and Coolify](docs/quick-start.md)",
-        "[Deploy an application and enable CI/CD](docs/operations/first-app.md)",
+        "[Set up the VPS and Coolify](https://paracosm17.github.io/solo-vps/quick-start/)",
+        "[Deploy an application and enable CI/CD](https://paracosm17.github.io/solo-vps/operations/first-app/)",
     ):
         if link not in readme_quick_start:
             raise ContractError(f"README Quick Start missing canonical runbook link: {link}")

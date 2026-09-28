@@ -2,9 +2,11 @@
 
 This file records user-visible Solo VPS changes intended for tagged releases.
 
-The project is **PRE-ALPHA** and has not published a supported release. Changes remain under `Unreleased` until the first release candidate is accepted.
+The project is **PRE-ALPHA**. The dated `0.1.0` entry is prepared for the first public alpha; publication remains a separate owner action.
 
 ## [Unreleased]
+
+## [0.1.0] - 2026-09-28
 
 ### Added
 
@@ -45,10 +47,10 @@ The project is **PRE-ALPHA** and has not published a supported release. Changes 
 
 ### Security and recovery boundaries
 
-- CRIT-005 is closed at V3: Repository-managed Alloy uses a protected Unix socket and a restricted Docker API proxy; unrelated host users cannot use the collector boundary.
+- Repository-managed Alloy uses a protected Unix socket and a restricted Docker API proxy; unrelated host users cannot use the collector boundary.
 - Image rollback is container-image-only and never claims to reverse database migrations, data changes or external side effects.
 - Real Backblaze B2 PostgreSQL restore, restic snapshot/freshness/temporary restore-test and planned reboot recovery are integration-proven.
 - Disposable lost-VPS reconstruction, the supported Coolify lifecycle and whole-host DOWN/UP notification passed. Retained logs were also observed again after several days. The public core route has V4 clean-user evidence, including verification, audit and platform idempotency; optional profiles retain separate V3 evidence. No alert-latency or log-retention SLA is claimed.
-- No supported release tag exists yet.
+- This alpha supports one Ubuntu 24.04 VPS with Coolify `4.3.21`. It has no high-availability, alert-latency or fixed log-retention guarantee.
 
 [Unreleased]: ./ROADMAP.md

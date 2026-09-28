@@ -2,7 +2,7 @@
 
 [English](README.md) · [Русский](README.ru.md)
 
-**A repeatable setup for the VPS you rarely set up.** Solo VPS configures an Ubuntu 24.04 host, SSH, the firewall, Docker and Coolify. The guide takes you through the remaining GitHub and Coolify steps for automatic application deployment.
+**SSH, Docker, Coolify and deployment from GitHub — with one setup guide.** Solo VPS configures an Ubuntu 24.04 host, its administrator, SSH, firewall and Docker, then installs Coolify. The guide covers the GitHub and Coolify steps for automatic application deployment.
 
 I built it because each new server used to mean looking up the same SSH-key, administrator, security and Docker commands again. The setup was infrequent enough to forget, yet important enough to get right each time.
 
@@ -27,7 +27,7 @@ Optional: restic → managed off-site object storage
 
 My old release routine was `git push` on the computer, then SSH to the server for `git pull`, `docker compose down` and `docker compose up`. With Solo VPS, GitHub Actions checks and builds the application, GHCR stores the image, and Coolify deploys it. A push can now start the delivery flow without running the build on the VPS or logging in for every update. Coolify provides the UI for deployments, variables and live logs.
 
-Solo VPS does not invent CI/CD. It joins established tools into one documented setup for a solo developer or small project, with explicit boundaries for security, backups and recovery.
+The project automates host setup and documents how the tools fit together, including backups and recovery. It is intended for a solo developer or small project running on one VPS.
 
 ## What Solo VPS is
 
@@ -40,7 +40,7 @@ After the basic setup you can:
 - verify the server with one project command;
 - add retained logs, external monitoring and off-site backups by following the next guided chapters.
 
-## The stack chosen for you
+## Components
 
 | Technology | What it does here | Why Solo VPS uses it |
 | --- | --- | --- |
@@ -57,11 +57,11 @@ Solo VPS is for one server. It is **not** Kubernetes, a multi-node orchestrator,
 
 ## Current status
 
-The owner independently completed the public core route on a clean Ubuntu 24.04 VPS at commit `0fdba7f`: host setup, hardened SSH, Coolify `4.3.21`, first application and automatic deployment. Supplied logs show successful `verify-coolify`, `verify`, `audit` and a second `make platform` with `changed=0`. This gives the core route [V4 clean-user evidence](reviews/2026-09-28-clean-user-replay.md); later changes through `659a5a7` do not alter runtime code or workflows. Separate V3 operator exercises cover the Coolify upgrade/resume, lost-VPS recovery, PostgreSQL and restic restore, Grafana metrics/alerting, retained logs and whole-host DOWN/UP delivery.
+The owner independently completed the public core route on a clean Ubuntu 24.04 VPS at commit `0fdba7f`: host setup, hardened SSH, Coolify `4.3.21`, first application and automatic deployment. Supplied logs show successful `verify-coolify`, `verify`, `audit` and a second `make platform` with `changed=0`. This gives the core route [V4 clean-user evidence](reviews/2026-09-28-clean-user-replay.md); later changes through `dabf740` do not alter runtime code or workflows. Separate V3 operator exercises cover the Coolify upgrade/resume, lost-VPS recovery, PostgreSQL and restic restore, Grafana metrics/alerting, retained logs and whole-host DOWN/UP delivery.
 
-Until a release is published, local checks and test-VPS experience do not provide production guarantees.
+This alpha has no production reliability guarantee.
 
-This README is the **canonical current user contract**. [`ROADMAP.md`](ROADMAP.md) tracks development state and next work. [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md) is the north-star architecture contract, **not current implementation status**.
+This README is the **canonical current user contract**. [`ROADMAP.md`](ROADMAP.md) tracks remaining work. [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md) describes architecture decisions, **not current implementation status**.
 
 ## What `make bootstrap` changes
 
@@ -83,8 +83,8 @@ The supported alpha path is **one fresh Ubuntu 24.04 LTS VPS** with at least **2
 
 Follow the two-part runbook in order. It includes every required command and UI action, with Windows PowerShell and Linux variants. The [source repository](https://github.com/paracosm17/solo-vps) is public, but there is no validated release or `v0.1.0` tag yet. For pre-alpha testing, clone `main` as shown in the Quick Start. The checkout itself records its exact commit ID; no manual hash entry is required. The moving `main` branch is not a validated release.
 
-1. **[Set up the VPS and Coolify](docs/quick-start.md)** — from `apt-get update` to administrator access, secured SSH, Coolify registration and the dashboard over HTTPS.
-2. **[Deploy an application and enable CI/CD](docs/operations/first-app.md)** — GitHub repository, GHCR image, first deployment, dedicated CI key/account, GitHub/Coolify settings, automatic delivery, runtime ENV/secrets and live logs.
+1. **[Set up the VPS and Coolify](https://paracosm17.github.io/solo-vps/quick-start/)** — from `apt-get update` to administrator access, secured SSH, Coolify registration and the dashboard over HTTPS.
+2. **[Deploy an application and enable CI/CD](https://paracosm17.github.io/solo-vps/operations/first-app/)** — GitHub repository, GHCR image, first deployment, dedicated CI key/account, GitHub/Coolify settings, automatic delivery, runtime ENV/secrets and live logs.
 
 The host commands are `make setup → make apply → make secure → make platform → make verify`. Run them at the points shown in part one, including the administrator-login check before SSH hardening.
 
@@ -105,8 +105,8 @@ Basic setup ends after part two. Off-site backups, external alerts and retained 
 
 **Start here:**
 
-- **[Quick Start](docs/quick-start.md)** — fresh VPS to verified Coolify.
-- **[Deploy your first application](docs/operations/first-app.md)** — the guided hello-app tutorial.
+- **[Quick Start](https://paracosm17.github.io/solo-vps/quick-start/)** — fresh VPS to verified Coolify.
+- **[Deploy your first application](https://paracosm17.github.io/solo-vps/operations/first-app/)** — the guided hello-app tutorial.
 - **[Daily operations](docs/operations/operator-ui.md)** — where to deploy, inspect logs, edit runtime config, and check CI.
 - **[After basic setup](docs/operations/after-basic-setup.md)** — the recommended order for logs, database backups, outage alerts, and recovery.
 - **[Retained application logs](docs/operations/observability.md)** — keep searchable history across redeployments.

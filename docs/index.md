@@ -42,7 +42,7 @@ The [Quick Start](quick-start.md) explains where each command runs, what it chan
 | --- | --- |
 | Ubuntu host baseline, SSH, firewall, Docker | **Solo VPS** |
 | Application deployment and runtime configuration | **Coolify** |
-| CI and image publishing, when enabled | **GitHub Actions / GHCR** |
+| CI builds and image publishing | **GitHub Actions / GHCR** |
 | Off-site storage and third-party accounts | **You** |
 | Recovery procedure | **Solo VPS docs + your off-site credentials/backups** |
 
