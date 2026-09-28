@@ -5,7 +5,7 @@
 > **Current phase:** first-release productization and runtime evidence
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** validate the final clean candidate with the release dry-run, exact-ref scans and hosted CI/Pages; hold the tag and GitHub Release until the owner requests publication.
+> **Next action:** hold `v0.1.0` publication until the owner requests it; preserve candidate evidence and repeat the affected checks if the candidate changes.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -186,7 +186,7 @@ The maintained product topology remains one VPS; another permanent or additional
 - Solo VPS source updates use a documented new-checkout exact-tag model;
 - Passport, ROADMAP and CHANGELOG ownership drift is reconciled.
 
-### Remaining blockers
+### Before publication
 
 - preserve operational equivalence with the tested source while preparing the release;
 - release-commit hosted CI/Pages checks and exact-ref secret/state scans;
