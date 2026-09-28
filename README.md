@@ -57,9 +57,9 @@ Solo VPS is for one server. It is **not** Kubernetes, a multi-node orchestrator,
 
 ## Current status
 
-Host, SSH, Docker, Coolify, CI and bounded image rollback are implemented in source. The owner followed the public first two chapters on a clean Ubuntu 24.04 VPS using Solo VPS commit `0fdba7f` and reported a working HTTPS application and automatic deployment. The supplied logs show host setup, `verify-coolify`, `verify` and `audit` with no failed Ansible tasks. Subsequent changes through `bf02b74` affect documentation and release metadata, not runtime code or workflows. The logs do not show the required second `make platform` run with `changed=0`. Separate operator exercises cover the `4.1.2` → `4.3.21` Coolify upgrade/resume, lost-VPS recovery, PostgreSQL and restic restore, Grafana metrics/alerting, retained logs and whole-host DOWN/UP delivery.
+The owner independently completed the public core route on a clean Ubuntu 24.04 VPS at commit `0fdba7f`: host setup, hardened SSH, Coolify `4.3.21`, first application and automatic deployment. Supplied logs show successful `verify-coolify`, `verify`, `audit` and a second `make platform` with `changed=0`. This gives the core route [V4 clean-user evidence](reviews/2026-09-28-clean-user-replay.md); later changes through `659a5a7` do not alter runtime code or workflows. Separate V3 operator exercises cover the Coolify upgrade/resume, lost-VPS recovery, PostgreSQL and restic restore, Grafana metrics/alerting, retained logs and whole-host DOWN/UP delivery.
 
-Until those proofs exist, treat local/static validation as development evidence rather than a production guarantee.
+Until a release is published, local checks and test-VPS experience do not provide production guarantees.
 
 This README is the **canonical current user contract**. [`ROADMAP.md`](ROADMAP.md) tracks development state and next work. [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md) is the north-star architecture contract, **not current implementation status**.
 
@@ -90,7 +90,7 @@ The host commands are `make setup → make apply → make secure → make platfo
 
 Basic setup ends after part two. Off-site backups, external alerts and retained logs are subsequent tasks, linked at its end.
 
-**Alpha limits:** the clean-host route used `0fdba7f`; its idempotent platform rerun and the final release checks remain open. The supported Coolify `4.3.21` source passed same-host checks after upgrade and recovery exercises; external DOWN/UP delivery and retained-log lookup have operator evidence, but Solo VPS does not promise an alert-latency or log-retention SLA.
+**Alpha limits:** the clean-host core route is validated; final release packaging and publication checks remain open. Backup/recovery and observability have separate operator evidence. Solo VPS does not promise high availability, an alert-latency SLA or a fixed log-retention duration.
 
 ## Safety boundaries
 

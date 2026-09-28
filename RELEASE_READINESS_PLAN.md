@@ -1,6 +1,6 @@
 # Plan for the first public release
 
-Updated: 2026-09-27. This is a maintainer/operator work plan, not another public installation guide. Current status remains in ROADMAP.md.
+Updated: 2026-09-28. This is a maintainer/operator work plan, not another public installation guide. Current status remains in ROADMAP.md.
 
 ## Goal and working agreement
 
@@ -90,9 +90,9 @@ The earlier Coolify qualification, whole-host outage, lost-VPS reconstruction, r
 
 Review the rendered EN/RU Home, Quick Start, first-application guide, daily operations, upgrade and recovery pages. Fix stale UI labels, contradictory version statements, duplicated text and development-history wording. Run the documentation/release validators and strict MkDocs build.
 
-### 2. Reconcile the independent clean-host rehearsal with the candidate
+### 2. Preserve the completed independent clean-host rehearsal
 
-The owner followed the public first two chapters on a clean Ubuntu 24.04 VPS at Solo VPS commit `0fdba7f` and reported a working application with automatic deployment. The supplied logs show clean bootstrap, administrator/SSH hardening, Coolify `4.3.21`, `verify-coolify`, full `verify` and `audit` without failed Ansible tasks. Changes through `bf02b74` touch only documentation, CSS and release metadata. Carry this rehearsal forward while later candidate changes remain operationally equivalent and the rendered guide still matches the route. The missing proof is an idempotent second `make platform` run on this host with `changed=0`.
+The owner followed the public first two chapters on a clean Ubuntu 24.04 VPS at Solo VPS commit `0fdba7f` and reported a working application with automatic deployment. Supplied logs show clean bootstrap, administrator/SSH hardening, Coolify `4.3.21`, successful `verify-coolify`, full `verify` and `audit`, and the second `make platform` with `ok=80 changed=0 unreachable=0 failed=0`. This closes the core V4 gate; see [the bounded evidence record](reviews/2026-09-28-clean-user-replay.md). Changes through `659a5a7` touch only documentation, CSS, release metadata and a documentation-validator test. Carry this rehearsal forward while later candidate changes remain operationally equivalent and the rendered guide still matches the route.
 
 If later candidate changes alter operational behavior or required clean-install proof is missing, repeat the full public route on a clean Ubuntu 24.04 VPS. A docs-only edit does not itself require reimaging if the executed route is equivalent. On a repeat, do not reuse old controller state, Coolify data, shell history or chat-only instructions. Optional Grafana/B2 chapters already have separate V3 evidence and are not repeated unless the clean replay exposes a dependency on them. Any missing value, renamed Coolify control or undocumented recovery step is a release defect: fix the source/docs and repeat the affected section.
 

@@ -15,7 +15,7 @@ The project is **PRE-ALPHA** and has not published a supported release. Changes 
 - SOPS + age infrastructure/recovery secrets, restic off-site backup tooling, PostgreSQL logical backup/restore and lost-VPS recovery source.
 - Optional Grafana Alloy retained logs and host metrics, external uptime guidance and operator maintenance runbooks.
 - A tagged-checkout Solo VPS source-update contract that preserves persistent state outside the source tree.
-- A safety-gated Coolify `4.1.2 → 4.3.21` lifecycle with exact release artifacts, Sentinel trust-boundary checks and deterministic interrupted-upgrade recovery. The promoted source passed ordinary verification on a recovered disposable VPS; clean-install replay is still required before `v0.1.0`.
+- A safety-gated Coolify `4.1.2 → 4.3.21` lifecycle with exact release artifacts, Sentinel trust-boundary checks and deterministic interrupted-upgrade recovery. The promoted source passed ordinary verification on a recovered disposable VPS and an independent clean-user core replay.
 
 ### Changed
 
@@ -48,7 +48,7 @@ The project is **PRE-ALPHA** and has not published a supported release. Changes 
 - CRIT-005 is closed at V3: Repository-managed Alloy uses a protected Unix socket and a restricted Docker API proxy; unrelated host users cannot use the collector boundary.
 - Image rollback is container-image-only and never claims to reverse database migrations, data changes or external side effects.
 - Real Backblaze B2 PostgreSQL restore, restic snapshot/freshness/temporary restore-test and planned reboot recovery are integration-proven.
-- Disposable lost-VPS reconstruction, the supported Coolify lifecycle and whole-host DOWN/UP notification passed. Retained logs were also observed again after several days. The remaining runtime release gate is the exact-candidate clean-user replay; no alert-latency or log-retention SLA is claimed.
+- Disposable lost-VPS reconstruction, the supported Coolify lifecycle and whole-host DOWN/UP notification passed. Retained logs were also observed again after several days. The public core route has V4 clean-user evidence, including verification, audit and platform idempotency; optional profiles retain separate V3 evidence. No alert-latency or log-retention SLA is claimed.
 - No supported release tag exists yet.
 
 [Unreleased]: ./ROADMAP.md
