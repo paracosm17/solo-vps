@@ -1,7 +1,6 @@
 # Solo VPS — ROADMAP
 
 > **Last updated:** 2026-09-28
-> **Project status:** PRE-ALPHA  
 > **Current phase:** first-release productization and runtime evidence
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
@@ -59,6 +58,8 @@ V5  real production-use evidence
 ## 2. Active first-release work
 
 ### Documentation/productization
+
+The public README now leads with product capabilities, requirements and the two-part setup guide. Obsolete installation notes and duplicated planning documents have been removed; writing rules live in `.github/DOCUMENTATION.md`. Historical runtime results are summarized in [the integration evidence record](reviews/2026-09-28-runtime-evidence-summary.md), while the gates below remain the current release checklist.
 
 The public route now treats chapters 1–7 as the guided setup sequence. Failures and maintenance is a separate runbook. Guided commands use semantic `SERVER_IP` / `ADMIN_USER` values, the navigation gives the tutorial more visual weight than reference trees, and the palette is calmer. The upgrade guide defines a new-checkout tagged-source update contract instead of an active-checkout `git pull` workflow.
 

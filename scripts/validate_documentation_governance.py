@@ -74,15 +74,15 @@ def validate_passport(passport: str) -> None:
 
 
 def validate_readme(readme: str) -> None:
-    require(readme, "canonical current user contract", "README.md")
-    require(readme, "zero dependency on Tailscale, Grafana/Alloy, error tracking, pgAdmin, or shell customization", "README.md")
+    require(readme, "one application VPS", "README.md")
+    require(readme, "Backups and monitoring are optional", "README.md")
     require(readme, "PROJECT_PASSPORT.md", "README.md")
-    require(readme, "not current implementation status", "README.md")
+    require(readme, "ROADMAP.md", "README.md")
 
     try:
-        quick = readme.split("## Quick Start", 1)[1].split("## Safety boundaries", 1)[0]
+        quick = readme.split("## Quick Start", 1)[1].split("## Documentation", 1)[0]
     except IndexError as exc:
-        raise ContractError("README Quick Start/Safety boundaries are not parseable") from exc
+        raise ContractError("README Quick Start/Documentation sections are not parseable") from exc
 
     for forbidden_command in (
         "make observability-runtime",

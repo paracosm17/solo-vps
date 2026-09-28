@@ -5,7 +5,7 @@ Date: 2026-08-14
 
 ## Context
 
-Early PRE-ALPHA builds stored ignored `config.yml`, inventory, the controller virtualenv, generated public SOPS policy, and handoff markers inside the Solo VPS checkout. This made source replacement fragile: an archive/reclone could silently remove required local files, while a future Git update could be complicated by generated checkout-local state.
+Early early-development builds stored ignored `config.yml`, inventory, the controller virtualenv, generated public SOPS policy, and handoff markers inside the Solo VPS checkout. This made source replacement fragile: an archive/reclone could silently remove required local files, while a future Git update could be complicated by generated checkout-local state.
 
 The public product is intended to be easy to update and safe to re-clone. Per-installation state should also survive deletion of the source tree.
 
@@ -37,7 +37,7 @@ Positive:
 Trade-offs:
 
 - users need one documented persistent data root in addition to the source checkout;
-- old PRE-ALPHA installations need a one-time migration via `make init`;
+- old early-development installations need a one-time migration via `make init`;
 - paths in documentation and contract tests must not drift back to checkout-local defaults.
 
 This does not add a second controller, VPS, service, or configuration database.

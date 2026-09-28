@@ -64,7 +64,7 @@ class ReleaseProcessContractTests(unittest.TestCase):
         self.addCleanup(shutil.rmtree, temp, True)
         (temp / "docs").mkdir()
         files = {
-            "README.md": "# Test\nPRE-ALPHA\n",
+            "README.md": "# Test\n",
             "CHANGELOG.md": "# Changelog\n\n## [Unreleased]\n\n## [0.1.0] - 2026-08-11\n\n- test\n",
             "LICENSE": "test fixture license\n",
             "PROJECT_PASSPORT.md": "fixture\n",

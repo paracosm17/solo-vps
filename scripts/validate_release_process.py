@@ -26,7 +26,6 @@ def validate(root: Path) -> list[str]:
     script = (root / "scripts/release_dry_run.py").read_text(encoding="utf-8")
 
     require("## [Unreleased]" in changelog, "CHANGELOG must contain Unreleased")
-    require("PRE-ALPHA" in changelog, "CHANGELOG must preserve PRE-ALPHA status")
     require("v0.MINOR.PATCH" in docs and "v1.0.0" in docs, "release version semantics missing")
     require("make release-dry-run RELEASE_VERSION=v0.1.0" in docs, "dry-run command missing")
     require("root `LICENSE`" in docs, "license publication gate missing")

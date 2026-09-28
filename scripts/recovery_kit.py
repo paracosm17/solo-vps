@@ -271,7 +271,7 @@ def main() -> int:
     parser.add_argument("operation", choices=("export", "verify", "extract"))
     parser.add_argument("--data-dir", type=Path, default=Path.home() / ".local/share/solo-vps")
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--source-revision", default="PRE-ALPHA-unversioned")
+    parser.add_argument("--source-revision", default="unversioned")
     args = parser.parse_args()
     try:
         if args.operation == "export":

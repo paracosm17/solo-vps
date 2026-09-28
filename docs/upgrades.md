@@ -1,6 +1,6 @@
 # Upgrade guide
 
-Solo VPS is **PRE-ALPHA**. Upgrades are deliberate operations with a defined support window, preflight, verification, and recovery path. There is no generic “update everything” command.
+Update each component through its documented procedure. Check the supported versions, prepare recovery inputs, apply the change and verify the result.
 
 ## Upgrade safety model
 
@@ -25,7 +25,7 @@ A previous project checkout is **not** a generic runtime rollback. Reverting sou
 
 Solo VPS source is updated by opening a **new checkout of a reviewed release**, not by running `git pull` in the active checkout. Installation-specific config, inventory and encrypted operator state live outside the source tree, so both checkouts use the same persistent state.
 
-No release tag exists while the project is PRE-ALPHA. Until the first release is published, use only the reviewed commit or archive supplied for a test. After a release is published, run this in the **old checkout**, replacing the example with the exact published target tag:
+This procedure updates between published releases. Choose a target from [GitHub Releases](https://github.com/paracosm17/solo-vps/releases), then run the following in the **old checkout**, replacing the example with that published tag:
 
 ```bash
 make source-update-prepare RELEASE_VERSION=v0.2.3
@@ -240,12 +240,12 @@ After:
 
 ## Current limitations
 
-At this PRE-ALPHA checkpoint:
+The supported update scope is:
 
-- the tagged-checkout source-update contract is documented, but no public release channel or release tag exists yet;
+- source updates use published tags and a new checkout; installation state stays in the external data directory;
 - Docker support is intentionally limited to 29.x rather than generic package auto-upgrades;
 - only the Coolify 4.1.2 -> 4.3.21 transition is represented by the current lifecycle source;
-- disposable upgrade and replacement-host recovery passed, but the promoted source still needs ordinary verifier and clean-install replay evidence;
+- Coolify upgrade/resume and replacement-host recovery have integration evidence; the current core setup also passed an independent clean-install replay;
 - the existing database-backup API helper fails closed on 4.3.21; use Coolify UI and a separate B2 restore for this version;
 - optional modules retain separate lifecycle contracts.
 

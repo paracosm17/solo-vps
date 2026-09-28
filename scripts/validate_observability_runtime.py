@@ -98,7 +98,7 @@ def validate(root: Path) -> None:
         'mode: "0640"',
         'Prove the non-root Alloy identity can access managed runtime paths',
         'Prove the non-root Alloy identity can read its managed configuration',
-        'Remove the obsolete PRE-ALPHA Alloy config from the root-only credential tree',
+        'Remove the obsolete Alloy config from the root-only credential tree',
         'stat.S_IMODE(st.st_mode) == 0o600', 'os.chmod(temporary, 0o600)', 'os.chown(temporary, 0, 0)',
         'no_log: true', 'os.replace', 'os.execve', 'validate', 'systemd_service:',
     ):

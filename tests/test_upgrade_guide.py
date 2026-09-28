@@ -109,7 +109,7 @@ class UpgradeGuideTests(unittest.TestCase):
 
     def test_missing_readme_navigation_is_rejected(self) -> None:
         root = self.make_fixture()
-        self.mutate(root, "README.md", "](docs/upgrades.md)", "](docs/update.md)")
+        self.mutate(root, "README.md", "https://paracosm17.github.io/solo-vps/upgrades/", "https://paracosm17.github.io/solo-vps/update/")
         with self.assertRaises(ContractError):
             validate_upgrade_guide(root)
 

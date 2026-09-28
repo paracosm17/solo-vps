@@ -1,16 +1,16 @@
 # Security policy
 
-Solo VPS is **PRE-ALPHA infrastructure automation**. A defect here can affect administrative access, network exposure, secrets, backups, or recovery, so security reports should not be handled like ordinary bug reports.
+Solo VPS configures administrative access, network exposure, deployment and backups. Report vulnerabilities privately so maintainers can investigate and prepare a fix.
 
 ## Supported versions
 
 | Source / release | Security support |
 | --- | --- |
-| Current PRE-ALPHA project source | Best-effort triage only |
-| Tagged stable releases | None exist yet |
-| Old snapshots / legacy documents | Not supported as executable production guidance |
+| Current `main` branch | Best-effort triage |
+| Latest published `0.x` release, when available | Best-effort triage; fixes may require an upgrade |
+| Older releases and historical snapshots | No backport commitment |
 
-There is no production-support SLA. Security fixes may require changing an unstable interface while the project is PRE-ALPHA.
+There is no production-support SLA. Security fixes in `0.x` may require interface or configuration changes; review the release notes before upgrading.
 
 ## What to report privately
 
@@ -43,7 +43,7 @@ A useful private report should contain:
 
 ## Disclosure and remediation
 
-Please allow maintainers time to reproduce and mitigate the issue before public disclosure. Because the project is PRE-ALPHA, no fixed response or remediation timeline is promised.
+Please allow maintainers time to reproduce and mitigate the issue before public disclosure. For reports, no fixed response or remediation timeline is promised.
 
 For access/data-critical findings, remediation should preserve the project's safety model:
 

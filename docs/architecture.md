@@ -191,7 +191,7 @@ Change a long-lived boundary by updating/superseding the ADR first, then the use
 
 ## Current evidence boundary
 
-Solo VPS is **PRE-ALPHA**. The architecture describes the intended and source-supported responsibility model; it must not be read as a production-readiness claim.
+The architecture describes responsibility boundaries, not implementation proof. Use the current runtime evidence in `ROADMAP.md` when assessing supported behavior.
 
 In particular, source validators and local checks are weaker than a clean disposable VPS replay, a real off-site backup/restore, a real PostgreSQL restore, or a destroy-and-rebuild disaster-recovery exercise. Use `ROADMAP.md` for the current evidence state.
 

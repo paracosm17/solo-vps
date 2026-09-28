@@ -15,9 +15,7 @@ Prepare:
 - a domain and access to its DNS records;
 - access to the public Solo VPS repository (or a separately supplied test ZIP); you will also need the same source on your workstation in part two.
 
-**PRE-ALPHA:** use a disposable VPS for now. The [source repository](https://github.com/paracosm17/solo-vps) is public, but there is no validated release yet. The command below clones the current `main`; `git rev-parse HEAD` reports its exact revision automatically if you need it for an evidence report.
-
-This is the supported one-VPS alpha setup. Make/Ansible run on the VPS in the steps below; Windows PowerShell handles workstation SSH/SCP. Linux examples use Bash, including in WSL on Windows. The owner has completed the first two chapters on a clean VPS; `v0.1.0` has not been released or approved for production.
+The setup uses one VPS. Make/Ansible run on the VPS in the steps below; Windows PowerShell handles workstation SSH/SCP. Linux examples use Bash, including in WSL on Windows.
 
 Choose these values before you start:
 
@@ -62,7 +60,7 @@ apt-get install -y --no-install-recommends make git nano ca-certificates
 
 The first command refreshes package indexes; the second installs the tools needed to obtain and configure the project.
 
-For this test, clone the public `main` branch. Once a release tag exists, use `git clone --branch v0.1.0 --depth 1 https://github.com/paracosm17/solo-vps.git solo-vps`. The ZIP path is for a separately supplied test archive only.
+Clone the public `main` branch using Git. The ZIP option is available if you have a separately supplied source archive.
 
 === "Git"
 
@@ -73,7 +71,7 @@ For this test, clone the public `main` branch. Once a release tag exists, use `g
     cd solo-vps
     ```
 
-    You are now in the Solo VPS directory. Run `git rev-parse HEAD` to record the exact revision for an evidence report; you do not need to enter it for installation.
+    You are now in the Solo VPS directory. Continue with the configuration below.
 
 === "ZIP"
 

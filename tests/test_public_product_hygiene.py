@@ -23,7 +23,6 @@ class PublicProductHygieneTests(unittest.TestCase):
             "ROADMAP.md",
             "CONTRIBUTING.md",
             "docs/operations/first-app.md",
-            "legacy/06-ci-supply-chain-ghcr.md",
         ):
             dest = root / rel
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -70,11 +69,11 @@ class PublicProductHygieneTests(unittest.TestCase):
             with self.assertRaises(ContractError):
                 validate(root)
 
-    def test_concrete_github_identity_in_legacy_is_rejected(self) -> None:
+    def test_concrete_github_identity_in_public_guide_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = self._copy_minimal(tmp)
-            legacy = root / "legacy" / "06-ci-supply-chain-ghcr.md"
-            legacy.write_text(legacy.read_text(encoding="utf-8") + '\nGITHUB_OWNER="real-user"\n', encoding="utf-8")
+            guide = root / "docs" / "operations" / "first-app.md"
+            guide.write_text(guide.read_text(encoding="utf-8") + '\nGITHUB_OWNER="real-user"\n', encoding="utf-8")
             with self.assertRaises(ContractError):
                 validate(root)
 

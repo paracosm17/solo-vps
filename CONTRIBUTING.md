@@ -1,6 +1,6 @@
 # Contributing to Solo VPS
 
-Solo VPS is a **PRE-ALPHA** infrastructure project. Contributions should make the fresh-VPS-to-recovery path simpler, safer, more reproducible, or easier to verify without adding unnecessary platform complexity.
+Contributions should improve the setup, operation or recovery of a single VPS. Fixes, clearer instructions and small, well-tested changes are welcome.
 
 ## License
 
@@ -18,9 +18,7 @@ Read these sources in order:
 4. [`docs/architecture.md`](docs/architecture.md) — concise responsibility map and accepted ADRs;
 5. the implementation/tests/docs for the subsystem you are changing.
 
-Legacy files under `legacy/` are research inputs, not executable instructions to copy mechanically.
-
-For documentation changes, read [`DOCUMENTATION_GUIDE.md`](DOCUMENTATION_GUIDE.md). It defines the two-part runbook, writing style, complete command/UI handoffs and EN/RU validation requirements.
+For documentation changes, read [`.github/DOCUMENTATION.md`](.github/DOCUMENTATION.md). It defines the two-part runbook, writing style, complete command/UI handoffs and EN/RU validation requirements.
 
 ## Scope discipline
 
@@ -49,7 +47,7 @@ Minimum source-level checks:
 make validate
 ```
 
-The root README explains the minimum local prerequisites. If the pinned M20 controller QA environment is available, use:
+Run development tooling on Linux or WSL. See [`docs/testing.md`](docs/testing.md) for prerequisites and the pinned controller QA environment, then use:
 
 ```bash
 make qa-check

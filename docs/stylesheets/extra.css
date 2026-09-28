@@ -1030,36 +1030,6 @@ body {
   color: var(--solo-text);
 }
 
-.solo-status {
-  display: flex;
-  gap: 0.68rem;
-  align-items: flex-start;
-  margin: 1.05rem 0 1.8rem;
-  border: 1px solid var(--solo-warning-border);
-  border-radius: var(--solo-radius);
-  padding: 0.72rem 0.82rem;
-  background: var(--solo-warning-bg);
-}
-
-.solo-status__icon {
-  flex: 0 0 auto;
-  width: 0.96rem;
-  height: 0.96rem;
-  margin-top: 0.06rem;
-  color: var(--solo-warning-border);
-}
-
-.solo-status__body {
-  min-width: 0;
-  font-size: 0.72rem;
-  line-height: 1.52;
-}
-
-.solo-status__body strong {
-  display: block;
-  margin-bottom: 0.08rem;
-}
-
 .solo-command-path {
   display: flex;
   flex-wrap: wrap;

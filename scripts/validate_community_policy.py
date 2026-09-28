@@ -145,7 +145,7 @@ def validate_community_policy(root: Path) -> None:
     if license_digest != APACHE_2_LICENSE_SHA256:
         raise ContractError("root LICENSE must preserve the canonical Apache License 2.0 terms")
 
-    if "SECURITY.md" not in readme or "CONTRIBUTING.md" not in readme or "docs/license-choice.md" not in readme or "[`LICENSE`](LICENSE)" not in readme:
+    if "SECURITY.md" not in readme or "CONTRIBUTING.md" not in readme or "docs/license-choice.md" not in readme or "](LICENSE)" not in readme:
         raise ContractError("README must surface security, contribution, and Apache-2.0 license policy")
     # MkDocs validates links relative to docs_dir. Repository-root policy files
     # are surfaced from README rather than linked through invalid ../ paths.

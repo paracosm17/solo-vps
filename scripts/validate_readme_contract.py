@@ -9,12 +9,12 @@ from pathlib import Path
 
 
 REQUIRED_HEADINGS = (
-    "## What Solo VPS is",
-    "## Current status",
-    "## What `make bootstrap` changes",
+    "## Features",
+    "## How it works",
     "## Quick Start",
-    "## Safety boundaries",
     "## Documentation",
+    "## Contributing and support",
+    "## License",
 )
 
 PRIMARY_LIFECYCLE = (
@@ -47,8 +47,14 @@ def referenced_make_targets(markdown: str) -> set[str]:
     return set(re.findall(r"(?m)^[ \t]*make\s+([A-Za-z0-9_.-]+)\b", markdown))
 
 
+def link_targets(markdown: str) -> list[str]:
+    return re.findall(r"\]\(([^)]+)\)", markdown) + re.findall(
+        r'''(?:href|src)=["']([^"']+)["']''', markdown
+    )
+
+
 def validate_links(root: Path, markdown_path: Path, markdown: str) -> None:
-    for target in re.findall(r"\]\(([^)]+)\)", markdown):
+    for target in link_targets(markdown):
         if target.startswith(("http://", "https://", "mailto:", "#")):
             continue
         clean = target.split("#", 1)[0]
@@ -74,10 +80,8 @@ def validate_readme(root: Path) -> None:
     command_reference = command_reference_path.read_text(encoding="utf-8")
     makefile = makefile_path.read_text(encoding="utf-8")
 
-    if not readme.startswith("# Solo VPS\n"):
-        raise ContractError("README must start with '# Solo VPS'")
-    if "PRE-ALPHA" not in readme or "not production-ready" not in readme:
-        raise ContractError("README must state PRE-ALPHA and not-production-ready status explicitly")
+    if not re.search(r"(?m)^# Solo VPS$|<h1(?:\s[^>]*)?>Solo VPS</h1>", readme):
+        raise ContractError("README must contain the Solo VPS title")
 
     positions = []
     for heading in REQUIRED_HEADINGS:
@@ -89,8 +93,8 @@ def validate_readme(root: Path) -> None:
         raise ContractError("README onboarding sections are out of the required order")
 
     quick_start_pos = readme.index("## Quick Start")
-    safety_pos = readme.index("## Safety boundaries")
-    readme_quick_start = readme[quick_start_pos:safety_pos]
+    documentation_pos = readme.index("## Documentation")
+    readme_quick_start = readme[quick_start_pos:documentation_pos]
 
     for link in (
         "[Set up the VPS and Coolify](https://paracosm17.github.io/solo-vps/quick-start/)",
@@ -132,11 +136,13 @@ def validate_readme(root: Path) -> None:
         )
 
     for phrase in (
-        "does not install Coolify",
-        "does not activate SSH hardening",
         "Ubuntu 24.04 LTS",
+        "2 vCPU, 2 GiB RAM and 30 GiB free disk",
+        "one application VPS",
+        "Backups and monitoring are optional",
         "Basic setup ends after part two",
-        "Use a disposable/test VPS",
+        "administrator-login check",
+        "does not undo database migrations or data changes",
     ):
         if phrase not in readme:
             raise ContractError(f"README missing product/safety boundary: {phrase}")

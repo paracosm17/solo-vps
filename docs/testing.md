@@ -2,7 +2,7 @@
 
 ## Basic runbook acceptance
 
-The user-facing path is `quick-start.md` followed by `operations/first-app.md`, with matching Russian pages. Follow `DOCUMENTATION_GUIDE.md` when editing it. Maintainer checks must not become required detours in that path.
+The user-facing path is `quick-start.md` followed by `operations/first-app.md`, with matching Russian pages. Follow `.github/DOCUMENTATION.md` when editing it. Maintainer checks must not become required detours in that path.
 
 Before accepting CI-template changes, run these from the Solo VPS checkout on the supported controller:
 

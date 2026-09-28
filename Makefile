@@ -227,7 +227,7 @@ DISASTER_RECOVERY_CONTRACT_VALIDATOR := scripts/validate_disaster_recovery_contr
 RECOVERY_KIT := scripts/recovery_kit.py
 COOLIFY_INSTANCE_RESTORE := scripts/coolify_instance_restore.py
 RECOVERY_KIT_OUTPUT ?=
-RECOVERY_SOURCE_REVISION ?= $(shell git rev-parse --verify HEAD 2>/dev/null || printf 'PRE-ALPHA-unversioned')
+RECOVERY_SOURCE_REVISION ?= $(shell git rev-parse --verify HEAD 2>/dev/null || printf 'unversioned')
 COOLIFY_INSTANCE_BACKUP_ARCHIVE ?=
 RECOVERY_STAGING_ROOT ?=
 RECOVERY_STAGING_CONFIRM ?=
@@ -257,7 +257,7 @@ export PYTHONDONTWRITEBYTECODE := 1
 
 help: ## Show the supported operator command surface
 	@printf '%s\n' \
-		'Solo VPS (PRE-ALPHA)' \
+		'Solo VPS' \
 		'' \
 		'Normal lifecycle:' \
 		'  make setup       Prepare this controller and persistent Solo VPS state' \
@@ -658,13 +658,13 @@ ci-fast-source: test-source-update-prepare
 
 ci-fast: ci-fast-source qa-tools qa-static ## Run the full public hosted CI fast gate, including the pinned real Ansible QA layer
 
-validate-release-process: ## Validate the M30 PRE-ALPHA release-process and dry-run source contract
+validate-release-process: ## Validate the M30 release-process and dry-run source contract
 	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) $(RELEASE_PROCESS_VALIDATOR) .
 
 test-release-process: ## Run local M30 release-process positive/negative tests
 	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests.test_release_process
 
-release-dry-run: validate ## Check a candidate PRE-ALPHA release without creating a tag, release, upload, or external write
+release-dry-run: validate ## Check a candidate release without creating a tag, release, upload, or external write
 	@test -n "$(RELEASE_VERSION)" || { printf '%s\n' 'ERROR: RELEASE_VERSION is required, e.g. make release-dry-run RELEASE_VERSION=v0.1.0' >&2; exit 2; }
 	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) $(RELEASE_DRY_RUN) --root . --version "$(RELEASE_VERSION)"
 	@$(MAKE) --no-print-directory qa-static

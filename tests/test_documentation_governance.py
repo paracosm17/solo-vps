@@ -60,9 +60,9 @@ class DocumentationGovernanceTests(unittest.TestCase):
         with self.assertRaises(ContractError):
             validate(root)
 
-    def test_missing_readme_truth_ownership_is_rejected(self) -> None:
+    def test_missing_readme_topology_boundary_is_rejected(self) -> None:
         root = self.make_fixture()
-        self.mutate(root, "README.md", "canonical current user contract", "current introduction")
+        self.mutate(root, "README.md", "one application VPS", "unlimited servers")
         with self.assertRaises(ContractError):
             validate(root)
 
