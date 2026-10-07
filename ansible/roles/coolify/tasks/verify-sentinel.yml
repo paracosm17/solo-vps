@@ -4,13 +4,19 @@
     cmd: >-
       {{ (role_path ~ '/../../../scripts/inspect_coolify_sentinel.py') | quote }}
       --docker {{ solo_vps_coolify_docker_binary | quote }}
-      --expected-image {{ solo_vps_coolify_sentinel_image | quote }}
-      {{ ('--expected-image-id ' ~ (solo_vps_coolify_sentinel_image_id_x86_64 | quote)) if ansible_facts.architecture == 'x86_64' else '' }}
-      --expected-version {{ solo_vps_coolify_sentinel_version | quote }}
+      --expected-image {{ (solo_vps_coolify_sentinel_contract.registry ~ '/coollabsio/sentinel:' ~ solo_vps_coolify_sentinel_contract.version) | quote }}
+      {{ ('--expected-image-id ' ~ (solo_vps_coolify_sentinel_contract.image_id_x86_64 | quote)) if ansible_facts.architecture == 'x86_64' else '' }}
+      --expected-version {{ solo_vps_coolify_sentinel_contract.version | quote }}
       {{ ('--expected-push-endpoint ' ~ (solo_vps_coolify_sentinel_expected_url | quote)) if solo_vps_coolify_sentinel_expected_url | default('') | length > 0 else '' }}
     executable: /usr/bin/python3
   changed_when: false
   register: solo_vps_coolify_sentinel_verify_raw
+  retries: 18
+  delay: 10
+  until: solo_vps_coolify_sentinel_verify_raw.rc == 0
+  vars:
+    solo_vps_coolify_sentinel_contract: >-
+      {{ solo_vps_coolify_release.upgrade_from.sentinel if solo_vps_coolify_sentinel_verify_origin | default(false) | bool else solo_vps_coolify_release.sentinel }}
 
 - name: Verify Sentinel API has no public controller listener
   ansible.builtin.wait_for:

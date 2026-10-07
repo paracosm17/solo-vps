@@ -28,7 +28,7 @@ solo_vps_coolify_release_artifacts:
 
 # Bind resume to the same reviewed artifacts and management-port topology.
 solo_vps_coolify_release_identity: >-
-  {{ {'release': solo_vps_coolify_release,
+  {{ {'release': (solo_vps_coolify_release | dict2items | rejectattr('key', 'equalto', 'qualification') | items2dict),
       'artifacts': solo_vps_coolify_release_artifacts,
       'image': solo_vps_coolify_expected_image,
       'override': lookup('ansible.builtin.file', role_path ~ '/templates/docker-compose.solo-vps.yml.j2')}

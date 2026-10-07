@@ -10,8 +10,11 @@ from scripts.coolify_release import load_release, variables
 ROOT = Path(__file__).resolve().parents[1]
 
 class CoolifyReleaseTemplateTests(unittest.TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         init_plugin_loader()
+
+    def setUp(self):
         self.loader = DataLoader()
         self.role = ROOT / 'ansible/roles/coolify'
         self.defaults = self.loader.load_from_file(str(self.role / 'defaults/main.yml'), trusted_as_template=True)
@@ -32,3 +35,17 @@ class CoolifyReleaseTemplateTests(unittest.TestCase):
             'solo_vps_coolify_upgrade_from_version': '9.1.0'})
         expression = task['ansible.builtin.set_fact']['solo_vps_coolify_upgrade_required']
         self.assertIs(templar.template(trust_as_template(expression)), True)
+
+    def test_qualification_does_not_change_transaction_but_sentinel_does(self):
+        release = self.loader.load_from_file(str(ROOT / 'config/coolify-release.yml'), trusted_as_template=True)
+        def identity(data):
+            templar = Templar(loader=self.loader, variables={**self.defaults, 'solo_vps_coolify_release': data,
+                'role_path': str(self.role), 'playbook_dir': str(ROOT / 'ansible/playbooks')})
+            return templar.template(trust_as_template('{{ solo_vps_coolify_release_identity }}'))
+        original = identity(release)
+        annotation = deepcopy(release)
+        annotation['qualification']['level'] = 'V3'
+        self.assertEqual(identity(annotation), original)
+        component = deepcopy(release)
+        component['sentinel']['version'] = '9.9.9'
+        self.assertNotEqual(identity(component), original)

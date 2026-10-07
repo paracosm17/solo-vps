@@ -20,7 +20,7 @@ def release_fingerprint(data: dict) -> str:
 def validate_manifest(data: object) -> dict:
     if not isinstance(data, dict) or data.get("schema_version") != 1:
         raise ValueError("Coolify release manifest requires schema_version: 1")
-    for item in (data, data.get("upgrade_from"), data.get("sentinel")):
+    for item in (data, data.get("upgrade_from"), data.get("sentinel"), (data.get("upgrade_from") or {}).get('sentinel')):
         if not isinstance(item, dict) or not isinstance(item.get("version"), str) or not SEMVER.fullmatch(item["version"]):
             raise ValueError("Coolify target, origin and Sentinel require exact semantic versions")
         if item.get("registry") not in ("docker.io", "ghcr.io"):
@@ -37,6 +37,8 @@ def validate_manifest(data: object) -> dict:
         raise ValueError("all three release artifacts require committed SHA256 checksums")
     if not SHA256.fullmatch(str(data["sentinel"].get("image_id_x86_64", ""))):
         raise ValueError("Sentinel requires reviewed x86_64 content identity")
+    if not SHA256.fullmatch(str(data['upgrade_from']['sentinel'].get('image_id_x86_64', ''))):
+        raise ValueError('origin Sentinel requires reviewed x86_64 content identity')
     qualification = data.get("qualification")
     if not isinstance(qualification, dict) or not isinstance(qualification.get("level"), str) or not isinstance(qualification.get("evidence"), str):
         raise ValueError("release qualification and evidence are required")
