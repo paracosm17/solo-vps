@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from scripts.validate_platform_lifecycle_contract import ContractError, validate
+from scripts.coolify_release import load_release
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,6 +17,7 @@ class PlatformLifecycleContractTests(unittest.TestCase):
         temp = Path(tempfile.mkdtemp(prefix="solo-vps-platform-lifecycle-"))
         self.addCleanup(shutil.rmtree, temp, ignore_errors=True)
         for relative in (
+            "config/coolify-release.yml",
             "Makefile", "docs/contracts/platform-lifecycle-policy.yml", "docs/upgrades.md",
             "docs/release-process.md", "ansible/roles/docker/defaults/main.yml",
             "ansible/roles/docker/tasks/main.yml", "ansible/roles/docker/tasks/verify.yml",
@@ -64,7 +66,7 @@ class PlatformLifecycleContractTests(unittest.TestCase):
 
     def test_coolify_previous_version_drift_is_rejected(self) -> None:
         root = self.fixture()
-        self.mutate(root, "ansible/roles/coolify/defaults/main.yml", 'solo_vps_coolify_previous_supported_version: "4.3.21"', 'solo_vps_coolify_previous_supported_version: "4.1.0"')
+        self.mutate(root, "docs/contracts/platform-lifecycle-policy.yml", 'release_manifest: config/coolify-release.yml', 'release_manifest: config/missing.yml')
         with self.assertRaises(ContractError):
             validate(root)
 
@@ -98,9 +100,9 @@ class PlatformLifecycleContractTests(unittest.TestCase):
         root = self.fixture()
         self.mutate(
             root,
-            "ansible/roles/coolify/defaults/main.yml",
-            'solo_vps_coolify_version: "4.4.0"',
-            'solo_vps_coolify_version: "4.3.22"',
+            "config/coolify-release.yml",
+            f'version: "{load_release()["version"]}"',
+            'version: "latest"',
         )
         with self.assertRaises(ContractError):
             validate(root)

@@ -75,7 +75,7 @@ COOLIFY_RESOURCE_UUID
 
 Use the dedicated `solo-vps-ci` private key. The server receives only the public half. Pin the server Ed25519 host key from a trusted operator channel; the workflow intentionally refuses dynamic `ssh-keyscan` trust.
 
-Use one non-root Coolify team token with `read`, `write`, and `deploy`, stored as `COOLIFY_API_TOKEN`. Do not use `root` or `read:sensitive`. For an older workflow, add the combined secret and replace the workflow; revoke old tokens and remove old secrets only after a successful deployment.
+Use one non-root Coolify team token with `read`, `write`, and `deploy`, stored as `COOLIFY_API_TOKEN`. Do not use `root` or `read:sensitive`.
 
 ## Security contract
 

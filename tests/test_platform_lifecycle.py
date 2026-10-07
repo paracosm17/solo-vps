@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
+from scripts.coolify_release import load_release
 from scripts.platform_lifecycle import LifecycleError, build_plan, load_policy, parse_engine_version
 
 
@@ -16,7 +17,8 @@ class PlatformLifecycleTests(unittest.TestCase):
         self.assertFalse(plan["network_request"])
         self.assertFalse(plan["mutation"])
         self.assertTrue(plan["docker"]["supported"])
-        self.assertEqual(plan["coolify"]["upgrade_path"], "4.3.21 -> 4.4.0")
+        release = load_release()
+        self.assertEqual(plan["coolify"]["upgrade_path"], f"{release['upgrade_from']['version']} -> {release['version']}")
         self.assertFalse(plan["coolify"]["fresh_restic_backup_required"])
         self.assertFalse(plan["coolify"]["offsite_instance_database_backup_required"])
         self.assertTrue(plan["coolify"]["local_control_plane_checkpoint_required"])

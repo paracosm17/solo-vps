@@ -3,6 +3,11 @@
 
 from __future__ import annotations
 
+try:
+    from scripts.coolify_release import load_release, load_defaults, variables
+except ModuleNotFoundError:
+    from coolify_release import load_release, load_defaults, variables
+
 import argparse
 import json
 import re
@@ -148,11 +153,11 @@ def validate_upgrade_guide(root: Path) -> None:
     coolify_status = adr_status(root / "docs" / "adr" / "0001-coolify-installation-boundary.md")
     if coolify_status != "Accepted":
         raise ContractError("M29 expects ADR-0001 to remain Accepted")
-    pins = yaml_load(root / "ansible/roles/coolify/defaults/main.yml")
+    pins = variables(load_release(root / "config/coolify-release.yml"))
     required = (
         "Solo VPS manages Coolify through a pinned, reviewed integration.",
-        f"previous supported Coolify: `{pins['solo_vps_coolify_previous_supported_version']}`",
-        f"current supported Coolify: `{pins['solo_vps_coolify_version']}`",
+        "{{ solo_vps_coolify_origin }}",
+        "{{ solo_vps_coolify_target }}",
         "make coolify-upgrade-preflight",
         "make coolify-upgrade",
         "make coolify-upgrade-resume",

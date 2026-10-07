@@ -1,39 +1,36 @@
 ---
-# Reviewed release manifest and host integration defaults.
-# Target 4.4.0: source candidate; runtime qualification is still pending.
-# New releases update this version-neutral manifest, not executable filenames.
-solo_vps_coolify_release_evidence: V2-source-candidate
-solo_vps_coolify_version: "4.4.0"
-solo_vps_coolify_previous_supported_version: "4.3.21"
+# Release data is shared by Ansible, Python helpers and generated documentation.
+solo_vps_coolify_release: >-
+  {{ lookup('ansible.builtin.file',
+     (role_path | default(playbook_dir ~ '/../roles/coolify')) ~ '/../../../config/coolify-release.yml') | from_yaml }}
+solo_vps_coolify_release_evidence: "{{ solo_vps_coolify_release.qualification.level }}"
+solo_vps_coolify_version: "{{ solo_vps_coolify_release.version }}"
+solo_vps_coolify_previous_supported_version: "{{ solo_vps_coolify_release.upgrade_from.version }}"
 solo_vps_coolify_release_tag: "v{{ solo_vps_coolify_version }}"
-# docker-compose.prod.yml defaults LATEST_IMAGE to latest; never rely on that fallback.
 solo_vps_coolify_image_tag: "{{ solo_vps_coolify_version }}"
-solo_vps_coolify_expected_image: "docker.io/coollabsio/coolify:{{ solo_vps_coolify_image_tag }}"
-solo_vps_coolify_previous_expected_image: "docker.io/coollabsio/coolify:{{ solo_vps_coolify_previous_supported_version }}"
-solo_vps_coolify_sentinel_version: "1.0.1"
-solo_vps_coolify_sentinel_image: "ghcr.io/coollabsio/sentinel:1.0.1"
-solo_vps_coolify_sentinel_image_id_x86_64: "sha256:23b28fee258052080eaf89ffdc2acc318eaa58d1238ee5d56247daa27738a548"
+solo_vps_coolify_expected_image: "{{ solo_vps_coolify_release.registry }}/coollabsio/coolify:{{ solo_vps_coolify_image_tag }}"
+solo_vps_coolify_previous_expected_image: "{{ solo_vps_coolify_release.upgrade_from.registry }}/coollabsio/coolify:{{ solo_vps_coolify_previous_supported_version }}"
+solo_vps_coolify_sentinel_version: "{{ solo_vps_coolify_release.sentinel.version }}"
+solo_vps_coolify_sentinel_image: "{{ solo_vps_coolify_release.sentinel.registry }}/coollabsio/sentinel:{{ solo_vps_coolify_sentinel_version }}"
+solo_vps_coolify_sentinel_image_id_x86_64: "{{ solo_vps_coolify_release.sentinel.image_id_x86_64 }}"
 solo_vps_coolify_release_base_url: >-
   https://raw.githubusercontent.com/coollabsio/coolify/{{ solo_vps_coolify_release_tag }}
-
-# Initial installation artifacts are pinned to a release tag and checksum.
-# Do not replace these with floating CDN URLs in the installation backend.
 solo_vps_coolify_release_artifacts:
   - name: docker-compose.yml
     url: "{{ solo_vps_coolify_release_base_url }}/docker-compose.yml"
-    checksum: sha256:2532ee9258e10ad4e86cb3c2b46c29fe9329f5a0dace0f7da410744feec279bd
+    checksum: "{{ solo_vps_coolify_release.artifacts['docker-compose.yml'] }}"
   - name: docker-compose.prod.yml
     url: "{{ solo_vps_coolify_release_base_url }}/docker-compose.prod.yml"
-    checksum: sha256:4cd00e83e117e847e6d6bdfe64f2a2f958bb09965692c5230fa9231a0315f80f
+    checksum: "{{ solo_vps_coolify_release.artifacts['docker-compose.prod.yml'] }}"
   - name: .env.production
     url: "{{ solo_vps_coolify_release_base_url }}/.env.production"
-    checksum: sha256:7895e54f7c9d40063e76afec9b35839048d91e5c3b5107d64ea49ef6987c304a
+    checksum: "{{ solo_vps_coolify_release.artifacts['.env.production'] }}"
 
 # Bind resume to the same reviewed artifacts and management-port topology.
 solo_vps_coolify_release_identity: >-
-  {{ {'target': solo_vps_coolify_version,
-      'origin': solo_vps_coolify_previous_supported_version,
+  {{ {'release': solo_vps_coolify_release,
       'artifacts': solo_vps_coolify_release_artifacts,
+      'image': solo_vps_coolify_expected_image,
       'override': lookup('ansible.builtin.file', role_path ~ '/templates/docker-compose.solo-vps.yml.j2')}
       | to_json | hash('sha256') }}
 

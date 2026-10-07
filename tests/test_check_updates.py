@@ -2,6 +2,7 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch
 from scripts.check_updates import report, select_release, source_identity
+from scripts.coolify_release import load_release
 import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,7 +33,7 @@ class UpdateCheckTests(unittest.TestCase):
         value = report(ROOT, True, component='coolify', fetch=lambda _: {'version': 'v' + target, 'prerelease': False})
         self.assertTrue(value['upstream']['coolify']['matches_reviewed_target'])
         self.assertNotIn('installable_by_this_source', value['upstream']['coolify'])
-        self.assertEqual(value['coolify']['evidence'], 'V2-source-candidate')
+        self.assertEqual(value['coolify']['evidence'], load_release()['qualification']['level'])
 
     def test_semver_selection_excludes_drafts_and_prereleases(self):
         releases = [{'tag_name': 'v4.9.0'}, {'tag_name': 'v4.10.0'}, {'tag_name': 'v5.0.0', 'prerelease': True}, {'tag_name': 'v6.0.0', 'draft': True}]

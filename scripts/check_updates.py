@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Read-only release discovery; availability never authorizes installation."""
 from __future__ import annotations
+
+try:
+    from scripts.coolify_release import load_release, load_defaults, variables
+except ModuleNotFoundError:
+    from coolify_release import load_release, load_defaults, variables
 import argparse
 import json
 from pathlib import Path
@@ -50,7 +55,7 @@ def source_identity(root: Path) -> dict:
             "dirty": bool(status.stdout.strip()) if status.returncode == 0 else None}
 
 def report(root: Path, online: bool = False, component: str = "all", fetch=fetch_release) -> dict:
-    manifest = yaml.safe_load((root / "ansible/roles/coolify/defaults/main.yml").read_text(encoding="utf-8"))
+    manifest = variables(load_release(root / "config/coolify-release.yml"))
     target = manifest["solo_vps_coolify_version"]
     version(target)
     result = {"network_request": online, "mutation": False, "source": source_identity(root), "coolify": {"reviewed_target": target, "reviewed_origin": manifest["solo_vps_coolify_previous_supported_version"], "evidence": manifest["solo_vps_coolify_release_evidence"], "installed_version": "not observed; run make coolify-upgrade-preflight"}, "upstream": {}}

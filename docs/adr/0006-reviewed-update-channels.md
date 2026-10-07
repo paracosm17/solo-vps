@@ -9,7 +9,7 @@ Coolify publishes more frequently than Solo VPS. The 0.1.0 alpha used Coolify 4.
 
 ## Decision
 
-Use the version-neutral release manifest in `ansible/roles/coolify/defaults/main.yml` as the authoritative target, supported origin, image identity and artifact SHA256 source. The lifecycle policy is a checked contract summary. Evaluation playbooks reuse the role manifest instead of copying pins. Executable filenames and Make targets are version-neutral; historical evidence retains versioned names.
+Use the version-neutral release manifest in `config/coolify-release.yml` as the authoritative target, supported origin, image identity and artifact SHA256 source. The lifecycle policy is a checked contract summary. Evaluation playbooks reuse the role manifest instead of copying pins. Executable filenames and Make targets are version-neutral; historical evidence retains versioned names.
 
 `updates-check` reads public release metadata and reports upstream separately from the reviewed target and its evidence. `updates-plan` is offline. Neither changes source, config or runtime. Upstream release availability is never installation approval.
 

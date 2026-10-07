@@ -3,6 +3,11 @@
 
 from __future__ import annotations
 
+try:
+    from scripts.coolify_release import load_release, load_defaults, variables
+except ModuleNotFoundError:
+    from coolify_release import load_release, load_defaults, variables
+
 import argparse
 import json
 import re
@@ -19,6 +24,10 @@ def load_policy(path: Path) -> dict:
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise LifecycleError("platform lifecycle policy must be a mapping")
+    release = load_release(path.resolve().parents[2] / data["coolify"]["release_manifest"])
+    data["coolify"]["current_supported"] = release["version"]
+    data["coolify"]["previous_supported"] = release["upgrade_from"]["version"]
+    data["coolify"]["supported_upgrade"].update({"from": release["upgrade_from"]["version"], "to": release["version"]})
     return data
 
 

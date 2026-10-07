@@ -3,6 +3,8 @@
 site_name: Solo VPS
 site_description: Reproducible single-VPS infrastructure for solo developers.
 docs_dir: docs
+hooks:
+  - docs/hooks/coolify_release.py
 site_dir: site
 
 # Release evidence stays in the repository, not in the user-facing site.

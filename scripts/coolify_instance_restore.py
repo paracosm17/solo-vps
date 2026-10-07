@@ -8,6 +8,11 @@ restart the current pinned Compose model. It never copies the old .env wholesale
 """
 from __future__ import annotations
 
+try:
+    from scripts.coolify_release import load_release, load_defaults, variables
+except ModuleNotFoundError:
+    from coolify_release import load_release, load_defaults, variables
+
 import argparse
 from dataclasses import dataclass
 import os
@@ -486,10 +491,10 @@ def main() -> int:
             raise CoolifyInstanceRestoreError("plan/restore requires --recovery-root")
         if args.expected_version is None:
             import yaml
-            manifest = Path(__file__).resolve().parents[1] / "ansible/roles/coolify/defaults/main.yml"
+            manifest = Path(__file__).resolve().parents[1] / "config/coolify-release.yml"
             try:
-                args.expected_version = yaml.safe_load(manifest.read_text(encoding="utf-8"))["solo_vps_coolify_version"]
-            except (OSError, KeyError, TypeError, yaml.YAMLError) as exc:
+                args.expected_version = load_release(manifest)["version"]
+            except (OSError, ValueError, KeyError, TypeError, yaml.YAMLError) as exc:
                 raise CoolifyInstanceRestoreError("cannot read reviewed target; supply --expected-version explicitly") from exc
         if args.operation == "plan":
             plan = build_plan(

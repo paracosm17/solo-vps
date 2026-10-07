@@ -33,7 +33,7 @@ make updates-plan
 
 `updates-check` читает опубликованные GitHub Releases Solo VPS и Coolify. Он показывает точный commit исходников, проверенный целевой pin Coolify, уровень его доказательств и ссылки на release notes. Обнаруженная версия автоматически не устанавливается. `updates-plan` работает без сети. Для checkout без точного тега сравнение релизов Solo VPS неизвестно: вместо него показывается commit. Ошибка сети или лимит API останавливает проверку без изменений.
 
-Обновление исходников Solo VPS и обновление Coolify — отдельные действия. Небольшая проверенная совместимость может выходить в patch-релизе Solo VPS: каждый Coolify patch не требует нового minor-релиза. Версии и SHA256 лежат в одном файле с постоянным именем `ansible/roles/coolify/defaults/main.yml`; команды испытания используют его же. Новую upstream-версию сначала нужно изучить, закрепить артефакты, проверить код и пройти обновление на тестовом VPS.
+Обновление исходников Solo VPS и обновление Coolify — отдельные действия. Небольшая проверенная совместимость может выходить в patch-релизе Solo VPS: каждый Coolify patch не требует нового minor-релиза. Версии и SHA256 лежат в одном файле с постоянным именем `config/coolify-release.yml`; команды испытания используют его же. Новую upstream-версию сначала нужно изучить, закрепить артефакты, проверить код и пройти обновление на тестовом VPS.
 
 ## Обновление исходников Solo VPS
 
@@ -119,7 +119,7 @@ Source rollback не является downgrade Docker package.
 
 ## Coolify
 
-**В этих исходниках подготовлен Coolify 4.4.0; проверка на VPS ещё предстоит.** Опубликованный Solo VPS 0.1.0 устанавливал 4.3.21. До production пройдите этот переход на тестовом VPS. Realtime теперь работает внутри Coolify через Reverb: обновление заменяет override локальных портов, переносит настройки backend Pusher и удаляет старый realtime-контейнер как orphan. Существующие секреты сохраняются. [Release notes upstream](https://github.com/coollabsio/coolify/releases/tag/v4.4.0).
+**Статус версии: {{ solo_vps_coolify_qualification }}.** Опубликованный Solo VPS 0.1.0 устанавливал 4.3.21. До production пройдите этот переход на тестовом VPS. Realtime теперь работает внутри Coolify через Reverb: обновление заменяет override локальных портов, переносит настройки backend Pusher и удаляет старый realtime-контейнер как orphan. Существующие секреты сохраняются. [Release notes upstream](https://github.com/coollabsio/coolify/releases/tag/v4.4.0).
 
 Используйте команды Solo VPS ниже. Кнопка **Update** в Coolify и автоматические обновления обходят локальную копию, проверенные SHA256 и контроль транзакции/resume; для этой установки такой путь ещё не подтверждён.
 
@@ -128,9 +128,9 @@ Solo VPS управляет Coolify через закреплённую и пр�
 Поддерживаемая lifecycle pair в этой source revision:
 
 ```text
-previous supported Coolify: `4.3.21`
-current supported Coolify: `4.4.0`
-transition:                 4.3.21 -> 4.4.0
+previous supported Coolify: `{{ solo_vps_coolify_origin }}`
+current supported Coolify: `{{ solo_vps_coolify_target }}`
+transition:                 {{ solo_vps_coolify_origin }} -> {{ solo_vps_coolify_target }}
 AUTOUPDATE=false
 ```
 
@@ -138,7 +138,7 @@ AUTOUPDATE=false
 
 ### Preflight
 
-Перед поддерживаемым переходом в Coolify `4.3.21` задайте **Servers → localhost → Sentinel → Configuration → Coolify URL** равным рабочему HTTPS-адресу панели, включите Sentinel, выполните Sync и подтвердите **Sentinel In Sync**. Raw-порты `8000` и `8888` должны оставаться закрытыми. Затем выполните:
+Перед поддерживаемым переходом в исходной версии Coolify задайте **Servers → localhost → Sentinel → Configuration → Coolify URL** равным рабочему HTTPS-адресу панели, включите Sentinel, выполните Sync и подтвердите **Sentinel In Sync**. Raw-порты `8000` и `8888` должны оставаться закрытыми. Затем выполните:
 
 ```bash
 COOLIFY_SENTINEL_URL=https://coolify.example.com make coolify-upgrade-preflight
@@ -262,7 +262,7 @@ make verify-backup-tooling
 
 - исходники обновляются по опубликованному тегу в новый каталог; данные установки остаются во внешнем каталоге состояния;
 - поддержка Docker ограничена веткой 29.x; автоматического перехода на новую основную версию нет;
-- для Coolify поддерживается переход 4.3.21 → 4.4.0;
+- для Coolify поддерживается переход из manifest;
 - исторический переход 4.1.2 → 4.3.21, продолжение после прерывания и восстановление VPS проверены на тестовом сервере; базовая установка 0.1.0 прошла независимую проверку на чистом VPS. Эти результаты не подтверждают 4.4.0;
 - на 4.3.21 API-помощник резервных копий отказывался принимать ответ без требуемого идентификатора хранилища. API и путь через панель/B2 требуют повторной проверки на 4.4.0;
 - дополнительные компоненты имеют собственные инструкции обновления.

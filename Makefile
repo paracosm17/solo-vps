@@ -117,7 +117,7 @@ updates-plan: ## Offline source identity and reviewed Coolify target
 	@$(PYTHON) scripts/check_updates.py
 
 test-updates-check: ## Test read-only update discovery
-	@$(PYTHON) -m unittest tests.test_check_updates -v
+	@$(PYTHON) -m unittest tests.test_check_updates tests.test_coolify_release -v
 
 test-doc-command-values: ## Test shell-safe local documentation values (requires Node.js)
 	@$(NODE) tests/test_operator_values.js
@@ -707,7 +707,7 @@ qa-check: ## Verify exact persistent QA tool and Ansible collection versions wit
 
 qa-static: qa-check ## Run yamllint, real Ansible syntax checks, and ansible-lint using only the pinned local QA environment
 	@$(QA_YAMLLINT) -c .yamllint $(QA_YAML_PATHS)
-	@$(QA_PYTHON) -m unittest tests.test_docker_version_templates tests.test_firewall_listener_templates
+	@$(QA_PYTHON) -m unittest tests.test_docker_version_templates tests.test_firewall_listener_templates tests.test_coolify_release_templates
 	@ANSIBLE_COLLECTIONS_PATH="$(abspath $(QA_COLLECTIONS_DIR))" $(MAKE) --no-print-directory ansible-syntax ANSIBLE_PLAYBOOK="$(abspath $(QA_ANSIBLE_PLAYBOOK))" ANSIBLE_DOC="$(abspath $(QA_ANSIBLE_DOC))"
 	@ANSIBLE_COLLECTIONS_PATH="$(abspath $(QA_COLLECTIONS_DIR))" $(QA_ANSIBLE_LINT) --offline ansible/
 

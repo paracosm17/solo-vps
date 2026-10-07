@@ -130,7 +130,7 @@
     - key: AUTOUPDATE
       value: "false"
     - key: REGISTRY_URL
-      value: docker.io
+      value: "{{ solo_vps_coolify_release.registry }}"
     - key: COOLIFY_VERSION
       value: "{{ solo_vps_coolify_version }}"
     - key: PUSHER_BACKEND_HOST

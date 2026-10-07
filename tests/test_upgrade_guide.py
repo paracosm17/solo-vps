@@ -16,6 +16,7 @@ class UpgradeGuideTests(unittest.TestCase):
         temp = Path(tempfile.mkdtemp(prefix="solo-vps-upgrade-guide-test-"))
         self.addCleanup(shutil.rmtree, temp, ignore_errors=True)
         for path in (
+            "config/coolify-release.yml",
             "README.md",
             "ROADMAP.md",
             "docs/upgrades.md",
@@ -68,7 +69,7 @@ class UpgradeGuideTests(unittest.TestCase):
         self.mutate(
             root,
             "docs/upgrades.md",
-            "previous supported Coolify: `4.3.21`",
+            "{{ solo_vps_coolify_origin }}",
             "previous supported Coolify: `latest`",
         )
         with self.assertRaises(ContractError):

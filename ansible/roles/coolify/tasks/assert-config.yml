@@ -2,6 +2,9 @@
 - name: Validate Coolify integration contract inputs
   ansible.builtin.assert:
     that:
+      - solo_vps_coolify_release.schema_version == 1
+      - solo_vps_coolify_release.realtime == 'embedded'
+      - solo_vps_coolify_release.upgrade_from.realtime in ['separate', 'embedded']
       - admin is defined
       - admin is mapping
       - admin.user is defined
@@ -13,6 +16,7 @@
       - solo_vps_coolify_version is match('^[0-9]+\\.[0-9]+\\.[0-9]+$')
       - solo_vps_coolify_previous_supported_version is match('^[0-9]+\\.[0-9]+\\.[0-9]+$')
       - solo_vps_coolify_previous_supported_version != solo_vps_coolify_version
+      - solo_vps_coolify_version is version(solo_vps_coolify_previous_supported_version, '>')
       - solo_vps_coolify_release_tag == 'v' ~ solo_vps_coolify_version
       - solo_vps_coolify_image_tag == solo_vps_coolify_version
       - solo_vps_coolify_release_artifacts | length == 3

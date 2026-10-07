@@ -3,6 +3,11 @@
 
 from __future__ import annotations
 
+try:
+    from scripts.coolify_release import load_release, load_defaults, variables
+except ModuleNotFoundError:
+    from coolify_release import load_release, load_defaults, variables
+
 import re
 import sys
 from pathlib import Path
@@ -35,16 +40,19 @@ def validate(root: Path) -> None:
     require(docker.get("fresh_install_candidate_policy") == "fail-closed-before-package-install", "fresh Docker candidate policy must fail closed")
     require(docker.get("automatic_major_upgrade") is False, "automatic Docker major upgrades must stay disabled")
 
-    manifest = yaml.safe_load(read(root / "ansible/roles/coolify/defaults/main.yml"))
+    try:
+        manifest = load_defaults(root / "ansible/roles/coolify/defaults/main.yml")
+    except ValueError as exc:
+        raise ContractError(str(exc)) from exc
     current = manifest["solo_vps_coolify_version"]
     previous = manifest["solo_vps_coolify_previous_supported_version"]
     require(re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", current) is not None, "exact target release required")
     require(re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", previous) is not None and previous != current, "exact distinct origin release required")
     coolify = policy.get("coolify", {})
-    require(coolify.get("current_supported") == current, "current supported Coolify must match the promoted pin")
-    require(coolify.get("previous_supported") == previous, "previous supported Coolify must be explicit")
+    require(coolify.get("release_manifest") == "config/coolify-release.yml", "policy must reference the shared release manifest")
+    require("current_supported" not in coolify and "previous_supported" not in coolify, "policy must not duplicate release versions")
     upgrade = coolify.get("supported_upgrade", {})
-    require(upgrade.get("from") == previous and upgrade.get("to") == current, "exact previous -> current Coolify path missing")
+    require("from" not in upgrade and "to" not in upgrade, "policy must not duplicate upgrade endpoints")
     for key in (
         "exact_target_artifacts",
         "require_local_control_plane_checkpoint",
@@ -77,7 +85,7 @@ def validate(root: Path) -> None:
     coolify_defaults = read(root / "ansible/roles/coolify/defaults/main.yml")
     require(manifest["solo_vps_coolify_previous_supported_version"] == previous, "Coolify previous supported version missing")
     require(manifest["solo_vps_coolify_version"] == current, "Coolify promoted version missing")
-    require('solo_vps_coolify_expected_image: "docker.io/coollabsio/coolify:' in coolify_defaults, "Coolify promoted image registry missing")
+    require('solo_vps_coolify_release.registry' in coolify_defaults, 'image registry must derive from manifest')
     require('/data/coolify/images' in coolify_defaults, "Coolify promoted image storage missing")
     require('solo_vps_coolify_upgrade_pending_marker: /data/coolify/.solo-vps-upgrading' in coolify_defaults, "Coolify upgrade transaction marker missing")
     require("solo_vps_coolify_supported_docker_majors:\n  - 29" in coolify_defaults, "Coolify readiness must inherit the Docker 29 support boundary")
@@ -158,7 +166,7 @@ def validate(root: Path) -> None:
     sentinel_tasks = read(root / "ansible/roles/coolify/tasks/evaluate-sentinel.yml")
     sentinel_inspector = read(root / "scripts/inspect_coolify_sentinel.py")
     for token in (
-        "REGISTRY_URL=docker.io",
+        "REGISTRY_URL={{ solo_vps_coolify_release.upgrade_from.registry",
         "Verify working Sentinel HTTPS communication before upgrade mutation",
     ):
         require(token in candidate_preflight, f"candidate preflight missing boundary: {token}")
@@ -208,8 +216,8 @@ def validate(root: Path) -> None:
     for phrase in (
         "Docker 29.x",
         "Docker 30",
-        f"previous supported Coolify: `{previous}`",
-        f"current supported Coolify: `{current}`",
+        "{{ solo_vps_coolify_origin }}",
+        "{{ solo_vps_coolify_target }}",
         "make coolify-upgrade-preflight",
         "make coolify-upgrade",
         "make coolify-upgrade-resume",

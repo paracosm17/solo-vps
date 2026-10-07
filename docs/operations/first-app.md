@@ -316,7 +316,7 @@ The first value checks the key CI uses to connect. The second lets CI recognize 
 3. Create `solo-vps-demo CI` with **30 days** expiry and all three permissions: **read**, **write**, **deploy**. Leave `root` and `read:sensitive` unchecked.
 4. Save the value in your password manager as `COOLIFY_API_TOKEN`; it is displayed only once.
 
-The same token checks the application, changes its immutable image and starts deployment. Its scope is the Coolify team, not one application. To migrate an older workflow, add the combined `COOLIFY_API_TOKEN` secret and update the workflow; after a successful deployment, remove the old secrets and revoke the two previous tokens.
+The same token checks the application, changes its immutable image and starts deployment. Its scope is the Coolify team, not one application.
 
 Copy the application's UUID from its URL: the part after `/application/` until the next `/` or `?`. This is `COOLIFY_RESOURCE_UUID`, not a project or server UUID.
 

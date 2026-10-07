@@ -70,7 +70,7 @@ On timeout or unknown status, the helper does not start rollback while the origi
 - Third-party actions are pinned to full commit IDs.
 - The deploy job uses `cancel-in-progress: false` and strict SSH host-key checking.
 - Direct management ports `8000/6001/6002` stay private; CI reaches port 8000 through the restricted tunnel.
-- Use one non-root team token with `read`, `write`, `deploy`. It expires according to the chosen lifetime. Revoke the previous two tokens after migrating the workflow and proving deployment.
+- Use one non-root team token with `read`, `write`, `deploy`. It expires according to the chosen lifetime.
 - GitHub stores deployment secrets; Coolify stores application runtime secrets. SOPS + age is for infrastructure/recovery secrets.
 
 For branch protection, require checks emitted by your application workflow, such as application tests and the PR image build. Do not require Solo VPS-only checks such as `fast-source` in an app repository that does not run them.
