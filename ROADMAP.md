@@ -1,10 +1,10 @@
 # Solo VPS — ROADMAP
 
 > **Last updated:** 2026-10-07
-> **Current phase:** post-0.1.0 maintenance and Coolify 4.4.0 qualification
+> **Current phase:** 0.2.0 alpha preparation and authorized production migration
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** review the corrected candidate and prepare the owner's production migration with checkpoint/backup prerequisites; production execution and releases remain separate owner actions.
+> **Next action:** complete the authorized production migration, record verification, then publish 0.2.0 from a clean exact commit after required CI/Pages/scans and release dry-run.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -30,7 +30,7 @@ Ubuntu 24.04 host
 
 A disposable Ubuntu 24.04 VPS has V3 evidence for Coolify `4.1.2` → `4.3.21` interruption/forward-resume, Sentinel, HTTPS demo CI/CD, whole-host DOWN/UP emails and lost-VPS reconstruction from off-site inputs. Recovery restored Coolify identity, PostgreSQL and the immutable demo; HTTPS, platform verification/audit, a new restic snapshot, its restore-test and the daily timer passed. Older retained logs and notification delivery were also confirmed by the owner. No alert-latency or retention SLA is claimed.
 
-The owner independently completed the public core route on a separate clean Ubuntu 24.04 VPS at `0fdba7f`. The supplied logs show host setup/hardening, `verify-coolify`, full `verify`, `audit`, and a second `make platform` with `ok=80 changed=0 unreachable=0 failed=0`. The owner reported a working HTTPS application and automatic deployment. This closes the **core V4 clean-user gate**; optional profiles keep their separate V3 evidence. See [the bounded evidence record](reviews/2026-09-28-clean-user-replay.md).
+The owner independently completed the public core route on a separate clean Ubuntu 24.04 VPS at `0fdba7f`. The supplied logs show host setup/hardening, `verify-coolify`, full `verify`, `audit`, and a second `make platform` with `ok=80 changed=0 unreachable=0 failed=0`. The owner reported a working HTTPS application and automatic deployment. This closed the **0.1.0 core V4 clean-user gate**; optional profiles keep their separate V3 evidence. See [the bounded evidence record](reviews/2026-09-28-clean-user-replay.md).
 
 ### Validation levels
 
@@ -94,7 +94,14 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 1. Preserve the completed [core V4 clean-user evidence](reviews/2026-09-28-clean-user-replay.md) at `0fdba7f`, including verification/audit and platform idempotency. Changes through `dabf740` and the final documentation/license preparation preserve operational equivalence. Review later candidate diffs; operational changes require the affected clean-host evidence to be repeated.
 2. Require a green hosted `Repository CI / fast-source` check and successful documentation deployment for that exact release commit.
 3. Before the release tag, repeat exact-ref history and archive scans for secrets and owner-specific state with the built-in check and an independent scanner.
-4. The dated `0.1.0` changelog entry and [release notes](releases/v0.1.0.md) are prepared. Run the clean release dry-run and review the immutable commit. The owner subsequently published the alpha. No new release is authorized in the current maintenance task.
+4. The dated `0.1.0` changelog entry and [release notes](releases/v0.1.0.md) are prepared. Run the clean release dry-run and review the immutable commit. The owner subsequently published the alpha. The owner subsequently authorized production migration and a new release; the 0.2.0 gates below apply.
+
+### Current 0.2.0 alpha gates
+
+- Preserve the controlled 4.4.0 upgrade and owner-reset fresh-host evidence at V3, including corrected-source resume, native proxy lifecycle, real ingress packets, verification/audit and idempotency. Do not carry the original source's independent V4 label onto the changed route.
+- Complete the authorized production migration with verified offhost backups, production recovery access and exact-origin preflight; record actual results without a reliability guarantee.
+- Require green protected-main source CI, successful Pages deployment, exact-ref history/archive secret scans and `release-dry-run RELEASE_VERSION=v0.2.0` before tagging.
+- Publish bounded release notes that preserve separate optional backup/monitoring, external IPv6 packet and uninterrupted browser-walkthrough limits.
 
 ### Explicitly deferred
 
@@ -113,7 +120,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-001 backup/restore/DR | RECOVERY PASS / V3 | Clean replacement host rebuilt from off-VPS inputs; Coolify, PostgreSQL, immutable app, HTTPS, new restic snapshot and restore-test passed; optional recovery stays V3 |
 | CRIT-002 failed deploy rollback | DONE / V3 | failed immutable candidate restores the known-good image; database rollback excluded |
 | CRIT-003 workstation admin key | DONE / V3 | independent human key, sudo, root denial and hardening gate proven |
-| CRIT-004 hosted self-CI / clean target | CORE V4 / HOSTED PASS | independent core replay passed; `fast-source` is required and passed on `659a5a7`; release-commit run pending |
+| CRIT-004 hosted self-CI / clean target | CORE V4 / HOSTED PASS | 0.1.0 independent V4 retained for original source; 4.4.0 controlled replay V3; final release-commit CI pending |
 | CRIT-005 observability confidentiality | DONE / V3 | Repository-managed non-root Alloy uses a protected Unix socket boundary |
 | CRIT-006 Quick Start complexity | CORE V4 PASS | owner completed both public chapters unaided at `0fdba7f`; first-run copy/paste feedback addressed in docs-only follow-up |
 | CRIT-007 operator help surface | DONE / V2 | bounded `help`, `help-ops`, `help-dev`, `help-all` |
@@ -129,7 +136,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-017 release/upgrade story | V3 PASS | 0.1.0 alpha published; update discovery and controlled 4.4.0 upgrade/resume/recovery passed; production migration remains separate |
 | CRIT-018 documentation duplication | DONE / V2 | user, architecture, plan and evidence roles separated |
 | CRIT-019 optional-feature leakage | DONE / V2 | optional capabilities do not gate the core Quick Start |
-| CRIT-020 revision metadata | BLOCKED | immutable public release identity pending |
+| CRIT-020 revision metadata | BLOCKED | 0.2.0 immutable identity pending |
 
 The Coolify-native Custom FluentBit experiment is **rejected as the maintained default**. Grafana Cloud credential encryption/delivery integration PASS remains historical evidence. Repository-managed non-root Alloy is the maintained retained-log implementation.
 
@@ -143,13 +150,13 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M2 — Preflight & Configuration Contract | P1 | DONE | V2 + maintained-host use |
 | M3 — Base System Role | P1 | DONE | Core V4 |
 | M4 — Admin User & SSH Hardening | P1 | DONE | Core V4 |
-| M5 — Firewall & Host Exposure Baseline | P1 | DONE | Core V4 |
+| M5 — Firewall & Host Exposure Baseline | P1 | DONE | 4.4.0 guard/policy V3; original source V4 retained separately |
 | M6 — Automatic Security Updates | P1 | DONE | Core V4 |
 | M7 — Docker Host | P1 | DONE | Docker 29.x, core V4 |
 | M8 — Optional Tailscale Administrative Plane | P3 | DEFERRED | post-release optional work |
 | M9 — Coolify Installation Backend | P1 | DONE | supported `4.3.21` clean install and idempotency, core V4 |
 | M10 — First End-to-End Application | P1 | DONE | Core V4 |
-| M11 — GitHub Actions + GHCR Template | P1 | CORE V4 PASS | owner deployed and updated demo using the public guide at `0fdba7f`; runtime/workflow source unchanged since |
+| M11 — GitHub Actions + GHCR Template | P1 | CORE V4 PASS | owner deployed and updated demo using the public guide at `0fdba7f`; original source V4 retained; new single-token workflow V3, not unchanged since |
 | M12 — Dependency & Image Hygiene | P2 | DONE | V2 |
 | M13 — Infrastructure Secrets with SOPS + age | P1 | DONE | V3 |
 | M14 — Off-Site Restic Backup | P1 | DONE | B2 snapshot/freshness/restore-test V3 |
@@ -176,7 +183,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 
 Use one temporary Ubuntu 24.04 VPS and reimage it between scenarios:
 
-The disposable lifecycle, whole-target outage and lost-VPS reconstruction scenarios have V3 evidence; the independent public core route and platform idempotency have V4 evidence. No new VPS exercise is required for the current operational source. Repeat affected evidence only if a later candidate changes operational behavior.
+The disposable lifecycle, whole-target outage and lost-VPS reconstruction scenarios have V3 evidence; the independent public core route and platform idempotency have V4 evidence. The changed 4.4.0 route has a separate V3 controlled fresh-host replay with corrected-source resume. An uninterrupted exact-revision browser walkthrough remains unproven; it is not inherited from the old V4 result.
 
 The maintained product topology remains one VPS; another permanent or additional validation server is not required.
 
@@ -197,6 +204,6 @@ The maintained product topology remains one VPS; another permanent or additional
 
 - preserve operational equivalence with the tested source while preparing the release;
 - release-commit hosted CI/Pages checks and exact-ref secret/state scans;
-- clean release dry-run and final review; 4.4.0 test-VPS qualification passed, new tags/releases remain out of scope.
+- clean release dry-run and final review; production migration and 0.2.0 publication are now authorized.
 
-**Current validation:** V4 for the core clean-user route; V3 for separate optional integrations, lifecycle and recovery exercises.
+**Current validation:** V3 for the changed 4.4.0 route and controlled fresh-host resume; the original 0.1.0 core retains its own V4 record. Optional integrations and recovery keep separate V3 evidence; production migration is in progress.

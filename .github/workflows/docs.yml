@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "docs/**"
+      - "config/coolify-release.yml"
+      - "scripts/coolify_release.py"
       - "overrides/**"
       - "mkdocs.yml"
       - "requirements-docs.txt"
@@ -14,6 +16,8 @@ on:
       - main
     paths:
       - "docs/**"
+      - "config/coolify-release.yml"
+      - "scripts/coolify_release.py"
       - "overrides/**"
       - "mkdocs.yml"
       - "requirements-docs.txt"
