@@ -48,4 +48,8 @@ The pre-existing demo desired image named an unavailable repository and used a l
 
 ## Limits
 
-The checkpoint restore proves same-host control-plane recovery on a disposable target. It excludes application data and is not offsite recovery or a generally supported automated downgrade. Audit does not contact offsite storage or replace an external monitor. Optional B2/restic, database-backup API adoption and backup UI workflows need separate target-version checks. A full new-user browser walkthrough and fresh 4.4.0 installation remain separate gates. Production needs its own owner-authorized operation and recovery prerequisites.
+The checkpoint restore proves same-host control-plane recovery on a disposable target. It excludes application data and is not offsite recovery or a generally supported automated downgrade. Audit does not contact offsite storage or replace an external monitor. Optional B2/restic, database-backup API adoption and backup UI workflows need separate target-version checks. An uninterrupted exact-revision new-user browser walkthrough remains a separate gate; subsequent controlled fresh-host results are recorded below. Production needs its own owner-authorized operation and recovery prerequisites.
+
+## Subsequent fresh-host replay
+
+The owner later reset the disposable VPS. Fresh bootstrap exposed additional first-start proxy/firewall behavior; see [the bounded clean-host replay](2026-10-07-coolify-440-clean-runtime.md) for exact revisions, corrected-source resume and post-reboot verification. The earlier upgrade/reboot results above do not substitute for that new check.

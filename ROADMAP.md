@@ -4,7 +4,7 @@
 > **Current phase:** post-0.1.0 maintenance and Coolify 4.4.0 qualification
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** review the qualified upgrade candidate and prepare the owner's production migration with recovery prerequisites; production execution and new releases remain separate owner actions.
+> **Next action:** review the corrected candidate and prepare the owner's production migration with checkpoint/backup prerequisites; production execution and releases remain separate owner actions.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -60,6 +60,8 @@ V5  real production-use evidence
 The owner confirms `v0.1.0` alpha is public and two real applications run on it. Their public health endpoints responded successfully on 2026-10-07; this is a point-in-time check, not a production audit.
 
 Implemented one read/write/deploy token, shell-portable prompts and local documentation values, one reviewed release manifest, version-neutral evaluation commands and read-only update discovery. The 4.3.21 → 4.4.0 transition has V3 controlled test evidence for interruption/resume, checkpoint database restore, no-op rerun, verification/audit, websocket/terminal, one-token app delivery/rollback and reboot. See [the bounded runtime record](reviews/2026-10-07-coolify-440-runtime.md) and [upgrade architecture](docs/adr/0006-reviewed-update-channels.md).
+
+The owner-reset fresh host reached healthy Coolify 4.4.0, HTTPS app deployment/rollback, full verification/audit and an idempotent platform rerun. First-start proxy policy, standalone firewall facts and UTC alias verification were corrected during the replay. Two reboot checks finished; the corrected final source passed full verification/audit, native websocket and real ingress packet checks. Temporary API credentials were revoked and removed; production still needs its own recovery prerequisites. See [the controlled fresh-host record](reviews/2026-10-07-coolify-440-clean-runtime.md). This corrected-source resume is V3, not an uninterrupted V4 user replay.
 
 ### Documentation/productization
 
