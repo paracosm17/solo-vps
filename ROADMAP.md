@@ -1,10 +1,10 @@
 # Solo VPS — ROADMAP
 
 > **Last updated:** 2026-10-07
-> **Current phase:** 0.2.0 alpha preparation and authorized production migration
+> **Current phase:** 0.2.0 alpha publication after verified production migration
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** complete the authorized production migration, record verification, then publish 0.2.0 from a clean exact commit after required CI/Pages/scans and release dry-run.
+> **Next action:** publish 0.2.0 from a clean exact commit after required CI/Pages/scans and release dry-run; retain bounded production and separate clean-host evidence.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -61,7 +61,9 @@ The owner confirms `v0.1.0` alpha is public and two real applications run on it.
 
 Implemented one read/write/deploy token, shell-portable prompts and local documentation values, one reviewed release manifest, version-neutral evaluation commands and read-only update discovery. The 4.3.21 → 4.4.0 transition has V3 controlled test evidence for interruption/resume, checkpoint database restore, no-op rerun, verification/audit, websocket/terminal, one-token app delivery/rollback and reboot. See [the bounded runtime record](reviews/2026-10-07-coolify-440-runtime.md) and [upgrade architecture](docs/adr/0006-reviewed-update-channels.md).
 
-The owner-reset fresh host reached healthy Coolify 4.4.0, HTTPS app deployment/rollback, full verification/audit and an idempotent platform rerun. First-start proxy policy, standalone firewall facts and UTC alias verification were corrected during the replay. Two reboot checks finished; the corrected final source passed full verification/audit, native websocket and real ingress packet checks. Temporary API credentials were revoked and removed; production still needs its own recovery prerequisites. See [the controlled fresh-host record](reviews/2026-10-07-coolify-440-clean-runtime.md). This corrected-source resume is V3, not an uninterrupted V4 user replay.
+The owner-reset fresh host reached healthy Coolify 4.4.0, HTTPS app deployment/rollback, full verification/audit and an idempotent platform rerun. First-start proxy policy, standalone firewall facts and UTC alias verification were corrected during the replay. Two reboot checks finished; the corrected final source passed full verification/audit, native websocket and real ingress packet checks. Temporary API credentials were revoked and removed; production recovery prerequisites and the upgrade have now been verified separately. See [the controlled fresh-host record](reviews/2026-10-07-coolify-440-clean-runtime.md). This corrected-source resume is V3, not an uninterrupted V4 user replay.
+
+The owner-authorized production transition passed at `23e0925`: exact-origin preflight, fresh checkpoint, upgrade, full verify/audit, no-op rerun, unchanged business containers, public bot health, native terminal/Reverb and Sentinel delivery. Verified encrypted backups exist outside the VPS. This is bounded V5 production-use evidence, not a reliability guarantee or a new clean-user V4 result. See [the production record](reviews/2026-10-07-coolify-440-production.md).
 
 ### Documentation/productization
 
@@ -77,7 +79,7 @@ Retained logs are V3: entries survived application redeploy and Alloy restart, a
 
 ### Coolify lifecycle
 
-The published `0.1.0` source supported Coolify `4.3.21`, with `4.1.2` as the previous upgrade origin. The current source qualifies `4.3.21 → 4.4.0` at V3 on a disposable VPS, including native Sentinel `1.0.2`; fresh-install and production evidence remain separate. The reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data. The `4.1.2` → `4.3.21` interruption/resume and replacement-host exercises passed, followed by same-host verification of the promoted source.
+The published `0.1.0` source supported Coolify `4.3.21`, with `4.1.2` as the previous upgrade origin. The current source qualifies `4.3.21 → 4.4.0` at V3 on a disposable VPS, including native Sentinel `1.0.2`; the corrected fresh-host V3 and bounded production V5 records remain separate. The reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data. The `4.1.2` → `4.3.21` interruption/resume and replacement-host exercises passed, followed by same-host verification of the promoted source.
 
 Sentinel is a Coolify-managed Linux/Docker metrics agent. The old verified "Sentinel absent" result records a `4.1.2` bridge-to-loopback incompatibility; it is not the desired contract for `4.3.19+`. A safety-gated [exercise sheet](docs/coolify-4.3.21-evaluation.md) records exact artifacts, HTTPS push path, the high-trust Docker/host boundary, absence of unintended public ports and interruption/forward-resume behavior. The `database-backup-adopt` API helper fails closed because the `4.3.21` schedule API omits the required S3 storage UUID; Coolify UI backup and isolated B2 restore passed instead. The promoted `4.3.21` source now also has core V4 clean-install and idempotency evidence.
 
@@ -133,7 +135,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-014 private security channel | DONE | GitHub Private Vulnerability Reporting enabled; public **Report a vulnerability** entry verified |
 | CRIT-015 external outage detection | DONE / V3 | Provider-level VPS shutdown/restart produced real DOWN/UP emails outside the VPS; operator observed delivery within a few minutes, with no latency SLA claimed |
 | CRIT-016 migration safety | DONE / V2 | app-owned preflight and image-only rollback boundary |
-| CRIT-017 release/upgrade story | V3 PASS | 0.1.0 alpha published; update discovery and controlled 4.4.0 upgrade/resume/recovery passed; production migration remains separate |
+| CRIT-017 release/upgrade story | V3 PASS | 0.1.0 alpha published; update discovery and controlled 4.4.0 upgrade/resume/recovery passed; bounded production migration V5 passed separately |
 | CRIT-018 documentation duplication | DONE / V2 | user, architecture, plan and evidence roles separated |
 | CRIT-019 optional-feature leakage | DONE / V2 | optional capabilities do not gate the core Quick Start |
 | CRIT-020 revision metadata | BLOCKED | 0.2.0 immutable identity pending |
@@ -154,7 +156,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M6 — Automatic Security Updates | P1 | DONE | Core V4 |
 | M7 — Docker Host | P1 | DONE | Docker 29.x, core V4 |
 | M8 — Optional Tailscale Administrative Plane | P3 | DEFERRED | post-release optional work |
-| M9 — Coolify Installation Backend | P1 | DONE | supported `4.3.21` clean install and idempotency, core V4 |
+| M9 — Coolify Installation Backend | P1 | DONE | Current 4.4.0 corrected fresh-host resume V3; original 4.3.21 clean-user V4 retained separately |
 | M10 — First End-to-End Application | P1 | DONE | Core V4 |
 | M11 — GitHub Actions + GHCR Template | P1 | CORE V4 PASS | owner deployed and updated demo using the public guide at `0fdba7f`; original source V4 retained; new single-token workflow V3, not unchanged since |
 | M12 — Dependency & Image Hygiene | P2 | DONE | V2 |
@@ -174,7 +176,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M26 — Public README & Quick Start | P1 | CORE V4 PASS | owner completed both public chapters independently at `0fdba7f`; first-run wording/input polish merged in `bf02b74` |
 | M27 — Architecture Documentation & ADR | P2 | DONE | V2 |
 | M28 — SECURITY / CONTRIBUTING / LICENSE | P2 | DONE | V2; private reporting enabled and public reporter entry verified |
-| M29 — Upgrade Guide | P2 | V3 PASS | 4.4.0 test-VPS upgrade/resume/recovery and reboot passed; fresh install and production remain separate gates |
+| M29 — Upgrade Guide | P2 | V3 PASS | 4.4.0 controlled upgrade/resume/recovery and corrected fresh-host V3 passed; production migration V5 passed; independent browser replay separate |
 | M30 — Release Process | P2 | SOURCE DONE | hosted dry-run and public release pending |
 
 ---
@@ -206,4 +208,4 @@ The maintained product topology remains one VPS; another permanent or additional
 - release-commit hosted CI/Pages checks and exact-ref secret/state scans;
 - clean release dry-run and final review; production migration and 0.2.0 publication are now authorized.
 
-**Current validation:** V3 for the changed 4.4.0 route and controlled fresh-host resume; the original 0.1.0 core retains its own V4 record. Optional integrations and recovery keep separate V3 evidence; production migration is in progress.
+**Current validation:** V3 for the changed 4.4.0 route and controlled fresh-host resume; the original 0.1.0 core retains its own V4 record. Optional integrations and recovery keep separate V3 evidence; production migration has bounded V5 evidence.

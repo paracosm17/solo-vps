@@ -12,7 +12,7 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 
 - Local documentation values for copyable commands, read-only update discovery and version-neutral Coolify evaluation commands.
 - Reviewed Coolify release manifest shared by Ansible, update discovery, lifecycle planning, restore verification and generated documentation.
-- Coolify 4.3.21 to 4.4.0 upgrade with Reverb port policy, preserved credentials and artifact-bound forward resume; controlled test-VPS replay, checkpoint restore, one-token deployment/rollback and reboot passed.
+- Coolify 4.3.21 to 4.4.0 upgrade with Reverb port policy, preserved credentials and artifact-bound forward resume; controlled test-VPS replay, checkpoint restore, one-token deployment/rollback and reboot passed; the maintained production upgrade passed full verification/audit and preserved business containers.
 
 ### Fixed
 
