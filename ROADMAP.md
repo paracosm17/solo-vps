@@ -4,7 +4,7 @@
 > **Current phase:** post-0.1.0 maintenance and Coolify 4.4.0 qualification
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** complete source checks and prove 4.3.21 → 4.4.0 on the authorized test VPS, including interruption/resume and one-token app delivery; production and new releases remain out of scope.
+> **Next action:** review the qualified upgrade candidate and prepare the owner's production migration with recovery prerequisites; production execution and new releases remain separate owner actions.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -59,7 +59,7 @@ V5  real production-use evidence
 
 The owner confirms `v0.1.0` alpha is public and two real applications run on it. Their public health endpoints responded successfully on 2026-10-07; this is a point-in-time check, not a production audit.
 
-Prepared source changes: one read/write/deploy token, shell-portable prompts and local documentation values, version-neutral evaluation commands, read-only update discovery, and the reviewed 4.3.21 → 4.4.0 Reverb transition. Existing 4.3.21 runtime evidence stays historical; 4.4.0 has no VPS qualification yet. See [upgrade architecture](docs/adr/0006-reviewed-update-channels.md).
+Implemented one read/write/deploy token, shell-portable prompts and local documentation values, one reviewed release manifest, version-neutral evaluation commands and read-only update discovery. The 4.3.21 → 4.4.0 transition has V3 controlled test evidence for interruption/resume, checkpoint database restore, no-op rerun, verification/audit, websocket/terminal, one-token app delivery/rollback and reboot. See [the bounded runtime record](reviews/2026-10-07-coolify-440-runtime.md) and [upgrade architecture](docs/adr/0006-reviewed-update-channels.md).
 
 ### Documentation/productization
 
@@ -75,7 +75,7 @@ Retained logs are V3: entries survived application redeploy and Alloy restart, a
 
 ### Coolify lifecycle
 
-The published `0.1.0` source supported Coolify `4.3.21`, with `4.1.2` as the previous upgrade origin. The current source prepares `4.3.21 → 4.4.0`; its runtime gate is pending. The reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data. The `4.1.2` → `4.3.21` interruption/resume and replacement-host exercises passed, followed by same-host verification of the promoted source.
+The published `0.1.0` source supported Coolify `4.3.21`, with `4.1.2` as the previous upgrade origin. The current source qualifies `4.3.21 → 4.4.0` at V3 on a disposable VPS, including native Sentinel `1.0.2`; fresh-install and production evidence remain separate. The reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data. The `4.1.2` → `4.3.21` interruption/resume and replacement-host exercises passed, followed by same-host verification of the promoted source.
 
 Sentinel is a Coolify-managed Linux/Docker metrics agent. The old verified "Sentinel absent" result records a `4.1.2` bridge-to-loopback incompatibility; it is not the desired contract for `4.3.19+`. A safety-gated [exercise sheet](docs/coolify-4.3.21-evaluation.md) records exact artifacts, HTTPS push path, the high-trust Docker/host boundary, absence of unintended public ports and interruption/forward-resume behavior. The `database-backup-adopt` API helper fails closed because the `4.3.21` schedule API omits the required S3 storage UUID; Coolify UI backup and isolated B2 restore passed instead. The promoted `4.3.21` source now also has core V4 clean-install and idempotency evidence.
 
@@ -124,7 +124,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-014 private security channel | DONE | GitHub Private Vulnerability Reporting enabled; public **Report a vulnerability** entry verified |
 | CRIT-015 external outage detection | DONE / V3 | Provider-level VPS shutdown/restart produced real DOWN/UP emails outside the VPS; operator observed delivery within a few minutes, with no latency SLA claimed |
 | CRIT-016 migration safety | DONE / V2 | app-owned preflight and image-only rollback boundary |
-| CRIT-017 release/upgrade story | PARTIAL | 0.1.0 alpha published; update discovery and 4.4.0 source candidate ready; new runtime qualification pending |
+| CRIT-017 release/upgrade story | V3 PASS | 0.1.0 alpha published; update discovery and controlled 4.4.0 upgrade/resume/recovery passed; production migration remains separate |
 | CRIT-018 documentation duplication | DONE / V2 | user, architecture, plan and evidence roles separated |
 | CRIT-019 optional-feature leakage | DONE / V2 | optional capabilities do not gate the core Quick Start |
 | CRIT-020 revision metadata | BLOCKED | immutable public release identity pending |
@@ -165,7 +165,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M26 — Public README & Quick Start | P1 | CORE V4 PASS | owner completed both public chapters independently at `0fdba7f`; first-run wording/input polish merged in `bf02b74` |
 | M27 — Architecture Documentation & ADR | P2 | DONE | V2 |
 | M28 — SECURITY / CONTRIBUTING / LICENSE | P2 | DONE | V2; private reporting enabled and public reporter entry verified |
-| M29 — Upgrade Guide | P2 | SOURCE DONE | 0.1.0 alpha published; historical lifecycle V3/core V4; 4.4.0 test-VPS gate pending |
+| M29 — Upgrade Guide | P2 | V3 PASS | 4.4.0 test-VPS upgrade/resume/recovery and reboot passed; fresh install and production remain separate gates |
 | M30 — Release Process | P2 | SOURCE DONE | hosted dry-run and public release pending |
 
 ---
@@ -195,6 +195,6 @@ The maintained product topology remains one VPS; another permanent or additional
 
 - preserve operational equivalence with the tested source while preparing the release;
 - release-commit hosted CI/Pages checks and exact-ref secret/state scans;
-- test-VPS 4.4.0 qualification, clean release dry-run and final review; new tags/releases remain out of scope.
+- clean release dry-run and final review; 4.4.0 test-VPS qualification passed, new tags/releases remain out of scope.
 
 **Current validation:** V4 for the core clean-user route; V3 for separate optional integrations, lifecycle and recovery exercises.

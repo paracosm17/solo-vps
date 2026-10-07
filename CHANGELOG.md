@@ -9,12 +9,14 @@ The `0.1.0` alpha is published. Published versions are listed in [GitHub Release
 ### Added
 
 - Local documentation values for copyable commands, read-only update discovery and version-neutral Coolify evaluation commands.
-- Prepared Coolify 4.3.21 to 4.4.0 upgrade with Reverb port policy, preserved credentials and artifact-bound forward resume; VPS qualification is pending.
+- Reviewed Coolify release manifest shared by Ansible, update discovery, lifecycle planning, restore verification and generated documentation.
+- Coolify 4.3.21 to 4.4.0 upgrade with Reverb port policy, preserved credentials and artifact-bound forward resume; controlled test-VPS replay, checkpoint restore, one-token deployment/rollback and reboot passed.
 
 ### Fixed
 
 - Use one Coolify API token with read, write and deploy in the CI template and operator helpers.
 - Use shell-portable input prompts and identify VPS-only host-key commands explicitly.
+- Retire only the owned legacy realtime container before embedded Reverb starts; verify native Sentinel reconciliation against reviewed origin/target identities.
 
 ## [0.1.0] - 2026-09-28
 

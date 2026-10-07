@@ -20,11 +20,16 @@ def release_fingerprint(data: dict) -> str:
 def validate_manifest(data: object) -> dict:
     if not isinstance(data, dict) or data.get("schema_version") != 1:
         raise ValueError("Coolify release manifest requires schema_version: 1")
-    for item in (data, data.get("upgrade_from"), data.get("sentinel"), (data.get("upgrade_from") or {}).get('sentinel')):
+    origin = data.get('upgrade_from')
+    if not isinstance(origin, dict):
+        raise ValueError('Coolify upgrade origin must be a mapping')
+    for item in (data, origin, data.get("sentinel"), origin.get('sentinel')):
         if not isinstance(item, dict) or not isinstance(item.get("version"), str) or not SEMVER.fullmatch(item["version"]):
             raise ValueError("Coolify target, origin and Sentinel require exact semantic versions")
         if item.get("registry") not in ("docker.io", "ghcr.io"):
             raise ValueError("release images must use an official reviewed registry")
+    if not isinstance(origin['sentinel'].get('accept_target', False), bool):
+        raise ValueError('origin Sentinel accept_target must be a boolean')
     if data["version"] == data["upgrade_from"]["version"]:
         raise ValueError("upgrade origin must differ from target")
     if tuple(map(int, data["version"].split("."))) <= tuple(map(int, data["upgrade_from"]["version"].split("."))):
@@ -80,8 +85,13 @@ def load_defaults(path: Path) -> dict:
     for key, expression in aliases.items():
         if defaults.get(key) != expression:
             raise ValueError(f'{key} must derive from the shared release manifest')
-    for artifact in defaults.get('solo_vps_coolify_release_artifacts', []):
+    artifacts = defaults.get('solo_vps_coolify_release_artifacts', [])
+    if len(artifacts) != len(ARTIFACT_NAMES) or {a.get('name') for a in artifacts} != set(ARTIFACT_NAMES):
+        raise ValueError('role must consume exactly the three manifest artifacts')
+    for artifact in artifacts:
         name = artifact.get('name')
         if name not in ARTIFACT_NAMES or artifact.get('checksum') != "{{ solo_vps_coolify_release.artifacts['" + name + "'] }}":
             raise ValueError('role artifact checksums must derive from the shared release manifest')
+        if artifact.get('url') != '{{ solo_vps_coolify_release_base_url }}/' + name:
+            raise ValueError('role artifact URLs must derive from the shared release tag')
     return {**defaults, **variables(load_release(path.parents[4] / "config/coolify-release.yml"))}

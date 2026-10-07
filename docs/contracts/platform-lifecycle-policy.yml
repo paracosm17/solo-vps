@@ -28,5 +28,4 @@ coolify:
 
 validation:
   docker_29_maintained_host: V3
-  coolify_current_maintained_host: V0-pending
-  coolify_previous_to_current_upgrade: V0-pending
+  coolify_release_evidence: config/coolify-release.yml#qualification

@@ -133,9 +133,9 @@ class QaContractTests(unittest.TestCase):
         text = path.read_text()
         text = text.replace(
             "\t@$(QA_YAMLLINT) -c .yamllint $(QA_YAML_PATHS)\n"
-            "\t@$(QA_PYTHON) -m unittest tests.test_docker_version_templates tests.test_firewall_listener_templates\n"
+            "\t@$(QA_PYTHON) -m unittest tests.test_docker_version_templates tests.test_firewall_listener_templates tests.test_coolify_release_templates\n"
             "\t@ANSIBLE_COLLECTIONS_PATH=\"$(abspath $(QA_COLLECTIONS_DIR))\" $(MAKE) --no-print-directory ansible-syntax",
-            "\t@$(QA_PYTHON) -m unittest tests.test_docker_version_templates tests.test_firewall_listener_templates\n"
+            "\t@$(QA_PYTHON) -m unittest tests.test_docker_version_templates tests.test_firewall_listener_templates tests.test_coolify_release_templates\n"
             "\t@ANSIBLE_COLLECTIONS_PATH=\"$(abspath $(QA_COLLECTIONS_DIR))\" $(MAKE) --no-print-directory ansible-syntax\n"
             "\t@$(QA_YAMLLINT) -c .yamllint $(QA_YAML_PATHS)",
         )

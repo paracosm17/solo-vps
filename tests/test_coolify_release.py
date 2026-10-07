@@ -33,7 +33,7 @@ class ReleaseManifestTests(unittest.TestCase):
         self.assertEqual(rendered, '9.1.0 -> 9.2.0')
 
     def test_malformed_or_incomplete_release_fails_closed(self):
-        for update in ({'version': 'latest'}, {'schema_version': 999}, {'registry': 'attacker.example'}, {'artifacts': {}}, {'version': '0.0.1'}):
+        for update in ({'version': 'latest'}, {'schema_version': 999}, {'registry': 'attacker.example'}, {'artifacts': {}}, {'version': '0.0.1'}, {'upgrade_from': []}):
             with self.subTest(update=update):
                 data = deepcopy(load_release())
                 data.update(update)

@@ -55,10 +55,13 @@ def source_identity(root: Path) -> dict:
             "dirty": bool(status.stdout.strip()) if status.returncode == 0 else None}
 
 def report(root: Path, online: bool = False, component: str = "all", fetch=fetch_release) -> dict:
-    manifest = variables(load_release(root / "config/coolify-release.yml"))
+    release_manifest = load_release(root / "config/coolify-release.yml")
+    manifest = variables(release_manifest)
     target = manifest["solo_vps_coolify_version"]
     version(target)
     result = {"network_request": online, "mutation": False, "source": source_identity(root), "coolify": {"reviewed_target": target, "reviewed_origin": manifest["solo_vps_coolify_previous_supported_version"], "evidence": manifest["solo_vps_coolify_release_evidence"], "installed_version": "not observed; run make coolify-upgrade-preflight"}, "upstream": {}}
+    result['coolify'].update(evidence_record=release_manifest['qualification']['evidence'],
+                             release_fingerprint=release_manifest['qualification']['release_sha256'])
     if online:
         for name, repo in REPOSITORIES.items():
             if component != "all" and component != name:

@@ -119,7 +119,7 @@ A source rollback is not a Docker package downgrade.
 
 ## Coolify
 
-**Release status: {{ solo_vps_coolify_qualification }}.** The published 0.1.0 installation used 4.3.21. Prove this transition on a test VPS before production use. The release changes realtime to in-container Reverb, so the upgrade rewrites the loopback override, migrates the Pusher backend host/port and removes the orphaned old realtime container. Existing credentials are preserved. [Upstream release notes](https://github.com/coollabsio/coolify/releases/tag/v4.4.0).
+**Release status: {{ solo_vps_coolify_qualification }}.** The published 0.1.0 installation used 4.3.21. The controlled test-VPS upgrade, interruption/resume, checkpoint restore, one-token delivery/rollback and reboot passed; see [the evidence record](https://github.com/paracosm17/solo-vps/blob/main/reviews/2026-10-07-coolify-440-runtime.md). The release changes realtime to in-container Reverb, so the upgrade rewrites the loopback override, migrates the Pusher backend host/port and retires the owned old standalone realtime container. Existing credentials are preserved. [Upstream release notes](https://github.com/coollabsio/coolify/releases/tag/v{{ solo_vps_coolify_target }}).
 
 Use Solo VPS upgrade commands below. The Coolify **Update** button and automatic upgrades bypass its checkpoint, reviewed artifact hashes and transaction/resume checks; they are not a qualified upgrade path for this installation.
 
@@ -185,7 +185,8 @@ Treat dependency changes as source-maintenance changes. The authoritative source
 | restic | `ansible/roles/backup/defaults/main.yml` |
 | sample Python image | `examples/hello-app/Dockerfile` |
 | consumer GitHub Actions | `templates/github-actions/hello-app-ci.yml` |
-| Docker/Coolify lifecycle | `docs/contracts/platform-lifecycle-policy.yml` |
+| Docker lifecycle | `docs/contracts/platform-lifecycle-policy.yml` |
+| Coolify release and components | `config/coolify-release.yml` |
 
 Update one dependency class at a time: review upstream notes → change the authoritative pin → run its validators/tests → `make validate` → obtain real integration evidence when runtime behavior changes.
 
@@ -263,7 +264,7 @@ The supported update scope is:
 - source updates use published tags and a new checkout; installation state stays in the external data directory;
 - Docker support is intentionally limited to 29.x rather than generic package auto-upgrades;
 - only the manifest-selected Coolify transition is represented by the current lifecycle source;
-- historical 4.1.2 → 4.3.21 upgrade/resume and replacement-host recovery have integration evidence; the published 0.1.0 core setup passed an independent clean-install replay. These results do not qualify 4.4.0;
+- historical 4.1.2 → 4.3.21 upgrade/resume and replacement-host recovery have integration evidence; the published 0.1.0 core setup passed an independent clean-install replay. The current transition now has separate controlled V3 evidence;
 - on 4.3.21, database-backup API adoption failed closed because its response omitted required storage identity. API adoption and the UI/B2 backup/restore route need fresh checks on 4.4.0;
 - optional modules retain separate lifecycle contracts.
 

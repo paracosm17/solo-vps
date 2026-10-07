@@ -119,7 +119,7 @@ Source rollback не является downgrade Docker package.
 
 ## Coolify
 
-**Статус версии: {{ solo_vps_coolify_qualification }}.** Опубликованный Solo VPS 0.1.0 устанавливал 4.3.21. До production пройдите этот переход на тестовом VPS. Realtime теперь работает внутри Coolify через Reverb: обновление заменяет override локальных портов, переносит настройки backend Pusher и удаляет старый realtime-контейнер как orphan. Существующие секреты сохраняются. [Release notes upstream](https://github.com/coollabsio/coolify/releases/tag/v4.4.0).
+**Статус версии: {{ solo_vps_coolify_qualification }}.** Опубликованный Solo VPS 0.1.0 устанавливал 4.3.21. На тестовом VPS проверены переход, прерывание/продолжение, восстановление checkpoint, деплой/откат одним токеном и перезагрузка; см. [результаты проверки](https://github.com/paracosm17/solo-vps/blob/main/reviews/2026-10-07-coolify-440-runtime.md). Realtime теперь работает внутри Coolify через Reverb: обновление заменяет override локальных портов, переносит настройки backend Pusher и удаляет принадлежащий Coolify старый отдельный realtime-контейнер. Существующие секреты сохраняются. [Release notes upstream](https://github.com/coollabsio/coolify/releases/tag/v{{ solo_vps_coolify_target }}).
 
 Используйте команды Solo VPS ниже. Кнопка **Update** в Coolify и автоматические обновления обходят локальную копию, проверенные SHA256 и контроль транзакции/resume; для этой установки такой путь ещё не подтверждён.
 
@@ -185,7 +185,8 @@ make coolify-upgrade-resume
 | restic | `ansible/roles/backup/defaults/main.yml` |
 | sample Python image | `examples/hello-app/Dockerfile` |
 | consumer GitHub Actions | `templates/github-actions/hello-app-ci.yml` |
-| Docker/Coolify lifecycle | `docs/contracts/platform-lifecycle-policy.yml` |
+| Docker lifecycle | `docs/contracts/platform-lifecycle-policy.yml` |
+| Версия Coolify и его компоненты | `config/coolify-release.yml` |
 
 Обновляйте один dependency class за раз: review upstream notes → change authoritative pin → run validators/tests → `make validate` → получите real integration evidence, если изменилось runtime behavior.
 
@@ -263,7 +264,7 @@ make verify-backup-tooling
 - исходники обновляются по опубликованному тегу в новый каталог; данные установки остаются во внешнем каталоге состояния;
 - поддержка Docker ограничена веткой 29.x; автоматического перехода на новую основную версию нет;
 - для Coolify поддерживается переход из manifest;
-- исторический переход 4.1.2 → 4.3.21, продолжение после прерывания и восстановление VPS проверены на тестовом сервере; базовая установка 0.1.0 прошла независимую проверку на чистом VPS. Эти результаты не подтверждают 4.4.0;
+- исторический переход 4.1.2 → 4.3.21, продолжение после прерывания и восстановление VPS проверены на тестовом сервере; базовая установка 0.1.0 прошла независимую проверку на чистом VPS. Текущий переход имеет отдельные доказательства V3;
 - на 4.3.21 API-помощник резервных копий отказывался принимать ответ без требуемого идентификатора хранилища. API и путь через панель/B2 требуют повторной проверки на 4.4.0;
 - дополнительные компоненты имеют собственные инструкции обновления.
 
