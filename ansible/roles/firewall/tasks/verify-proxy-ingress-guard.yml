@@ -1,4 +1,10 @@
 ---
+- name: Read routed interface facts for standalone guard verification
+  ansible.builtin.setup:
+    gather_subset: ["!all", "!min", network]
+    filter: [ansible_default_ipv4, ansible_default_ipv6]
+  when: ansible_facts.default_ipv4 is not defined and ansible_facts.default_ipv6 is not defined
+
 - name: Inspect routed interfaces for read-only proxy ingress verification
   ansible.builtin.set_fact:
     solo_vps_proxy_guard_interfaces: >-
