@@ -37,6 +37,19 @@ def fixture() -> list[dict]:
 
 
 class CoolifySentinelInspectTests(unittest.TestCase):
+    def test_reviewed_alternative_requires_the_complete_matching_identity(self):
+        payload = fixture()
+        payload[0]['Config']['Image'] = 'docker.io/coollabsio/sentinel:1.0.2'
+        payload[0]['Image'] = 'sha256:' + '2' * 64
+        args = dict(expected_image=EXPECTED_IMAGE, expected_image_id=EXPECTED_IMAGE_ID, expected_version='1.0.1',
+                    alternative_image='docker.io/coollabsio/sentinel:1.0.2', alternative_image_id='sha256:' + '2' * 64,
+                    alternative_version='1.0.2', observed_version='1.0.2')
+        self.assertEqual(evaluate_inspect(payload, **args)['status'], 'PASS')
+        payload[0]['Image'] = 'sha256:' + '3' * 64
+        with self.assertRaises(SentinelInspectionError): evaluate_inspect(payload, **args)
+        args.pop('alternative_version')
+        with self.assertRaises(SentinelInspectionError): evaluate_inspect(payload, **args)
+
     def evaluate(self, payload: list[dict]) -> dict:
         return evaluate_inspect(
             payload,

@@ -7,6 +7,11 @@
       --expected-image {{ (solo_vps_coolify_sentinel_contract.registry ~ '/coollabsio/sentinel:' ~ solo_vps_coolify_sentinel_contract.version) | quote }}
       {{ ('--expected-image-id ' ~ (solo_vps_coolify_sentinel_contract.image_id_x86_64 | quote)) if ansible_facts.architecture == 'x86_64' else '' }}
       --expected-version {{ solo_vps_coolify_sentinel_contract.version | quote }}
+      {% if solo_vps_coolify_sentinel_verify_origin | default(false) | bool and solo_vps_coolify_release.upgrade_from.sentinel.accept_target | default(false) | bool %}
+      --alternative-image {{ solo_vps_coolify_sentinel_image | quote }}
+      {{ ('--alternative-image-id ' ~ (solo_vps_coolify_sentinel_image_id_x86_64 | quote)) if ansible_facts.architecture == 'x86_64' else '' }}
+      --alternative-version {{ solo_vps_coolify_sentinel_version | quote }}
+      {% endif %}
       {{ ('--expected-push-endpoint ' ~ (solo_vps_coolify_sentinel_expected_url | quote)) if solo_vps_coolify_sentinel_expected_url | default('') | length > 0 else '' }}
     executable: /usr/bin/python3
   changed_when: false

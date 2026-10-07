@@ -10,6 +10,8 @@ upgrade_from:
   registry: docker.io
   realtime: separate
   sentinel:
+    # Coolify updates its agent independently, including before a platform upgrade.
+    accept_target: true
     version: "1.0.1"
     registry: docker.io
     image_id_x86_64: sha256:23b28fee258052080eaf89ffdc2acc318eaa58d1238ee5d56247daa27738a548
@@ -24,4 +26,4 @@ sentinel:
 qualification:
   level: V2-source-candidate
   evidence: reviews/2026-10-07-coolify-440-source-preparation.md
-  release_sha256: sha256:bf1479f693abafe5c9abd255f95adab01545815fe46f0daa3e88109ed9e07b7c
+  release_sha256: sha256:e5ff1870c7aa01f965c227df390c54318b672eedc11ee2cb1e8e60e0aeb7a4b6
