@@ -75,6 +75,12 @@ class CoolifyProxyTests(unittest.TestCase):
             mutations.clear()
             self.assertFalse(reconcile('iptables', ['ens18'], True))
             self.assertFalse(mutations)
+            # Docker prepends its normal hooks while restoring workloads.
+            # DOCKER-USER still enters the guard before any shared rules.
+            chains['FORWARD'] = [['-j', 'DOCKER-USER'], ['-j', 'DOCKER-FORWARD'], ['-j', CHAIN]]
+            self.assertFalse(reconcile('iptables', ['ens18'], True))
+            self.assertFalse(reconcile('iptables', ['ens18'], False))
+            self.assertFalse(mutations)
             chains[CHAIN].append(['-j', 'ACCEPT'])
             with self.assertRaises(GuardError):
                 reconcile('iptables', ['ens18'], False)

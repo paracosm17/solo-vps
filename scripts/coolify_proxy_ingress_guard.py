@@ -72,7 +72,12 @@ def reconcile(binary: str, interfaces: list[str], check: bool) -> bool:
         output = invoke(binary, ['-S', parent]).stdout
         entries = [shlex.split(line)[2:] for line in output.splitlines() if line.startswith('-A ')]
         jump = ['-j', child]
-        if not entries or entries[0] != jump:
+        # dockerd prepends DOCKER-USER ahead of DOCKER-FORWARD on startup.
+        # Its first rule was already verified above to run our bounded guard.
+        # Both entry paths therefore guard forbidden traffic before ACCEPT.
+        covered = bool(entries) and (entries[0] == jump or
+                   (parent == 'FORWARD' and entries[0] == ['-j', 'DOCKER-USER']))
+        if not covered:
             if check:
                 raise GuardError('Proxy guard must precede shared accept rules')
             while invoke(binary, ['-C', parent, *jump], required=False).returncode == 0:

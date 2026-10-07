@@ -617,7 +617,7 @@ def _print_plan(plan: DeploymentPlan, as_json: bool) -> None:
     print(f"  image_ref: {plan.handoff.image_ref}")
     print(f"  expected_internal_port: {plan.expected_port}")
     print(f"  public_domain_allowed: {'yes' if plan.allow_domain else 'no'}")
-    print("  required_token_permissions: read+write token; separate deploy-only token")
+    print("  required_token_permissions: one token with read, write and deploy")
     print("  update_payload:")
     print(json.dumps(plan.update_payload, indent=4, sort_keys=True))
     print("  rollback: --apply requires and restores the previous immutable desired digest on failure")
