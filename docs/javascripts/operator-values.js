@@ -13,7 +13,9 @@
     return v.length <= 253 && v.includes(".") && v.split(".").every(s => /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/.test(s));
   }
   function validated(values) {
-    return Object.fromEntries(Object.entries(values).filter(([key, v]) => fields[key] && typeof v === "string" && fields[key].valid(v)));
+    return Object.fromEntries(Object.entries(values)
+      .filter(([key, v]) => fields[key] && typeof v === "string" && fields[key].valid(v))
+      .map(([key, v]) => [key, key === "GITHUB_OWNER" ? v.toLowerCase() : v]));
   }
   function render(text, supplied) {
     const values = validated(supplied);
