@@ -56,7 +56,9 @@
 - name: Require the effective service to execute the guard before restoring containers
   ansible.builtin.assert:
     that:
-      - "'/usr/local/lib/solo-vps/coolify_proxy_ingress_guard.py' in solo_vps_proxy_guard_effective_unit.stdout"
-      - "'ignore_errors=no' in solo_vps_proxy_guard_effective_unit.stdout"
+      - >-
+        solo_vps_proxy_guard_effective_unit.stdout
+        | regex_search('\{[^{}]*argv\[\]=/usr/bin/python3 /usr/local/lib/solo-vps/coolify_proxy_ingress_guard.py --interface [^{};]+; ignore_errors=no ;[^{}]*\}')
+        is not none
     fail_msg: "Another Docker drop-in removed or weakened the pre-start guard; inspect systemctl cat docker.service."
   when: solo_vps_proxy_guard_docker_binary.stat.exists

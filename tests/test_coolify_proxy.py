@@ -45,7 +45,8 @@ def container():
 class CoolifyProxyTests(unittest.TestCase):
     def test_guard_preserves_shared_rules_is_idempotent_and_check_never_mutates(self):
         shared = ['-m', 'conntrack', '--ctstate', 'RELATED,ESTABLISHED', '-j', 'RETURN']
-        chains = {'INPUT': [['-j', 'ufw-before-input']], 'FORWARD': [['-j', 'DOCKER-FORWARD']], 'DOCKER-USER': [shared.copy()]}
+        forward = [['-j', 'ufw-before-forward'], ['-j', 'DOCKER-USER'], ['-j', 'DOCKER-FORWARD']]
+        chains = {'INPUT': [['-j', 'ufw-before-input']], 'FORWARD': copy.deepcopy(forward), 'DOCKER-USER': [shared.copy()]}
         mutations = []
         def fake(binary, args, required=True):
             op, name, *rest = args
@@ -69,6 +70,7 @@ class CoolifyProxyTests(unittest.TestCase):
             self.assertTrue(reconcile('iptables', ['ens18'], False))
             self.assertIn(shared, chains['DOCKER-USER'])
             self.assertIn(['-j', 'ufw-before-input'], chains['INPUT'])
+            self.assertEqual(chains['FORWARD'], [['-j', CHAIN], *forward])
             self.assertFalse(reconcile('iptables', ['ens18'], False))
             mutations.clear()
             self.assertFalse(reconcile('iptables', ['ens18'], True))

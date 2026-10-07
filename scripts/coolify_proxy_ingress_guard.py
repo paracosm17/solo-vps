@@ -66,7 +66,9 @@ def reconcile(binary: str, interfaces: list[str], check: bool) -> bool:
         if check:
             raise GuardError('Docker user chain is missing')
         invoke(binary, ['-N', 'DOCKER-USER']); changed = True
-    for parent, child in [('DOCKER-USER', CHAIN), ('INPUT', CHAIN), ('FORWARD', 'DOCKER-USER')]:
+    # Hook only the bounded guard in FORWARD; never reorder a shared
+    # DOCKER-USER jump whose operator rules can ACCEPT unrelated traffic.
+    for parent, child in [('DOCKER-USER', CHAIN), ('INPUT', CHAIN), ('FORWARD', CHAIN)]:
         output = invoke(binary, ['-S', parent]).stdout
         entries = [shlex.split(line)[2:] for line in output.splitlines() if line.startswith('-A ')]
         jump = ['-j', child]
