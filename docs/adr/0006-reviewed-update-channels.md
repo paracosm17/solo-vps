@@ -21,6 +21,8 @@ Coolify runtime mutation continues through explicit preflight, a private local c
 
 The Coolify Update button and floating upstream scripts are outside the qualified path. Keep `AUTOUPDATE=false`. An upstream update may overwrite the managed Compose policy and bypass our checkpoint and markers.
 
+Coolify's explicit proxy Compose invocation does not load an implicit override. Ansible specifies the TCP edge policy through native Get/Save configuration actions; Coolify remains the proxy lifecycle owner. Only the ports field changes, with image/network preflight before a required native restart. A bounded host guard blocks upstream TCP 8080/UDP 443 on external ingress before Docker can start containers, covering the first-start reconciliation window and reboot. It preserves shared firewall rules and original-direction outbound replies; IPv4 and IPv6 are guarded independently.
+
 ## Consequences and qualification
 
 Operators update Solo VPS source when a newer reviewed integration is needed, and update Coolify as a separate explicit action. The checkout cannot verify arbitrary future Coolify versions. This preserves one host owner and one application platform owner.

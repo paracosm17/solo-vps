@@ -1,0 +1,63 @@
+---
+- name: Derive routed external interfaces for the bounded proxy ingress guard
+  ansible.builtin.set_fact:
+    solo_vps_proxy_guard_interfaces: >-
+      {{ ([ansible_facts.default_ipv4.interface | default(''),
+           ansible_facts.default_ipv6.interface | default('')]
+          | reject('equalto', '') | unique | list) }}
+
+- name: Require unambiguous external interface facts for proxy ingress protection
+  ansible.builtin.assert:
+    that:
+      - solo_vps_proxy_guard_interfaces | length > 0
+      - solo_vps_proxy_guard_interfaces | select('match', '^[a-zA-Z0-9_.:-]{1,15}$') | list | length == solo_vps_proxy_guard_interfaces | length
+    fail_msg: "Cannot derive the routed external interfaces; do not start Coolify without the ingress guard."
+
+- name: Create the host-owned firewall helper directory
+  ansible.builtin.file:
+    path: /usr/local/lib/solo-vps
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install the bounded proxy ingress guard helper
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../scripts/coolify_proxy_ingress_guard.py"
+    dest: /usr/local/lib/solo-vps/coolify_proxy_ingress_guard.py
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create the Docker service drop-in directory before Docker installation
+  ansible.builtin.file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Require the ingress guard before every Docker service start
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/docker.service.d/solo-vps-proxy-ingress.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by Solo VPS: bounded proxy ingress guard.
+      [Service]
+      ExecStartPre=/usr/bin/python3 /usr/local/lib/solo-vps/coolify_proxy_ingress_guard.py{% for interface in solo_vps_proxy_guard_interfaces %} --interface {{ interface }}{% endfor %}
+  register: solo_vps_proxy_guard_unit
+
+- name: Reload service metadata after changing the guard dependency
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  when: solo_vps_proxy_guard_unit.changed
+
+- name: Establish both protocol-family guards before any proxy can start
+  ansible.builtin.command:
+    argv: >-
+      {{ ['/usr/bin/python3', '/usr/local/lib/solo-vps/coolify_proxy_ingress_guard.py']
+         + (solo_vps_proxy_guard_interfaces | map('regex_replace', '^(.*)$', '--interface=\1') | list) }}
+  register: solo_vps_proxy_guard_result
+  changed_when: (solo_vps_proxy_guard_result.stdout | from_json).changed

@@ -262,8 +262,13 @@
   changed_when: false
   no_log: true
 
-- name: Prepare the proxy edge policy before the first Coolify process can start
+- name: Preserve unknown proxy configuration before the first Coolify process can start
   ansible.builtin.import_tasks: prepare-proxy-policy.yml
+
+- name: Require the host ingress guard before the first Coolify process starts
+  ansible.builtin.import_role:
+    name: firewall
+    tasks_from: verify-proxy-ingress-guard
 
 - name: Start the pinned Coolify platform with loopback-only management ports
   ansible.builtin.command:
@@ -284,6 +289,9 @@
       - always
       - --remove-orphans
       - --force-recreate
+
+- name: Persist the native proxy edge policy before first-install verification
+  ansible.builtin.import_tasks: reconcile-proxy.yml
 
 - name: Verify the newly installed Coolify runtime before marking it managed
   ansible.builtin.import_tasks: verify-runtime.yml

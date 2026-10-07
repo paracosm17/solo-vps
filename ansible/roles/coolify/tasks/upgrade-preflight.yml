@@ -1,4 +1,9 @@
 ---
+- name: Require the host-owned proxy ingress guard before version mutation
+  ansible.builtin.import_role:
+    name: firewall
+    tasks_from: verify-proxy-ingress-guard
+
 - name: Validate Coolify integration contract inputs
   ansible.builtin.import_tasks: assert-config.yml
 

@@ -48,6 +48,13 @@
     line: IPV6=yes
     create: false
 
+- name: Preserve non-UFW hooks when the UFW framework reloads builtin chains
+  ansible.builtin.lineinfile:
+    path: /etc/default/ufw
+    regexp: '^MANAGE_BUILTINS='
+    line: MANAGE_BUILTINS=no
+    create: false
+
 # Preserve the active administrative ingress path before changing any default
 # policy or enabling UFW. This ordering is intentional and access-critical.
 - name: Allow the supported SSH ingress before default-deny activation
@@ -94,6 +101,9 @@
   ansible.builtin.wait_for_connection:
     timeout: "{{ solo_vps_firewall_reconnect_timeout }}"
   become: false
+
+- name: Protect forbidden Docker proxy publications before platform installation
+  ansible.builtin.import_tasks: proxy-ingress-guard.yml
 
 - name: Verify the firewall baseline after activation
   ansible.builtin.import_tasks: verify.yml

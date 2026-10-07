@@ -138,6 +138,8 @@ AUTOUPDATE=false
 
 ### Preflight
 
+After preparing this source revision on an existing host, run `make firewall` to establish the bounded proxy ingress guard, then `make verify-firewall`. Keep a working administrator SSH session and provider recovery access. This host protection is required before the platform transition; it also runs before Docker restores containers after reboot.
+
 Before the supported transition, configure **Servers → localhost → Sentinel → Configuration → Coolify URL** to the working HTTPS dashboard URL in the origin Coolify release, enable and sync Sentinel, and confirm **Sentinel In Sync**. Keep raw management port `8000` and Sentinel port `8888` private. Then run:
 
 ```bash

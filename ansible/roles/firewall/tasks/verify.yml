@@ -2,6 +2,9 @@
 - name: Validate firewall configuration for verification
   ansible.builtin.import_tasks: assert-config.yml
 
+- name: Verify the bounded Docker proxy ingress protection
+  ansible.builtin.import_tasks: verify-proxy-ingress-guard.yml
+
 - name: Gather installed package facts for firewall verification
   ansible.builtin.package_facts:
     manager: apt
