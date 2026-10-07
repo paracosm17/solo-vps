@@ -472,7 +472,7 @@ def main() -> int:
     parser.add_argument("operation", choices=("inspect", "plan", "restore"))
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--recovery-root", type=Path)
-    parser.add_argument("--expected-version", default="4.3.21")
+    parser.add_argument("--expected-version", help="exact target version; defaults to the checkout's reviewed release manifest")
     parser.add_argument("--target-id", default="")
     args = parser.parse_args()
     try:
@@ -484,6 +484,13 @@ def main() -> int:
             return 0
         if args.recovery_root is None:
             raise CoolifyInstanceRestoreError("plan/restore requires --recovery-root")
+        if args.expected_version is None:
+            import yaml
+            manifest = Path(__file__).resolve().parents[1] / "ansible/roles/coolify/defaults/main.yml"
+            try:
+                args.expected_version = yaml.safe_load(manifest.read_text(encoding="utf-8"))["solo_vps_coolify_version"]
+            except (OSError, KeyError, TypeError, yaml.YAMLError) as exc:
+                raise CoolifyInstanceRestoreError("cannot read reviewed target; supply --expected-version explicitly") from exc
         if args.operation == "plan":
             plan = build_plan(
                 archive=args.archive,

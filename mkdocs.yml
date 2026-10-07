@@ -199,6 +199,7 @@ extra_css:
   - stylesheets/extra.css
 
 extra_javascript:
+  - javascripts/operator-values.js
   - javascripts/extra.js
 
 extra:

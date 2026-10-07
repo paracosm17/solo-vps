@@ -21,6 +21,20 @@ If a change cannot describe its recovery path, it is not ready for production ex
 
 A previous project checkout is **not** a generic runtime rollback. Reverting source does not undo packages, database migrations, or external state changes.
 
+## Check for updates
+
+Run from your workstation checkout:
+
+```bash
+make updates-check
+make updates-check UPDATE_COMPONENT=coolify
+make updates-plan
+```
+
+`updates-check` reads published GitHub releases for Solo VPS and Coolify. It prints the exact source revision, the reviewed Coolify target and its evidence, and upstream release notes. It never installs a discovered version. `updates-plan` is offline. For an untagged checkout, the installed Solo VPS release comparison is unknown; the exact commit is reported instead. A network failure or API rate limit stops discovery without changing anything.
+
+Updating Solo VPS source and updating Coolify are separate actions. Small reviewed compatibility changes can ship in a Solo VPS patch release; a new Coolify patch does not require a Solo VPS minor release. This source's version-neutral release manifest is `ansible/roles/coolify/defaults/main.yml`; the evaluation commands reuse it. Upstream versions still need release-note review, checksummed artifacts, source checks and a test-VPS upgrade before production use.
+
 ## Update Solo VPS source
 
 Solo VPS source is updated by opening a **new checkout of a reviewed release**, not by running `git pull` in the active checkout. Installation-specific config, inventory and encrypted operator state live outside the source tree, so both checkouts use the same persistent state.
@@ -105,14 +119,18 @@ A source rollback is not a Docker package downgrade.
 
 ## Coolify
 
+**This source prepares Coolify 4.4.0; runtime qualification is pending.** The published 0.1.0 installation used 4.3.21. Prove this transition on a test VPS before production use. The release changes realtime to in-container Reverb, so the upgrade rewrites the loopback override, migrates the Pusher backend host/port and removes the orphaned old realtime container. Existing credentials are preserved. [Upstream release notes](https://github.com/coollabsio/coolify/releases/tag/v4.4.0).
+
+Use Solo VPS upgrade commands below. The Coolify **Update** button and automatic upgrades bypass its checkpoint, reviewed artifact hashes and transaction/resume checks; they are not a qualified upgrade path for this installation.
+
 Solo VPS manages Coolify through a pinned, reviewed integration. It keeps ownership of the host and Docker configuration instead of handing that responsibility to an unreviewed installer path.
 
 The supported lifecycle pair in this source revision is:
 
 ```text
-previous supported Coolify: `4.1.2`
-current supported Coolify: `4.3.21`
-transition:                 4.1.2 -> 4.3.21
+previous supported Coolify: `4.3.21`
+current supported Coolify: `4.4.0`
+transition:                 4.3.21 -> 4.4.0
 AUTOUPDATE=false
 ```
 
@@ -120,7 +138,7 @@ AUTOUPDATE=false
 
 ### Preflight
 
-Before the supported transition, configure **Servers → localhost → Sentinel → Configuration → Coolify URL** to the working HTTPS dashboard URL in Coolify `4.1.2`, enable and sync Sentinel, and confirm **Sentinel In Sync**. Keep raw management port `8000` and Sentinel port `8888` private. Then run:
+Before the supported transition, configure **Servers → localhost → Sentinel → Configuration → Coolify URL** to the working HTTPS dashboard URL in Coolify `4.3.21`, enable and sync Sentinel, and confirm **Sentinel In Sync**. Keep raw management port `8000` and Sentinel port `8888` private. Then run:
 
 ```bash
 COOLIFY_SENTINEL_URL=https://coolify.example.com make coolify-upgrade-preflight
@@ -244,9 +262,9 @@ The supported update scope is:
 
 - source updates use published tags and a new checkout; installation state stays in the external data directory;
 - Docker support is intentionally limited to 29.x rather than generic package auto-upgrades;
-- only the Coolify 4.1.2 -> 4.3.21 transition is represented by the current lifecycle source;
-- Coolify upgrade/resume and replacement-host recovery have integration evidence; the current core setup also passed an independent clean-install replay;
-- the existing database-backup API helper fails closed on 4.3.21; use Coolify UI and a separate B2 restore for this version;
+- only the Coolify 4.3.21 -> 4.4.0 transition is represented by the current lifecycle source;
+- historical 4.1.2 → 4.3.21 upgrade/resume and replacement-host recovery have integration evidence; the published 0.1.0 core setup passed an independent clean-install replay. These results do not qualify 4.4.0;
+- on 4.3.21, database-backup API adoption failed closed because its response omitted required storage identity. API adoption and the UI/B2 backup/restore route need fresh checks on 4.4.0;
 - optional modules retain separate lifecycle contracts.
 
 See [Disaster recovery](disaster-recovery.md) before any change that can affect data or control-plane recovery.

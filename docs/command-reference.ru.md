@@ -1,5 +1,9 @@
 # Справочник команд
 
+## Проверка обновлений
+
+`make updates-check` читает публичные GitHub Releases без установки. `UPDATE_COMPONENT=coolify` или `UPDATE_COMPONENT=solo-vps` ограничивает проверку одним компонентом. `make updates-plan` показывает исходную ревизию и целевой pin Coolify без сети. Подготовка checkout точного тега и обновление платформы выполняются отдельно по [инструкции обновления](upgrades.md).
+
 Solo VPS намеренно показывает небольшой normal lifecycle. Начинайте с него; subsystem targets используйте только для diagnostics, recovery или проверенной advanced operation.
 
 > Выполните `make help` для поддерживаемого operator surface, `make help-ops` для operational commands и `make help-all` только когда нужен полный implementation catalog.

@@ -76,7 +76,7 @@ class CoolifyDeployApiContractTests(unittest.TestCase):
         self.assertFalse(self.plan.as_dict()["database_schema_rollback"])
         self.assertEqual(
             self.plan.as_dict()["required_token_permissions"],
-            {"read_write_token": ["read", "write"], "deploy_token": ["deploy"]},
+            {"api_token": ["read", "write", "deploy"]},
         )
 
     def test_direct_and_fixed_runner_tunnel_loopback_urls_are_accepted(self) -> None:

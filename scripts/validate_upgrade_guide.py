@@ -148,10 +148,11 @@ def validate_upgrade_guide(root: Path) -> None:
     coolify_status = adr_status(root / "docs" / "adr" / "0001-coolify-installation-boundary.md")
     if coolify_status != "Accepted":
         raise ContractError("M29 expects ADR-0001 to remain Accepted")
+    pins = yaml_load(root / "ansible/roles/coolify/defaults/main.yml")
     required = (
         "Solo VPS manages Coolify through a pinned, reviewed integration.",
-        "previous supported Coolify: `4.1.2`",
-        "current supported Coolify: `4.3.21`",
+        f"previous supported Coolify: `{pins['solo_vps_coolify_previous_supported_version']}`",
+        f"current supported Coolify: `{pins['solo_vps_coolify_version']}`",
         "make coolify-upgrade-preflight",
         "make coolify-upgrade",
         "make coolify-upgrade-resume",

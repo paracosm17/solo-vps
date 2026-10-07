@@ -68,7 +68,7 @@ class UpgradeGuideTests(unittest.TestCase):
         self.mutate(
             root,
             "docs/upgrades.md",
-            "previous supported Coolify: `4.1.2`",
+            "previous supported Coolify: `4.3.21`",
             "previous supported Coolify: `latest`",
         )
         with self.assertRaises(ContractError):

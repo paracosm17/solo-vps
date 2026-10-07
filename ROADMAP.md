@@ -1,10 +1,10 @@
 # Solo VPS — ROADMAP
 
-> **Last updated:** 2026-09-28
-> **Current phase:** first-release productization and runtime evidence
+> **Last updated:** 2026-10-07
+> **Current phase:** post-0.1.0 maintenance and Coolify 4.4.0 qualification
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** hold `v0.1.0` publication until the owner requests it; preserve candidate evidence and repeat the affected checks if the candidate changes.
+> **Next action:** complete source checks and prove 4.3.21 → 4.4.0 on the authorized test VPS, including interruption/resume and one-token app delivery; production and new releases remain out of scope.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -55,7 +55,11 @@ V5  real production-use evidence
 
 ---
 
-## 2. Active first-release work
+## 2. Active maintenance work
+
+The owner confirms `v0.1.0` alpha is public and two real applications run on it. Their public health endpoints responded successfully on 2026-10-07; this is a point-in-time check, not a production audit.
+
+Prepared source changes: one read/write/deploy token, shell-portable prompts and local documentation values, version-neutral evaluation commands, read-only update discovery, and the reviewed 4.3.21 → 4.4.0 Reverb transition. Existing 4.3.21 runtime evidence stays historical; 4.4.0 has no VPS qualification yet. See [upgrade architecture](docs/adr/0006-reviewed-update-channels.md).
 
 ### Documentation/productization
 
@@ -71,24 +75,24 @@ Retained logs are V3: entries survived application redeploy and Alloy restart, a
 
 ### Coolify lifecycle
 
-The source now supports Coolify `4.3.21`, with `4.1.2` as the previous supported upgrade origin. The reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data. The `4.1.2` → `4.3.21` interruption/resume and replacement-host exercises passed, followed by same-host verification of the promoted source.
+The published `0.1.0` source supported Coolify `4.3.21`, with `4.1.2` as the previous upgrade origin. The current source prepares `4.3.21 → 4.4.0`; its runtime gate is pending. The reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data. The `4.1.2` → `4.3.21` interruption/resume and replacement-host exercises passed, followed by same-host verification of the promoted source.
 
 Sentinel is a Coolify-managed Linux/Docker metrics agent. The old verified "Sentinel absent" result records a `4.1.2` bridge-to-loopback incompatibility; it is not the desired contract for `4.3.19+`. A safety-gated [exercise sheet](docs/coolify-4.3.21-evaluation.md) records exact artifacts, HTTPS push path, the high-trust Docker/host boundary, absence of unintended public ports and interruption/forward-resume behavior. The `database-backup-adopt` API helper fails closed because the `4.3.21` schedule API omits the required S3 storage UUID; Coolify UI backup and isolated B2 restore passed instead. The promoted `4.3.21` source now also has core V4 clean-install and idempotency evidence.
 
 ### Publication
 
-The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or earlier published history. No release tag exists. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`; the deployed EN/RU home and Quick Start language links resolve under `/solo-vps/`, and both edit links target the right source file. Private Vulnerability Reporting is enabled, and the public repository security page exposes **Report a vulnerability** to an unauthenticated visitor; a synthetic report from another account is not a Solo VPS runtime gate. Hosted `Repository CI / fast-source` is required by the protected `main` branch. Commit `dabf740` from PR [#13](https://github.com/paracosm17/solo-vps/pull/13) passed hosted CI and Pages deployment; the eventual release commit still needs its own hosted checks and exact-ref scans before tagging.
+The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `main` push started from one clean root commit. Gitleaks found no leaks in the exported tree or earlier published history. The owner confirms the `v0.1.0` alpha is published. GitHub Pages is deployed at `https://paracosm17.github.io/solo-vps/`; the deployed EN/RU home and Quick Start language links resolve under `/solo-vps/`, and both edit links target the right source file. Private Vulnerability Reporting is enabled, and the public repository security page exposes **Report a vulnerability** to an unauthenticated visitor; a synthetic report from another account is not a Solo VPS runtime gate. Hosted `Repository CI / fast-source` is required by the protected `main` branch. Commit `dabf740` from PR [#13](https://github.com/paracosm17/solo-vps/pull/13) passed hosted CI and Pages deployment; the eventual release commit still needs its own hosted checks and exact-ref scans before tagging.
 
 ---
 
 ## 3. Release gates
 
-### Must pass before `v0.1.0`
+### Retained `v0.1.0` release procedure
 
 1. Preserve the completed [core V4 clean-user evidence](reviews/2026-09-28-clean-user-replay.md) at `0fdba7f`, including verification/audit and platform idempotency. Changes through `dabf740` and the final documentation/license preparation preserve operational equivalence. Review later candidate diffs; operational changes require the affected clean-host evidence to be repeated.
 2. Require a green hosted `Repository CI / fast-source` check and successful documentation deployment for that exact release commit.
 3. Before the release tag, repeat exact-ref history and archive scans for secrets and owner-specific state with the built-in check and an independent scanner.
-4. The dated `0.1.0` changelog entry and [release notes](releases/v0.1.0.md) are prepared. Run the clean release dry-run and review the immutable commit. The owner explicitly deferred the tag and GitHub Release; publication requires a later instruction. Review the changelog date if publication is postponed.
+4. The dated `0.1.0` changelog entry and [release notes](releases/v0.1.0.md) are prepared. Run the clean release dry-run and review the immutable commit. The owner subsequently published the alpha. No new release is authorized in the current maintenance task.
 
 ### Explicitly deferred
 
@@ -120,7 +124,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-014 private security channel | DONE | GitHub Private Vulnerability Reporting enabled; public **Report a vulnerability** entry verified |
 | CRIT-015 external outage detection | DONE / V3 | Provider-level VPS shutdown/restart produced real DOWN/UP emails outside the VPS; operator observed delivery within a few minutes, with no latency SLA claimed |
 | CRIT-016 migration safety | DONE / V2 | app-owned preflight and image-only rollback boundary |
-| CRIT-017 release/upgrade story | PARTIAL | tagged-source contract documented; Coolify lifecycle V3 passed; first public tag pending |
+| CRIT-017 release/upgrade story | PARTIAL | 0.1.0 alpha published; update discovery and 4.4.0 source candidate ready; new runtime qualification pending |
 | CRIT-018 documentation duplication | DONE / V2 | user, architecture, plan and evidence roles separated |
 | CRIT-019 optional-feature leakage | DONE / V2 | optional capabilities do not gate the core Quick Start |
 | CRIT-020 revision metadata | BLOCKED | immutable public release identity pending |
@@ -161,7 +165,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M26 — Public README & Quick Start | P1 | CORE V4 PASS | owner completed both public chapters independently at `0fdba7f`; first-run wording/input polish merged in `bf02b74` |
 | M27 — Architecture Documentation & ADR | P2 | DONE | V2 |
 | M28 — SECURITY / CONTRIBUTING / LICENSE | P2 | DONE | V2; private reporting enabled and public reporter entry verified |
-| M29 — Upgrade Guide | P2 | SOURCE DONE | tagged-source contract documented; Coolify lifecycle V3 and supported clean install V4 passed; first tagged Solo VPS release pending |
+| M29 — Upgrade Guide | P2 | SOURCE DONE | 0.1.0 alpha published; historical lifecycle V3/core V4; 4.4.0 test-VPS gate pending |
 | M30 — Release Process | P2 | SOURCE DONE | hosted dry-run and public release pending |
 
 ---
@@ -187,10 +191,10 @@ The maintained product topology remains one VPS; another permanent or additional
 - Solo VPS source updates use a documented new-checkout exact-tag model;
 - Passport, ROADMAP and CHANGELOG ownership drift is reconciled.
 
-### Before publication
+### Before the next release
 
 - preserve operational equivalence with the tested source while preparing the release;
 - release-commit hosted CI/Pages checks and exact-ref secret/state scans;
-- clean release dry-run and final candidate review; tag/publication held at the owner's request.
+- test-VPS 4.4.0 qualification, clean release dry-run and final review; new tags/releases remain out of scope.
 
 **Current validation:** V4 for the core clean-user route; V3 for separate optional integrations, lifecycle and recovery exercises.

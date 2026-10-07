@@ -155,7 +155,7 @@ class DeploymentPlan:
 
     @property
     def update_payload(self) -> dict[str, str]:
-        # The supported Coolify 4.3.21 lifecycle keeps Docker Image desired state
+        # The reviewed Coolify integration keeps Docker Image desired state
         # as repository plus the sha256-* tag/hash field used by the API.
         return {
             "docker_registry_image_name": self.handoff.preferred_ui_image_name,
@@ -176,8 +176,7 @@ class DeploymentPlan:
             "start_url": self.start_url,
             "update_payload": self.update_payload,
             "required_token_permissions": {
-                "read_write_token": ["read", "write"],
-                "deploy_token": ["deploy"],
+                "api_token": ["read", "write", "deploy"],
             },
             **rollback_boundary_evidence(),
         }
@@ -355,11 +354,11 @@ def _load_token(name: str) -> str:
 
 
 def load_read_write_token_from_environment() -> str:
-    return _load_token("COOLIFY_API_TOKEN_RW")
+    return _load_token("COOLIFY_API_TOKEN")
 
 
 def load_deploy_token_from_environment() -> str:
-    return _load_token("COOLIFY_API_TOKEN_DEPLOY")
+    return _load_token("COOLIFY_API_TOKEN")
 
 
 def check_application(client: CoolifyApiClient, plan: DeploymentPlan) -> dict[str, Any]:
@@ -631,7 +630,7 @@ def _print_plan(plan: DeploymentPlan, as_json: bool) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Plan/check/apply an immutable GHCR deployment through the loopback-only Coolify 4.3.21 API."
+        description="Plan/check/apply an immutable GHCR deployment through the loopback-only Coolify API."
     )
     parser.add_argument("--resource-uuid", required=True)
     parser.add_argument("--image-ref", required=True)
@@ -752,7 +751,7 @@ def main() -> int:
             if exc.outcome == "DEPLOY_FAILED_ROLLBACK_FAILED":
                 print(
                     "  recovery_note: run recovery_command on the VPS only after exporting a reviewed short-lived "
-                    "COOLIFY_API_TOKEN_RW and COOLIFY_API_TOKEN_DEPLOY; do not put tokens on the command line.",
+                    "COOLIFY_API_TOKEN; do not put tokens on the command line.",
                     file=sys.stderr,
                 )
         return 3 if exc.outcome == "DEPLOY_FAILED_ROLLBACK_FAILED" else 2

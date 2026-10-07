@@ -164,6 +164,7 @@ The project owner accepted ADRs 0001–0004 below. **Acceptance establishes the 
 | [`ADR-0002`](adr/0002-controller-side-sops-decryption.md) | **Accepted** | Keep the production age private key on the operator workstation; no second controller server is required |
 | [`ADR-0003`](adr/0003-coolify-native-database-backups.md) | **Accepted** | Use Coolify-native logical backups for Coolify-managed PostgreSQL rather than a competing dump scheduler |
 | [`ADR-0004`](adr/0004-external-operator-state.md) | **Accepted** | Keep per-installation controller state outside the disposable Git checkout |
+| [`ADR-0006`](adr/0006-reviewed-update-channels.md) | **Accepted** | Separate release discovery, exact-tag source preparation and reviewed Coolify runtime upgrades |
 
 ## Proposed ADR decisions
 

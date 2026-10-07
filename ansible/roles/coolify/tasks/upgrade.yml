@@ -61,6 +61,7 @@
       current_supported={{ solo_vps_coolify_version }}
       from_version={{ solo_vps_coolify_upgrade_from_version }}
       to_version={{ solo_vps_coolify_version }}
+      release_identity={{ solo_vps_coolify_release_identity }}
       localhost_user={{ admin.user }}
       checkpoint={{ (solo_vps_coolify_upgrade_checkpoint.stdout | from_json).checkpoint }}
   when: solo_vps_coolify_upgrade_required
@@ -87,6 +88,25 @@
   loop: "{{ solo_vps_coolify_release_artifacts }}"
   loop_control:
     label: "{{ item.name }}"
+  when: solo_vps_coolify_upgrade_required
+
+
+- name: Render the reviewed target management-port override
+  ansible.builtin.template:
+    src: docker-compose.solo-vps.yml.j2
+    dest: "{{ solo_vps_coolify_source_dir }}/{{ solo_vps_coolify_compose_override_filename }}"
+    owner: "9999"
+    group: "0"
+    mode: "0600"
+  when: solo_vps_coolify_upgrade_required
+
+- name: Preserve existing identities while validating Reverb credentials
+  ansible.builtin.script:
+    cmd: "{{ (role_path ~ '/../../../scripts/initialize_coolify_env.py') | quote }} --path {{ solo_vps_coolify_env_path | quote }} --require-existing --reverb"
+    executable: /usr/bin/python3
+  register: solo_vps_coolify_upgrade_env_validation
+  changed_when: (solo_vps_coolify_upgrade_env_validation.stdout | from_json).changed
+  no_log: true
   when: solo_vps_coolify_upgrade_required
 
 - name: Validate the staged target Compose model without exposing secrets
@@ -134,6 +154,10 @@
       value: "{{ solo_vps_coolify_version }}"
     - key: AUTOUPDATE
       value: "false"
+    - key: REGISTRY_URL
+      value: docker.io
+    - key: COOLIFY_VERSION
+      value: "{{ solo_vps_coolify_version }}"
   when: solo_vps_coolify_upgrade_required
 
 - name: Revalidate the promoted target Compose model before restart

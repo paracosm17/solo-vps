@@ -2,12 +2,12 @@
 - name: Run target preflight before candidate verification
   ansible.builtin.import_playbook: preflight.yml
 
-- name: Verify the disposable Coolify 4.3.21 candidate
+- name: Verify the disposable Coolify reviewed candidate
   hosts: all
   become: true
   gather_facts: true
   vars_files:
-    - coolify-4.3.21-evaluation-vars.yml
+    - coolify-evaluation-vars.yml
   tasks:
     - name: Require the disposable evaluation identity
       ansible.builtin.assert:

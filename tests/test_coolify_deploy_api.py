@@ -65,20 +65,20 @@ class CoolifyDeployApiContractTests(unittest.TestCase):
             image_ref=IMAGE_REF,
         )
 
-    def test_split_tokens_do_not_fall_back_to_legacy_token(self) -> None:
-        with mock.patch.dict("os.environ", {"COOLIFY_API_TOKEN": "legacy-broad-token"}, clear=True):
-            with self.assertRaisesRegex(CoolifyDeployError, "COOLIFY_API_TOKEN_RW"):
+    def test_one_token_is_required_for_read_write_and_deploy(self) -> None:
+        with mock.patch.dict("os.environ", {}, clear=True):
+            with self.assertRaisesRegex(CoolifyDeployError, "COOLIFY_API_TOKEN"):
                 load_read_write_token_from_environment()
-            with self.assertRaisesRegex(CoolifyDeployError, "COOLIFY_API_TOKEN_DEPLOY"):
+            with self.assertRaisesRegex(CoolifyDeployError, "COOLIFY_API_TOKEN"):
                 load_deploy_token_from_environment()
 
         with mock.patch.dict(
             "os.environ",
-            {"COOLIFY_API_TOKEN_RW": "rw-token", "COOLIFY_API_TOKEN_DEPLOY": "deploy-token"},
+            {"COOLIFY_API_TOKEN": "combined-token"},
             clear=True,
         ):
-            self.assertEqual(load_read_write_token_from_environment(), "rw-token")
-            self.assertEqual(load_deploy_token_from_environment(), "deploy-token")
+            self.assertEqual(load_read_write_token_from_environment(), "combined-token")
+            self.assertEqual(load_deploy_token_from_environment(), "combined-token")
 
     def test_plan_uses_exact_loopback_api_and_proven_digest_fields(self) -> None:
         self.assertEqual(self.plan.base_url, "http://127.0.0.1:8000/api/v1")
@@ -96,7 +96,7 @@ class CoolifyDeployApiContractTests(unittest.TestCase):
         self.assertFalse(self.plan.as_dict()["external_side_effect_rollback"])
         self.assertEqual(
             self.plan.as_dict()["required_token_permissions"],
-            {"read_write_token": ["read", "write"], "deploy_token": ["deploy"]},
+            {"api_token": ["read", "write", "deploy"]},
         )
 
     def test_direct_and_fixed_runner_tunnel_loopback_urls_are_accepted(self) -> None:
@@ -466,8 +466,7 @@ class CoolifyDeployApiContractTests(unittest.TestCase):
         makefile = (Path(__file__).resolve().parents[1] / "Makefile").read_text(encoding="utf-8")
         self.assertIn("deploy-coolify-image-api: check-coolify-api-deploy-confirm", makefile)
         self.assertIn("I_HAVE_REVIEWED_THE_LOOPBACK_COOLIFY_API_DEPLOYMENT", makefile)
-        self.assertIn("$$COOLIFY_API_TOKEN_RW", makefile)
-        self.assertIn("$$COOLIFY_API_TOKEN_DEPLOY", makefile)
+        self.assertIn("$$COOLIFY_API_TOKEN", makefile)
         self.assertNotIn("COOLIFY_API_TOKEN ?=", makefile)
 
     def test_cli_plan_does_not_require_token_or_contact_network(self) -> None:

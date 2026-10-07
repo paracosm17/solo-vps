@@ -190,21 +190,21 @@ make backup
 
 This command writes to external storage. Use it only after off-site backup is configured in chapter 6.
 
-## 8. Replace the Coolify API tokens before they expire
+## 8. Replace the Coolify API token before they expire
 
-Chapter 2 created two CI tokens with a 30-day lifetime. Do not wait for the next release to discover that either expired.
+Chapter 2 created one CI token with a 30-day lifetime. Replace it before it expires.
 
 **In Coolify:**
 
 1. Open **Keys & Tokens → API Tokens**.
-2. Create a replacement `read` + `write` token and a separate deploy-only token. Leave `root` and `read:sensitive` off.
-3. Save both new values in your password manager. Keep the old tokens for now unless either is compromised.
+2. Create one replacement token with `read`, `write`, `deploy`. Leave `root` and `read:sensitive` off.
+3. Save the new value in your password manager. Keep the old token for now unless it is compromised.
 
 **In GitHub → application repository → Settings → Environments → production:**
 
-4. Under **Environment secrets**, update `COOLIFY_API_TOKEN_RW` and `COOLIFY_API_TOKEN_DEPLOY`.
+4. Under **Environment secrets**, update `COOLIFY_API_TOKEN`.
 5. The next normal release should complete deployment successfully.
-6. After a successful deployment, delete the two old tokens in Coolify.
+6. After a successful deployment, delete the old token in Coolify.
 
 If a token leaked, revoke that token immediately, create its scoped replacement, and update the matching GitHub secret. Do not keep a compromised credential alive just to make validation easier.
 

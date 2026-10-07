@@ -2,9 +2,19 @@
 
 This file records user-visible Solo VPS changes intended for tagged releases.
 
-The dated `0.1.0` entry is prepared for publication. Published versions are listed in [GitHub Releases](https://github.com/paracosm17/solo-vps/releases).
+The `0.1.0` alpha is published. Published versions are listed in [GitHub Releases](https://github.com/paracosm17/solo-vps/releases).
 
 ## [Unreleased]
+
+### Added
+
+- Local documentation values for copyable commands, read-only update discovery and version-neutral Coolify evaluation commands.
+- Prepared Coolify 4.3.21 to 4.4.0 upgrade with Reverb port policy, preserved credentials and artifact-bound forward resume; VPS qualification is pending.
+
+### Fixed
+
+- Use one Coolify API token with read, write and deploy in the CI template and operator helpers.
+- Use shell-portable input prompts and identify VPS-only host-key commands explicitly.
 
 ## [0.1.0] - 2026-09-28
 

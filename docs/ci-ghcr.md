@@ -40,8 +40,7 @@ Use the runbook for [key creation and CI transport](operations/first-app.md#ci-k
 | Scope | Name | Value |
 | --- | --- | --- |
 | Environment `production`: secret | `SOLO_VPS_DEPLOY_SSH_KEY` | Dedicated CI private key, without a passphrase |
-| Environment `production`: secret | `COOLIFY_API_TOKEN_RW` | Current-team token with `read` + `write` |
-| Environment `production`: secret | `COOLIFY_API_TOKEN_DEPLOY` | Current-team deploy-only token |
+| Environment `production`: secret | `COOLIFY_API_TOKEN` | One team token: `read`, `write`, `deploy` |
 | Environment `production`: variable | `SOLO_VPS_DEPLOY_HOST` | Server address, without user, protocol or port |
 | Environment `production`: variable | `SOLO_VPS_SSH_KNOWN_HOSTS` | One trusted server Ed25519 key line, matching that address |
 | Environment `production`: variable | `SOLO_VPS_DEPLOY_SSH_FINGERPRINT` | CI-key fingerprint `SHA256:...` |
@@ -71,7 +70,7 @@ On timeout or unknown status, the helper does not start rollback while the origi
 - Third-party actions are pinned to full commit IDs.
 - The deploy job uses `cancel-in-progress: false` and strict SSH host-key checking.
 - Direct management ports `8000/6001/6002` stay private; CI reaches port 8000 through the restricted tunnel.
-- Coolify 4.3.21 uses two non-root tokens: `read` + `write` for desired-state checks/updates, and a separate deploy-only token for start/restart. Both cover the current team and expire according to the chosen lifetime.
+- Use one non-root team token with `read`, `write`, `deploy`. It expires according to the chosen lifetime. Revoke the previous two tokens after migrating the workflow and proving deployment.
 - GitHub stores deployment secrets; Coolify stores application runtime secrets. SOPS + age is for infrastructure/recovery secrets.
 
 For branch protection, require checks emitted by your application workflow, such as application tests and the PR image build. Do not require Solo VPS-only checks such as `fast-source` in an app repository that does not run them.

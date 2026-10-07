@@ -4,6 +4,8 @@
 
 Выполняйте шаги по порядку. Перед командами указано, где их вводить: **на компьютере**, **на VPS** или **в браузере**.
 
+Откройте форму **«Ваши значения для команд»** вверху страницы и один раз введите IP, имя администратора и нужные домены. Значения подставятся в блоки для копирования и сохранятся только в этой вкладке до её закрытия. Можно очистить их кнопкой в форме. Пароли, ключи и токены вводить не нужно. Без JavaScript используйте исходные команды с вводом значений. В Linux/WSL используйте Bash или zsh; запросы `printf` + `read` работают в обеих оболочках.
+
 ## Перед началом
 
 Подготовьте:
@@ -41,7 +43,7 @@
 === "Linux"
 
     ```bash
-    read -r -p 'IPv4 VPS: ' SERVER_IP
+    printf '%s' 'IPv4 VPS: '; read -r SERVER_IP
     ssh "root@${SERVER_IP}"
     ```
 
@@ -95,7 +97,7 @@ apt-get install -y --no-install-recommends make git nano ca-certificates
     === "Linux"
 
         ```bash
-        read -r -p 'IPv4 VPS: ' SERVER_IP
+        printf '%s' 'IPv4 VPS: '; read -r SERVER_IP
         scp solo-vps.zip "root@${SERVER_IP}:/root/solo-vps.zip"
         ```
 
@@ -179,7 +181,7 @@ admin:
     Если ключ уже существует, используйте его без повторного создания. Передайте публичную часть:
 
     ```bash
-    read -r -p 'IPv4 VPS: ' SERVER_IP
+    printf '%s' 'IPv4 VPS: '; read -r SERVER_IP
     cat ~/.ssh/id_ed25519.pub | ssh "root@${SERVER_IP}" 'cd ~/solo-vps && make human-admin-key-stdin'
     ```
 
@@ -217,8 +219,8 @@ make apply
 === "Linux"
 
     ```bash
-    read -r -p 'IPv4 VPS: ' SERVER_IP
-    read -r -p 'Имя администратора Linux: ' ADMIN_USER
+    printf '%s' 'IPv4 VPS: '; read -r SERVER_IP
+    printf '%s' 'Имя администратора Linux: '; read -r ADMIN_USER
     ssh "${ADMIN_USER}@${SERVER_IP}"
     ```
 
@@ -256,8 +258,8 @@ SSH_HARDENING_CONFIRM=I_HAVE_VERIFIED_PROVIDER_RECOVERY SSH_HARDENING_ADMIN_LOGI
 === "Linux"
 
     ```bash
-    read -r -p 'IPv4 VPS: ' SERVER_IP
-    read -r -p 'Имя администратора Linux: ' ADMIN_USER
+    printf '%s' 'IPv4 VPS: '; read -r SERVER_IP
+    printf '%s' 'Имя администратора Linux: '; read -r ADMIN_USER
     ssh "${ADMIN_USER}@${SERVER_IP}"
     ```
 
@@ -282,8 +284,8 @@ cd ~/solo-vps
 === "Linux"
 
     ```bash
-    read -r -p 'IPv4 VPS: ' SERVER_IP
-    read -r -p 'Имя администратора Linux: ' ADMIN_USER
+    printf '%s' 'IPv4 VPS: '; read -r SERVER_IP
+    printf '%s' 'Имя администратора Linux: '; read -r ADMIN_USER
     scp -r "${ADMIN_USER}@${SERVER_IP}:solo-vps" .
     ```
 
@@ -316,8 +318,8 @@ make platform
 === "Linux"
 
     ```bash
-    read -r -p 'IPv4 VPS: ' SERVER_IP
-    read -r -p 'Имя администратора Linux: ' ADMIN_USER
+    printf '%s' 'IPv4 VPS: '; read -r SERVER_IP
+    printf '%s' 'Имя администратора Linux: '; read -r ADMIN_USER
     ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:18000:127.0.0.1:8000 -L 127.0.0.1:6001:127.0.0.1:6001 -L 127.0.0.1:6002:127.0.0.1:6002 "${ADMIN_USER}@${SERVER_IP}"
     ```
 

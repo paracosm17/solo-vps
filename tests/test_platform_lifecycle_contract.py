@@ -24,12 +24,12 @@ class PlatformLifecycleContractTests(unittest.TestCase):
             "ansible/roles/coolify/tasks/evaluation-preflight.yml",
             "ansible/roles/coolify/tasks/evaluate-sentinel.yml",
             "ansible/roles/coolify/tasks/verify-sentinel.yml",
-            "ansible/playbooks/coolify-4.3.21-evaluation-vars.yml",
-            "ansible/playbooks/coolify-evaluate-4-3-21-preflight.yml",
-            "ansible/playbooks/coolify-evaluate-4-3-21-upgrade.yml",
-            "ansible/playbooks/coolify-evaluate-4-3-21-resume.yml",
-            "ansible/playbooks/verify-coolify-4-3-21-candidate.yml",
-            "scripts/inspect_coolify_sentinel.py", "docs/coolify-4.3.21-evaluation.md",
+            "ansible/playbooks/coolify-evaluation-vars.yml",
+            "ansible/playbooks/coolify-evaluate-preflight.yml",
+            "ansible/playbooks/coolify-evaluate-upgrade.yml",
+            "ansible/playbooks/coolify-evaluate-resume.yml",
+            "ansible/playbooks/verify-coolify-candidate.yml",
+            "scripts/inspect_coolify_sentinel.py",
         ):
             target = temp / relative
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -64,7 +64,7 @@ class PlatformLifecycleContractTests(unittest.TestCase):
 
     def test_coolify_previous_version_drift_is_rejected(self) -> None:
         root = self.fixture()
-        self.mutate(root, "ansible/roles/coolify/defaults/main.yml", 'solo_vps_coolify_previous_supported_version: "4.1.2"', 'solo_vps_coolify_previous_supported_version: "4.1.0"')
+        self.mutate(root, "ansible/roles/coolify/defaults/main.yml", 'solo_vps_coolify_previous_supported_version: "4.3.21"', 'solo_vps_coolify_previous_supported_version: "4.1.0"')
         with self.assertRaises(ContractError):
             validate(root)
 
@@ -98,10 +98,23 @@ class PlatformLifecycleContractTests(unittest.TestCase):
         root = self.fixture()
         self.mutate(
             root,
-            "ansible/playbooks/coolify-4.3.21-evaluation-vars.yml",
-            'solo_vps_coolify_version: "4.3.21"',
+            "ansible/roles/coolify/defaults/main.yml",
+            'solo_vps_coolify_version: "4.4.0"',
             'solo_vps_coolify_version: "4.3.22"',
         )
+        with self.assertRaises(ContractError):
+            validate(root)
+
+    def test_resume_requires_artifact_identity_and_exact_marker_lines(self) -> None:
+        for old, new in (("'release_identity=' ~ solo_vps_coolify_release_identity", "'release_identity=' ~ 'unbound'"), (".splitlines()", "")):
+            root = self.fixture()
+            self.mutate(root, "ansible/roles/coolify/tasks/upgrade-resume.yml", old, new)
+            with self.assertRaises(ContractError):
+                validate(root)
+
+    def test_custom_realtime_preflight_is_required(self) -> None:
+        root = self.fixture()
+        self.mutate(root, "ansible/roles/coolify/tasks/upgrade-preflight.yml", "--require-existing --reverb --check", "--require-existing")
         with self.assertRaises(ContractError):
             validate(root)
 

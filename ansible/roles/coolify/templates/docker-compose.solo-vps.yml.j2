@@ -9,11 +9,8 @@ services:
         published: "${APP_PORT:-8000}"
         host_ip: 127.0.0.1
         protocol: tcp
-
-  soketi:
-    ports: !override
       - target: 6001
-        published: "${SOKETI_PORT:-6001}"
+        published: "${REVERB_PORT:-${SOKETI_PORT:-6001}}"
         host_ip: 127.0.0.1
         protocol: tcp
       - target: 6002

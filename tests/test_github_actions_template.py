@@ -32,8 +32,7 @@ class GithubActionsTemplateContractTests(unittest.TestCase):
                    SOLO_VPS_DEPLOY_HOST="203.0.113.10", COOLIFY_RESOURCE_UUID="example123resource456",
                    SOLO_VPS_DEPLOY_SSH_FINGERPRINT="SHA256:" + "a" * 43,
                    SOLO_VPS_DEPLOY_SSH_KEY="private-key-must-not-appear",
-                   COOLIFY_API_TOKEN_RW="rw-token-must-not-appear",
-                   COOLIFY_API_TOKEN_DEPLOY="deploy-token-must-not-appear",
+                   COOLIFY_API_TOKEN="api-token-must-not-appear",
                    SOLO_VPS_SSH_KNOWN_HOSTS="203.0.113.10 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI" + "A" * 43)
 
         def run(overrides: dict[str, str]) -> subprocess.CompletedProcess[str]:
@@ -48,8 +47,7 @@ class GithubActionsTemplateContractTests(unittest.TestCase):
             ("SOLO_VPS_DEPLOY_SSH_FINGERPRINT", "SHA256:" + "a" * 43 + " comment", "SHA256:"),
             ("SOLO_VPS_SSH_KNOWN_HOSTS", "192.0.2.1 ssh-ed25519 AAAA", "must match"),
             ("SOLO_VPS_DEPLOY_SSH_KEY", "", "secret"),
-            ("COOLIFY_API_TOKEN_RW", "", "secret"),
-            ("COOLIFY_API_TOKEN_DEPLOY", "", "secret"),
+            ("COOLIFY_API_TOKEN", "", "secret"),
         ):
             with self.subTest(name=name, hint=hint):
                 result = run({name: value})
@@ -59,8 +57,7 @@ class GithubActionsTemplateContractTests(unittest.TestCase):
                 self.assertIn(hint, result.stderr)
                 for secret in (
                     env["SOLO_VPS_DEPLOY_SSH_KEY"],
-                    env["COOLIFY_API_TOKEN_RW"],
-                    env["COOLIFY_API_TOKEN_DEPLOY"],
+                    env["COOLIFY_API_TOKEN"],
                 ):
                     self.assertNotIn(secret, result.stdout + result.stderr)
 
@@ -199,14 +196,8 @@ class GithubActionsTemplateContractTests(unittest.TestCase):
 
     def test_deploy_secrets_are_environment_scoped_to_one_step(self) -> None:
         path = self._mutated(
-            "          COOLIFY_API_TOKEN_RW: ${{ secrets.COOLIFY_API_TOKEN_RW }}\n",
-            "          COOLIFY_API_TOKEN_RW: hard-coded-token\n",
-        )
-        with self.assertRaises(ValueError):
-            validate(path)
-        path = self._mutated(
-            "          COOLIFY_API_TOKEN_DEPLOY: ${{ secrets.COOLIFY_API_TOKEN_DEPLOY }}\n",
-            "          COOLIFY_API_TOKEN_DEPLOY: hard-coded-token\n",
+            "          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}\n",
+            "          COOLIFY_API_TOKEN: hard-coded-token\n",
         )
         with self.assertRaises(ValueError):
             validate(path)

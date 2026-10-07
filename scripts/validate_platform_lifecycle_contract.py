@@ -35,11 +35,16 @@ def validate(root: Path) -> None:
     require(docker.get("fresh_install_candidate_policy") == "fail-closed-before-package-install", "fresh Docker candidate policy must fail closed")
     require(docker.get("automatic_major_upgrade") is False, "automatic Docker major upgrades must stay disabled")
 
+    manifest = yaml.safe_load(read(root / "ansible/roles/coolify/defaults/main.yml"))
+    current = manifest["solo_vps_coolify_version"]
+    previous = manifest["solo_vps_coolify_previous_supported_version"]
+    require(re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", current) is not None, "exact target release required")
+    require(re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", previous) is not None and previous != current, "exact distinct origin release required")
     coolify = policy.get("coolify", {})
-    require(coolify.get("current_supported") == "4.3.21", "current supported Coolify must match the promoted pin")
-    require(coolify.get("previous_supported") == "4.1.2", "previous supported Coolify must be explicit")
+    require(coolify.get("current_supported") == current, "current supported Coolify must match the promoted pin")
+    require(coolify.get("previous_supported") == previous, "previous supported Coolify must be explicit")
     upgrade = coolify.get("supported_upgrade", {})
-    require(upgrade.get("from") == "4.1.2" and upgrade.get("to") == "4.3.21", "exact previous -> current Coolify path missing")
+    require(upgrade.get("from") == previous and upgrade.get("to") == current, "exact previous -> current Coolify path missing")
     for key in (
         "exact_target_artifacts",
         "require_local_control_plane_checkpoint",
@@ -70,8 +75,8 @@ def validate(root: Path) -> None:
     )
 
     coolify_defaults = read(root / "ansible/roles/coolify/defaults/main.yml")
-    require('solo_vps_coolify_previous_supported_version: "4.1.2"' in coolify_defaults, "Coolify previous supported version missing")
-    require('solo_vps_coolify_version: "4.3.21"' in coolify_defaults, "Coolify promoted version missing")
+    require(manifest["solo_vps_coolify_previous_supported_version"] == previous, "Coolify previous supported version missing")
+    require(manifest["solo_vps_coolify_version"] == current, "Coolify promoted version missing")
     require('solo_vps_coolify_expected_image: "docker.io/coollabsio/coolify:' in coolify_defaults, "Coolify promoted image registry missing")
     require('/data/coolify/images' in coolify_defaults, "Coolify promoted image storage missing")
     require('solo_vps_coolify_upgrade_pending_marker: /data/coolify/.solo-vps-upgrading' in coolify_defaults, "Coolify upgrade transaction marker missing")
@@ -104,6 +109,14 @@ def validate(root: Path) -> None:
     require("automatic downgrade" in resume.lower(), "upgrade resume must reject automatic downgrade semantics")
     require(resume.index("Run full current supported Coolify verification") < resume.index("Remove the interrupted Coolify upgrade marker only after full verification"), "resume must retain transaction marker until full verification")
     require("verify-sentinel.yml" in preflight, "supported upgrade must verify Sentinel before mutation")
+    require("--require-existing --reverb --check" in preflight, "custom realtime configuration must be rejected before mutation")
+    require("release_identity={{ solo_vps_coolify_release_identity }}" in apply, "transaction must bind reviewed artifacts and port override")
+    require("'release_identity=' ~ solo_vps_coolify_release_identity" in resume, "resume must enforce the same reviewed artifacts and override")
+    marker_checks = [condition for task in yaml.safe_load(resume)
+                     for condition in task.get("ansible.builtin.assert", {}).get("that", [])
+                     if isinstance(condition, str) and "solo_vps_coolify_upgrade_resume_marker_raw" in condition]
+    require(bool(marker_checks) and all(".splitlines()" in condition for condition in marker_checks),
+            "resume must compare every exact marker line, not version substrings")
     supported_sentinel = read(root / "ansible/roles/coolify/tasks/verify-sentinel.yml")
     for token in ("--expected-image", "--expected-version", "port: 8888"):
         require(token in supported_sentinel, f"supported Sentinel boundary missing: {token}")
@@ -132,32 +145,20 @@ def validate(root: Path) -> None:
     ):
         require(playbook in syntax_block, f"real pinned QA syntax target must include lifecycle playbook: {playbook}")
 
-    candidate_path = root / "ansible/playbooks/coolify-4.3.21-evaluation-vars.yml"
+    candidate_path = root / "ansible/playbooks/coolify-evaluation-vars.yml"
     candidate = yaml.safe_load(read(candidate_path))
     require(isinstance(candidate, dict), "Coolify evaluation candidate vars must be a mapping")
     require(candidate.get("solo_vps_coolify_evaluation_candidate") is True, "Coolify candidate must stay explicitly evaluation-only")
-    require(candidate.get("solo_vps_coolify_previous_supported_version") == "4.1.2", "Coolify candidate must start at the current supported release")
-    require(candidate.get("solo_vps_coolify_version") == "4.3.21", "reviewed disposable Coolify candidate drifted")
-    require(candidate.get("solo_vps_coolify_expected_image") == "docker.io/coollabsio/coolify:4.3.21", "candidate Coolify image drifted")
-    require(candidate.get("solo_vps_coolify_evaluation_sentinel_version") == "1.0.1", "candidate Sentinel version drifted")
-    require(candidate.get("solo_vps_coolify_evaluation_sentinel_image") == "ghcr.io/coollabsio/sentinel:1.0.1", "candidate Sentinel image drifted")
-    require(candidate.get("solo_vps_coolify_evaluation_sentinel_image_id") == "sha256:23b28fee258052080eaf89ffdc2acc318eaa58d1238ee5d56247daa27738a548", "candidate Sentinel image ID drifted")
-    expected_hashes = {
-        "docker-compose.yml": "sha256:0223699dfef8a421116872b050830b21cfedfc58911576a0129c2082aeaadc59",
-        "docker-compose.prod.yml": "sha256:77f4723dfac49deeec550b412e366bde70a329ff8c66ceb44d5d10b146a24124",
-        ".env.production": "sha256:4a8070a010ac5c919f05919d36a67065f87e8b514a52c38b381f1b1cd7fcbe5c",
-    }
-    artifacts = candidate.get("solo_vps_coolify_release_artifacts", [])
-    require(
-        {item.get("name"): item.get("checksum") for item in artifacts} == expected_hashes,
-        "candidate release artifact set or SHA-256 drifted",
-    )
+    require("solo_vps_coolify_version" not in candidate, "candidate must share the release manifest instead of copying pins")
+    artifacts = manifest.get("solo_vps_coolify_release_artifacts", [])
+    require({item.get("name") for item in artifacts} == {"docker-compose.yml", "docker-compose.prod.yml", ".env.production"}, "complete target artifact set required")
+    require(all(re.fullmatch(r"sha256:[0-9a-f]{64}", item.get("checksum", "")) for item in artifacts), "committed SHA256 artifacts required")
 
     candidate_preflight = read(root / "ansible/roles/coolify/tasks/evaluation-preflight.yml")
     sentinel_tasks = read(root / "ansible/roles/coolify/tasks/evaluate-sentinel.yml")
     sentinel_inspector = read(root / "scripts/inspect_coolify_sentinel.py")
     for token in (
-        "REGISTRY_URL=ghcr.io",
+        "REGISTRY_URL=docker.io",
         "Verify working Sentinel HTTPS communication before upgrade mutation",
     ):
         require(token in candidate_preflight, f"candidate preflight missing boundary: {token}")
@@ -176,26 +177,26 @@ def validate(root: Path) -> None:
         require(token in sentinel_inspector, f"secret-safe Sentinel inspector missing boundary: {token}")
 
     candidate_playbooks = (
-        "coolify-evaluate-4-3-21-preflight.yml",
-        "coolify-evaluate-4-3-21-upgrade.yml",
-        "coolify-evaluate-4-3-21-resume.yml",
-        "verify-coolify-4-3-21-candidate.yml",
+        "coolify-evaluate-preflight.yml",
+        "coolify-evaluate-upgrade.yml",
+        "coolify-evaluate-resume.yml",
+        "verify-coolify-candidate.yml",
     )
     for playbook in candidate_playbooks:
         require(playbook in syntax_block, f"real pinned QA syntax target must include candidate playbook: {playbook}")
         require((root / "ansible/playbooks" / playbook).is_file(), f"candidate playbook missing: {playbook}")
     for target in (
         "coolify-evaluation-init",
-        "coolify-evaluate-4-3-21-preflight",
-        "coolify-evaluate-4-3-21-upgrade",
-        "coolify-evaluate-4-3-21-resume",
-        "verify-coolify-4-3-21-candidate",
+        "coolify-evaluate-preflight",
+        "coolify-evaluate-upgrade",
+        "coolify-evaluate-resume",
+        "verify-coolify-candidate",
     ):
         require(re.search(rf"(?m)^{re.escape(target)}:", makefile) is not None, f"Makefile candidate target missing: {target}")
     for token in (
         "COOLIFY_EVALUATION_DATA_DIR",
         "SOLO_VPS_DEFAULT_DATA_DIR",
-        ".coolify-4.3.21-disposable-evaluation",
+        ".coolify-disposable-evaluation",
         "evaluation refuses the normal Solo VPS data directory",
         "SOLO_VPS_DATA_DIR must equal COOLIFY_EVALUATION_DATA_DIR",
     ):
@@ -203,24 +204,12 @@ def validate(root: Path) -> None:
     require("EXPECTED EVALUATION INTERRUPTION" in apply, "candidate must exercise deterministic interrupted-upgrade recovery")
     require("solo_vps_coolify_evaluation_candidate" in apply, "fault injection must stay restricted to the evaluation profile")
 
-    exercise = read(root / "docs/coolify-4.3.21-evaluation.md")
-    for phrase in (
-        "Не запускайте команды обновления на основном сервере",
-        "make coolify-evaluation-init",
-        'export SOLO_VPS_DATA_DIR="$COOLIFY_EVALUATION_DATA_DIR"',
-        "Sentinel In Sync",
-        "COOLIFY_EVALUATION_INTERRUPT_AFTER_MARKER=true",
-        "make coolify-evaluate-4-3-21-resume",
-        "удалите disposable VPS",
-    ):
-        require(phrase in exercise, f"candidate exercise sheet missing safety step: {phrase!r}")
-
     docs = read(root / "docs/upgrades.md")
     for phrase in (
         "Docker 29.x",
         "Docker 30",
-        "previous supported Coolify: `4.1.2`",
-        "current supported Coolify: `4.3.21`",
+        f"previous supported Coolify: `{previous}`",
+        f"current supported Coolify: `{current}`",
         "make coolify-upgrade-preflight",
         "make coolify-upgrade",
         "make coolify-upgrade-resume",
@@ -243,7 +232,7 @@ def main() -> int:
         return 2
     print(
         "PASS platform lifecycle contract: Docker 29.x fail-closed window, "
-        "supported Coolify 4.1.2 -> 4.3.21 lifecycle and Sentinel boundary are explicit"
+        "reviewed Coolify lifecycle and Sentinel boundary are explicit"
     )
     return 0
 

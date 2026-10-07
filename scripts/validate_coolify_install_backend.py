@@ -189,7 +189,7 @@ def validate(root: Path) -> list[str]:
         "delegate_to: localhost",
         "become: false",
         "http://127.0.0.1:8000/api/health",
-        "http://127.0.0.1:6001/ready",
+        "http://127.0.0.1:6001/up",
         "http://127.0.0.1:6002/ready",
         "solo_vps_coolify_verify_realtime.State.Health.Status == 'healthy'",
         "solo_vps_coolify_realtime_ready_http.status == 200",

@@ -1,12 +1,15 @@
 ---
-# Version updates are deliberate project changes, not a public user knob.
-solo_vps_coolify_version: "4.3.21"
-solo_vps_coolify_previous_supported_version: "4.1.2"
+# Reviewed release manifest and host integration defaults.
+# Target 4.4.0: source candidate; runtime qualification is still pending.
+# New releases update this version-neutral manifest, not executable filenames.
+solo_vps_coolify_release_evidence: V2-source-candidate
+solo_vps_coolify_version: "4.4.0"
+solo_vps_coolify_previous_supported_version: "4.3.21"
 solo_vps_coolify_release_tag: "v{{ solo_vps_coolify_version }}"
 # docker-compose.prod.yml defaults LATEST_IMAGE to latest; never rely on that fallback.
 solo_vps_coolify_image_tag: "{{ solo_vps_coolify_version }}"
 solo_vps_coolify_expected_image: "docker.io/coollabsio/coolify:{{ solo_vps_coolify_image_tag }}"
-solo_vps_coolify_previous_expected_image: "ghcr.io/coollabsio/coolify:{{ solo_vps_coolify_previous_supported_version }}"
+solo_vps_coolify_previous_expected_image: "docker.io/coollabsio/coolify:{{ solo_vps_coolify_previous_supported_version }}"
 solo_vps_coolify_sentinel_version: "1.0.1"
 solo_vps_coolify_sentinel_image: "ghcr.io/coollabsio/sentinel:1.0.1"
 solo_vps_coolify_sentinel_image_id_x86_64: "sha256:23b28fee258052080eaf89ffdc2acc318eaa58d1238ee5d56247daa27738a548"
@@ -18,13 +21,21 @@ solo_vps_coolify_release_base_url: >-
 solo_vps_coolify_release_artifacts:
   - name: docker-compose.yml
     url: "{{ solo_vps_coolify_release_base_url }}/docker-compose.yml"
-    checksum: sha256:0223699dfef8a421116872b050830b21cfedfc58911576a0129c2082aeaadc59
+    checksum: sha256:2532ee9258e10ad4e86cb3c2b46c29fe9329f5a0dace0f7da410744feec279bd
   - name: docker-compose.prod.yml
     url: "{{ solo_vps_coolify_release_base_url }}/docker-compose.prod.yml"
-    checksum: sha256:77f4723dfac49deeec550b412e366bde70a329ff8c66ceb44d5d10b146a24124
+    checksum: sha256:4cd00e83e117e847e6d6bdfe64f2a2f958bb09965692c5230fa9231a0315f80f
   - name: .env.production
     url: "{{ solo_vps_coolify_release_base_url }}/.env.production"
-    checksum: sha256:4a8070a010ac5c919f05919d36a67065f87e8b514a52c38b381f1b1cd7fcbe5c
+    checksum: sha256:7895e54f7c9d40063e76afec9b35839048d91e5c3b5107d64ea49ef6987c304a
+
+# Bind resume to the same reviewed artifacts and management-port topology.
+solo_vps_coolify_release_identity: >-
+  {{ {'target': solo_vps_coolify_version,
+      'origin': solo_vps_coolify_previous_supported_version,
+      'artifacts': solo_vps_coolify_release_artifacts,
+      'override': lookup('ansible.builtin.file', role_path ~ '/templates/docker-compose.solo-vps.yml.j2')}
+      | to_json | hash('sha256') }}
 
 solo_vps_coolify_data_parent: /data
 solo_vps_coolify_data_root: /data/coolify
@@ -52,7 +63,7 @@ solo_vps_coolify_required_directories:
   - /data/coolify/proxy/dynamic
   - /data/coolify/sentinel
 
-# Coolify v4.1.2 supports a non-root SSH server user through passwordless sudo.
+# Coolify v4.3.21 supports a non-root SSH server user through passwordless sudo.
 # Its lifecycle commands create per-resource directories below applications,
 # databases, and services, then chown those child directories to the configured
 # server user. The namespace parents therefore need execute-only group traversal

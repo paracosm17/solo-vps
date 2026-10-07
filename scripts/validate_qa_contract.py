@@ -106,7 +106,7 @@ def validate_ansible_lint(path: pathlib.Path) -> None:
     if data.get("offline") is not True:
         raise ContractError("ansible-lint must run offline after QA tooling is bootstrapped")
     excluded = data.get("exclude_paths")
-    if excluded != [".venv/", "ansible/playbooks/coolify-4.3.21-evaluation-vars.yml"]:
+    if excluded != [".venv/", "ansible/playbooks/coolify-evaluation-vars.yml"]:
         raise ContractError("ansible-lint may exclude only the virtualenv and evaluation vars file")
 
     skipped = data.get("skip_list")
