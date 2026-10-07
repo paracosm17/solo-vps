@@ -6,10 +6,41 @@ import tempfile
 import unittest
 from unittest import mock
 
-from scripts.initialize_coolify_env import SECRET_KEYS, complete_environment, initialize
+from scripts.initialize_coolify_env import SECRET_KEYS, complete_environment, complete_reverb_environment, initialize
 
 
 class CoolifyEnvironmentTests(unittest.TestCase):
+    def test_reverb_migration_preserves_credentials_and_browser_settings(self):
+        source = complete_environment("PUSHER_BACKEND_HOST=coolify-realtime\nPUSHER_PORT=443\nPUSHER_HOST=panel.example.com\n")
+        with mock.patch("scripts.initialize_coolify_env.generated_value", side_effect=AssertionError("must not rotate")):
+            updated = complete_reverb_environment(complete_environment(source, require_existing=True))
+        before = dict(line.split("=", 1) for line in source.splitlines() if "=" in line)
+        after = dict(line.split("=", 1) for line in updated.splitlines() if "=" in line)
+        for key in SECRET_KEYS + ("PUSHER_PORT", "PUSHER_HOST"):
+            self.assertEqual(before[key], after[key])
+        self.assertEqual(after["PUSHER_BACKEND_HOST"], "127.0.0.1")
+        self.assertEqual(after["PUSHER_BACKEND_PORT"], "6001")
+        self.assertEqual(complete_reverb_environment(updated), updated)
+
+    def test_reverb_preflight_is_read_only_and_custom_backend_never_mutates(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / ".env"
+            source = complete_environment("PUSHER_BACKEND_HOST=coolify-realtime\n")
+            path.write_text(source, encoding="utf-8")
+            self.assertFalse(initialize(path, require_existing=True, reverb=True, check_only=True))
+            self.assertEqual(path.read_text(), source)
+            self.assertTrue(initialize(path, require_existing=True, reverb=True))
+            for custom in ("PUSHER_BACKEND_HOST=custom.example.com\nPUSHER_BACKEND_PORT=443\n", "PUSHER_BACKEND_HOST=127.0.0.1\nPUSHER_BACKEND_PORT=7001\n"):
+                source = complete_environment(custom)
+                path.write_text(source, encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "outside the reviewed"):
+                    initialize(path, require_existing=True, reverb=True)
+                self.assertEqual(path.read_text(), source)
+
+    def test_duplicate_realtime_backend_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            complete_reverb_environment("PUSHER_BACKEND_PORT=6001\nPUSHER_BACKEND_PORT=7001\n")
+
     def test_initializes_all_secrets_and_second_run_is_unchanged(self):
         initial = "# retained configuration\nAPP_ID=\nLATEST_IMAGE=4.1.2\n"
         completed = complete_environment(initial)

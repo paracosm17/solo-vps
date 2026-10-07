@@ -5,15 +5,18 @@
       - solo_vps_coolify_evaluation_candidate | default(false) | bool
       - solo_vps_coolify_evaluation_target_id | default('') is match('^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$')
     fail_msg: >-
-      The 4.3.21 evaluation path requires a non-secret disposable target ID.
+      The reviewed release evaluation path requires a non-secret disposable target ID.
       It must never be used as an unreviewed maintained-server upgrade shortcut.
 
-- name: Require the reviewed GHCR registry identity for candidate evaluation
+- name: Require the reviewed origin registry identity for candidate evaluation
   ansible.builtin.command:
     argv:
       - /usr/bin/grep
       - -Fx
-      - REGISTRY_URL=ghcr.io
+      - -e
+      - "REGISTRY_URL={{ solo_vps_coolify_release.upgrade_from.registry }}"
+      - -e
+      - "REGISTRY_URL={{ solo_vps_coolify_release.registry }}"
       - "{{ solo_vps_coolify_env_path }}"
   changed_when: false
 

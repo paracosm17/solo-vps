@@ -1,0 +1,64 @@
+---
+- name: Read routed interface facts for standalone guard verification
+  ansible.builtin.setup:
+    gather_subset: ["!all", "!min", network]
+    filter: [ansible_default_ipv4, ansible_default_ipv6]
+  when: ansible_facts.default_ipv4 is not defined and ansible_facts.default_ipv6 is not defined
+
+- name: Inspect routed interfaces for read-only proxy ingress verification
+  ansible.builtin.set_fact:
+    solo_vps_proxy_guard_interfaces: >-
+      {{ ([ansible_facts.default_ipv4.interface | default(''),
+           ansible_facts.default_ipv6.interface | default('')]
+          | reject('equalto', '') | unique | list) }}
+
+- name: Verify both proxy ingress guards without changing shared firewall state
+  ansible.builtin.command:
+    argv: >-
+      {{ ['/usr/bin/python3', '/usr/local/lib/solo-vps/coolify_proxy_ingress_guard.py', '--check']
+         + (solo_vps_proxy_guard_interfaces | map('regex_replace', '^(.*)$', '--interface=\1') | list) }}
+  changed_when: false
+
+- name: Verify the persistent Docker pre-start guard dependency
+  ansible.builtin.slurp:
+    src: /etc/systemd/system/docker.service.d/solo-vps-proxy-ingress.conf
+  register: solo_vps_proxy_guard_unit_raw
+
+- name: Require guard execution before Docker can restore workloads
+  ansible.builtin.assert:
+    that:
+      - "'ExecStartPre=/usr/bin/python3 /usr/local/lib/solo-vps/coolify_proxy_ingress_guard.py' in (solo_vps_proxy_guard_unit_raw.content | b64decode)"
+    fail_msg: "Docker proxy ingress guard dependency is missing; run make firewall before platform changes."
+
+- name: Read UFW builtin-chain management policy without changing it
+  ansible.builtin.slurp:
+    src: /etc/default/ufw
+  register: solo_vps_proxy_guard_ufw_raw
+
+- name: Require UFW reloads to preserve non-UFW guard hooks
+  ansible.builtin.assert:
+    that:
+      - "'MANAGE_BUILTINS=no' in (solo_vps_proxy_guard_ufw_raw.content | b64decode).splitlines()"
+    fail_msg: "UFW builtin-chain management can remove the proxy ingress guard; run make firewall."
+
+- name: Inspect whether Docker is installed for effective service verification
+  ansible.builtin.stat:
+    path: /usr/bin/docker
+  register: solo_vps_proxy_guard_docker_binary
+
+- name: Read the effective Docker pre-start commands without changing service state
+  ansible.builtin.command:
+    argv: [systemctl, show, docker.service, --property=ExecStartPre, --value]
+  register: solo_vps_proxy_guard_effective_unit
+  changed_when: false
+  when: solo_vps_proxy_guard_docker_binary.stat.exists
+
+- name: Require the effective service to execute the guard before restoring containers
+  ansible.builtin.assert:
+    that:
+      - >-
+        solo_vps_proxy_guard_effective_unit.stdout
+        | regex_search('\{[^{}]*argv\[\]=/usr/bin/python3 /usr/local/lib/solo-vps/coolify_proxy_ingress_guard.py --interface [^{};]+; ignore_errors=no ;[^{}]*\}')
+        is not none
+    fail_msg: "Another Docker drop-in removed or weakened the pre-start guard; inspect systemctl cat docker.service."
+  when: solo_vps_proxy_guard_docker_binary.stat.exists

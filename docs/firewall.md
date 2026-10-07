@@ -37,6 +37,8 @@ Keep your existing provider session and provider console/rescue path available d
 
 A UFW rule list is not enough to prove that every Docker-published port is private. Solo VPS audits Docker publication separately.
 
+The host also guards the two unsupported upstream proxy publications: inbound TCP `8080` and UDP `443`. IPv4 and IPv6 INPUT/Docker forwarding rules match the original inbound destination, so application HTTP/HTTPS mappings and outbound replies are preserved. The guard runs before every Docker service start, including reboot; UFW reloads retain its hooks. This bounded protection does not replace publication auditing. Coolify stores its TCP `80/443` proxy policy in its native configuration and owns proxy restarts.
+
 For the default Coolify profile:
 
 - `80/443` are the public application edge;

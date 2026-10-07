@@ -239,7 +239,7 @@ def main() -> int:
                 print(f"  {key}: {value}", file=sys.stderr)
         print(
             "  recovery_note: automatic rollback failed; if the application is not running:healthy, "
-            "export reviewed short-lived COOLIFY_API_TOKEN_RW and COOLIFY_API_TOKEN_DEPLOY values and use the printed recovery_command on the VPS.",
+            "export reviewed short-lived COOLIFY_API_TOKEN values and use the printed recovery_command on the VPS.",
             file=sys.stderr,
         )
         return 3

@@ -1,30 +1,38 @@
 ---
-# Version updates are deliberate project changes, not a public user knob.
-solo_vps_coolify_version: "4.3.21"
-solo_vps_coolify_previous_supported_version: "4.1.2"
+# Release data is shared by Ansible, Python helpers and generated documentation.
+solo_vps_coolify_release: >-
+  {{ lookup('ansible.builtin.file',
+     (role_path | default(playbook_dir ~ '/../roles/coolify')) ~ '/../../../config/coolify-release.yml') | from_yaml }}
+solo_vps_coolify_release_evidence: "{{ solo_vps_coolify_release.qualification.level }}"
+solo_vps_coolify_version: "{{ solo_vps_coolify_release.version }}"
+solo_vps_coolify_previous_supported_version: "{{ solo_vps_coolify_release.upgrade_from.version }}"
 solo_vps_coolify_release_tag: "v{{ solo_vps_coolify_version }}"
-# docker-compose.prod.yml defaults LATEST_IMAGE to latest; never rely on that fallback.
 solo_vps_coolify_image_tag: "{{ solo_vps_coolify_version }}"
-solo_vps_coolify_expected_image: "docker.io/coollabsio/coolify:{{ solo_vps_coolify_image_tag }}"
-solo_vps_coolify_previous_expected_image: "ghcr.io/coollabsio/coolify:{{ solo_vps_coolify_previous_supported_version }}"
-solo_vps_coolify_sentinel_version: "1.0.1"
-solo_vps_coolify_sentinel_image: "ghcr.io/coollabsio/sentinel:1.0.1"
-solo_vps_coolify_sentinel_image_id_x86_64: "sha256:23b28fee258052080eaf89ffdc2acc318eaa58d1238ee5d56247daa27738a548"
+solo_vps_coolify_expected_image: "{{ solo_vps_coolify_release.registry }}/coollabsio/coolify:{{ solo_vps_coolify_image_tag }}"
+solo_vps_coolify_previous_expected_image: "{{ solo_vps_coolify_release.upgrade_from.registry }}/coollabsio/coolify:{{ solo_vps_coolify_previous_supported_version }}"
+solo_vps_coolify_sentinel_version: "{{ solo_vps_coolify_release.sentinel.version }}"
+solo_vps_coolify_sentinel_image: "{{ solo_vps_coolify_release.sentinel.registry }}/coollabsio/sentinel:{{ solo_vps_coolify_sentinel_version }}"
+solo_vps_coolify_sentinel_image_id_x86_64: "{{ solo_vps_coolify_release.sentinel.image_id_x86_64 }}"
 solo_vps_coolify_release_base_url: >-
   https://raw.githubusercontent.com/coollabsio/coolify/{{ solo_vps_coolify_release_tag }}
-
-# Initial installation artifacts are pinned to a release tag and checksum.
-# Do not replace these with floating CDN URLs in the installation backend.
 solo_vps_coolify_release_artifacts:
   - name: docker-compose.yml
     url: "{{ solo_vps_coolify_release_base_url }}/docker-compose.yml"
-    checksum: sha256:0223699dfef8a421116872b050830b21cfedfc58911576a0129c2082aeaadc59
+    checksum: "{{ solo_vps_coolify_release.artifacts['docker-compose.yml'] }}"
   - name: docker-compose.prod.yml
     url: "{{ solo_vps_coolify_release_base_url }}/docker-compose.prod.yml"
-    checksum: sha256:77f4723dfac49deeec550b412e366bde70a329ff8c66ceb44d5d10b146a24124
+    checksum: "{{ solo_vps_coolify_release.artifacts['docker-compose.prod.yml'] }}"
   - name: .env.production
     url: "{{ solo_vps_coolify_release_base_url }}/.env.production"
-    checksum: sha256:4a8070a010ac5c919f05919d36a67065f87e8b514a52c38b381f1b1cd7fcbe5c
+    checksum: "{{ solo_vps_coolify_release.artifacts['.env.production'] }}"
+
+# Bind resume to the same reviewed artifacts and management-port topology.
+solo_vps_coolify_release_identity: >-
+  {{ {'release': (solo_vps_coolify_release | dict2items | rejectattr('key', 'equalto', 'qualification') | items2dict),
+      'artifacts': solo_vps_coolify_release_artifacts,
+      'image': solo_vps_coolify_expected_image,
+      'override': lookup('ansible.builtin.file', role_path ~ '/templates/docker-compose.solo-vps.yml.j2')}
+      | to_json | hash('sha256') }}
 
 solo_vps_coolify_data_parent: /data
 solo_vps_coolify_data_root: /data/coolify
@@ -52,7 +60,7 @@ solo_vps_coolify_required_directories:
   - /data/coolify/proxy/dynamic
   - /data/coolify/sentinel
 
-# Coolify v4.1.2 supports a non-root SSH server user through passwordless sudo.
+# Coolify v4.3.21 supports a non-root SSH server user through passwordless sudo.
 # Its lifecycle commands create per-resource directories below applications,
 # databases, and services, then chown those child directories to the configured
 # server user. The namespace parents therefore need execute-only group traversal

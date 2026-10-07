@@ -4,6 +4,10 @@ Solo VPS deliberately exposes a small normal lifecycle. Start there; use subsyst
 
 > Run `make help` for the supported operator surface, `make help-ops` for operational commands, and `make help-all` only when you need the complete implementation catalog.
 
+## Update discovery
+
+`make updates-check` queries public GitHub releases without installing anything. Use `UPDATE_COMPONENT=coolify` or `UPDATE_COMPONENT=solo-vps` to limit discovery. `make updates-plan` reports the source identity and reviewed Coolify target offline. Follow [upgrades](upgrades.md) to prepare an exact-tag source checkout or perform a separate platform upgrade.
+
 ## Normal lifecycle
 
 | Command | Mutates state? | Purpose |

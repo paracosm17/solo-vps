@@ -16,6 +16,7 @@ class CoolifyInstallBackendTests(unittest.TestCase):
         temp = Path(tempfile.mkdtemp(prefix="solo-vps-coolify-install-test-"))
         self.addCleanup(shutil.rmtree, temp, ignore_errors=True)
         for relative in (
+            "config/coolify-release.yml",
             "Makefile",
             "ansible/roles/coolify/defaults/main.yml",
             "ansible/roles/coolify/tasks/install.yml",

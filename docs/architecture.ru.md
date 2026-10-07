@@ -164,6 +164,7 @@ Grafana Cloud  -> optional retained historical application logs
 | [`ADR-0002`](adr/0002-controller-side-sops-decryption.md) | **Accepted** | Оставить production age private key на workstation оператора; второй controller server не нужен |
 | [`ADR-0003`](adr/0003-coolify-native-database-backups.md) | **Accepted** | Использовать Coolify-native logical backups для Coolify-managed PostgreSQL вместо конкурирующего dump scheduler |
 | [`ADR-0004`](adr/0004-external-operator-state.md) | **Accepted** | Хранить per-installation controller state вне disposable Git checkout |
+| [`ADR-0006`](adr/0006-reviewed-update-channels.md) | **Accepted** | Разделить проверку версий, подготовку исходников по тегу и проверенное обновление Coolify |
 
 ## Предложенные ADR
 

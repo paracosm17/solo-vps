@@ -1188,3 +1188,11 @@ body {
     min-width: 2.8rem;
   }
 }
+
+/* Non-secret, local command personalization. */
+.solo-operator-values { margin: 1rem 0 1.5rem; padding: .8rem 1rem; border: 1px solid var(--md-default-fg-color--lightest); border-radius: .4rem; }
+.solo-operator-values summary { cursor: pointer; font-weight: 600; }
+.solo-operator-values label { display: inline-flex; flex-direction: column; width: min(100%, 18rem); margin: .4rem .8rem .4rem 0; font-size: .75rem; }
+.solo-operator-values input { padding: .4rem; border: 1px solid var(--md-default-fg-color--lighter); border-radius: .2rem; color: var(--md-default-fg-color); background: var(--md-default-bg-color); }
+.solo-operator-values input[aria-invalid="true"] { border-color: #d33; }
+.solo-operator-values button { display: block; cursor: pointer; margin-top: .5rem; padding: .4rem .7rem; border: 1px solid var(--md-default-fg-color--lighter); border-radius: .2rem; }

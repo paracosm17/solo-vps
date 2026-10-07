@@ -1,0 +1,10 @@
+---
+- name: Retire the owned standalone realtime container before embedded Reverb claims its ports
+  ansible.builtin.script:
+    cmd: "{{ (role_path ~ '/../../../scripts/remove_legacy_coolify_realtime.py') | quote }}"
+    executable: /usr/bin/python3
+  register: solo_vps_coolify_legacy_realtime_retirement
+  changed_when: (solo_vps_coolify_legacy_realtime_retirement.stdout | from_json).changed
+  when:
+    - solo_vps_coolify_release.upgrade_from.realtime == 'separate'
+    - solo_vps_coolify_release.realtime == 'embedded'

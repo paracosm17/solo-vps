@@ -2,9 +2,25 @@
 
 This file records user-visible Solo VPS changes intended for tagged releases.
 
-The dated `0.1.0` entry is prepared for publication. Published versions are listed in [GitHub Releases](https://github.com/paracosm17/solo-vps/releases).
+Solo VPS is an alpha project. Published versions are listed in [GitHub Releases](https://github.com/paracosm17/solo-vps/releases).
 
 ## [Unreleased]
+
+## [0.2.0] - 2026-10-07
+
+### Added
+
+- Local documentation values for copyable commands, read-only update discovery and version-neutral Coolify evaluation commands.
+- Reviewed Coolify release manifest shared by Ansible, update discovery, lifecycle planning, restore verification and generated documentation.
+- Coolify 4.3.21 to 4.4.0 upgrade with Reverb port policy, preserved credentials and artifact-bound forward resume; controlled test-VPS replay, checkpoint restore, one-token deployment/rollback and reboot passed; the maintained production upgrade passed full verification/audit and preserved business containers.
+
+### Fixed
+
+- Use one Coolify API token with read, write and deploy in the CI template and operator helpers.
+- Use shell-portable input prompts and identify VPS-only host-key commands explicitly.
+- Retire only the owned legacy realtime container before embedded Reverb starts; verify native Sentinel reconciliation against reviewed origin/target identities.
+- Persist the TCP-only proxy policy through native Coolify configuration; protect forbidden ingress before Docker starts workloads and preserve shared firewall rules.
+- Collect routed interfaces for standalone firewall commands, verify effective Docker guard execution and accept equivalent UTC zoneinfo aliases.
 
 ## [0.1.0] - 2026-09-28
 
@@ -45,7 +61,7 @@ The dated `0.1.0` entry is prepared for publication. Published versions are list
 - Distinguish a deployment rejected before mutation from a failed deployment that requires rollback.
 - Prevent expected Docker API proxy `403` responses after reboot from being misclassified as Grafana provider-auth failures.
 - Align the retained-log and metrics walkthroughs with the operator-verified Grafana Cloud UI.
-- Align the first-app and CI authorization flow with Coolify `4.3.21`: use separate `read` + `write` and deploy-only API tokens because the current non-root token UI makes `deploy` exclusive; refresh the affected Coolify UI labels and remove the stale `4.1.2` creation-form workaround.
+- Refresh Coolify token setup and affected UI labels; remove the stale `4.1.2` creation-form workaround.
 - Remove brittle new-resource button wording from the public Coolify walkthroughs, refresh the web-terminal reference, and document Coolify's built-in **Sponsorship reminders** switch as an optional UI preference.
 
 ### Security and recovery boundaries

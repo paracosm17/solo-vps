@@ -40,8 +40,7 @@ templates/github-actions/tests/*          -> tests/
 | Где | Имя | Значение |
 | --- | --- | --- |
 | Окружение `production`: secret | `SOLO_VPS_DEPLOY_SSH_KEY` | Отдельный приватный CI-ключ без passphrase |
-| Окружение `production`: secret | `COOLIFY_API_TOKEN_RW` | Токен текущей команды с `read` + `write` |
-| Окружение `production`: secret | `COOLIFY_API_TOKEN_DEPLOY` | Deploy-only токен текущей команды |
+| Окружение `production`: secret | `COOLIFY_API_TOKEN` | Единый токен команды: `read`, `write`, `deploy` |
 | Окружение `production`: variable | `SOLO_VPS_DEPLOY_HOST` | Адрес сервера без пользователя, протокола и порта |
 | Окружение `production`: variable | `SOLO_VPS_SSH_KNOWN_HOSTS` | Одна доверенная строка Ed25519-ключа сервера с этим адресом |
 | Окружение `production`: variable | `SOLO_VPS_DEPLOY_SSH_FINGERPRINT` | Отпечаток CI-ключа `SHA256:...` |
@@ -71,7 +70,7 @@ templates/github-actions/tests/*          -> tests/
 - Сторонние Actions закреплены полными commit ID.
 - Задание деплоя использует `cancel-in-progress: false` и строгую проверку SSH-ключа сервера.
 - Прямой доступ к портам управления `8000/6001/6002` закрыт извне; CI обращается к 8000 через ограниченный туннель.
-- В Coolify 4.3.21 используются два non-root токена: `read` + `write` для проверки/смены desired state и отдельный deploy-only токен для start/restart. Оба действуют в текущей команде и истекают согласно выбранному сроку.
+- Используйте единый токен команды с правами `read`, `write`, `deploy` и выбранным сроком действия.
 - GitHub хранит секреты деплоя, Coolify — секреты работающего приложения. SOPS + age используется для секретов инфраструктуры и восстановления.
 
 В правилах защиты ветки требуйте проверки, которые создаёт workflow вашего приложения: например, тесты и сборку PR-образа. Проверки самого Solo VPS, такие как `fast-source`, не нужно требовать в приложении, где они не запускаются.

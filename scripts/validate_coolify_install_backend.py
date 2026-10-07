@@ -3,6 +3,11 @@
 
 from __future__ import annotations
 
+try:
+    from scripts.coolify_release import load_release, load_defaults, variables
+except ModuleNotFoundError:
+    from coolify_release import load_release, load_defaults, variables
+
 import argparse
 from pathlib import Path
 
@@ -49,7 +54,7 @@ def validate(root: Path) -> list[str]:
         "solo_vps_coolify_managed_marker: /data/coolify/.solo-vps-managed",
         "solo_vps_coolify_pending_marker: /data/coolify/.solo-vps-installing",
         "id.{{ admin.user }}@host.docker.internal",
-        "solo_vps_coolify_expected_image: \"docker.io/coollabsio/coolify:{{ solo_vps_coolify_image_tag }}\"",
+        "solo_vps_coolify_release.registry",
         "- /data/coolify/images",
         'solo_vps_coolify_non_root_parent_mode: "0711"',
         'solo_vps_coolify_non_root_data_root_mode: "0710"',
@@ -189,7 +194,7 @@ def validate(root: Path) -> list[str]:
         "delegate_to: localhost",
         "become: false",
         "http://127.0.0.1:8000/api/health",
-        "http://127.0.0.1:6001/ready",
+        "http://127.0.0.1:6001/up",
         "http://127.0.0.1:6002/ready",
         "solo_vps_coolify_verify_realtime.State.Health.Status == 'healthy'",
         "solo_vps_coolify_realtime_ready_http.status == 200",

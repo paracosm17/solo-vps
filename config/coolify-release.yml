@@ -1,0 +1,29 @@
+---
+# Reviewed integration release. Update this file for a compatible upstream release.
+# Hashes are mandatory: setting a version alone never trusts floating artifacts.
+schema_version: 1
+version: "4.4.0"
+registry: docker.io
+realtime: embedded
+upgrade_from:
+  version: "4.3.21"
+  registry: docker.io
+  realtime: separate
+  sentinel:
+    # Coolify updates its agent independently, including before a platform upgrade.
+    accept_target: true
+    version: "1.0.1"
+    registry: docker.io
+    image_id_x86_64: sha256:23b28fee258052080eaf89ffdc2acc318eaa58d1238ee5d56247daa27738a548
+artifacts:
+  docker-compose.yml: sha256:2532ee9258e10ad4e86cb3c2b46c29fe9329f5a0dace0f7da410744feec279bd
+  docker-compose.prod.yml: sha256:4cd00e83e117e847e6d6bdfe64f2a2f958bb09965692c5230fa9231a0315f80f
+  .env.production: sha256:7895e54f7c9d40063e76afec9b35839048d91e5c3b5107d64ea49ef6987c304a
+sentinel:
+  version: "1.0.2"
+  registry: docker.io
+  image_id_x86_64: sha256:9355fc746d5ca550b8c16577c514337a12dda54f88bb1876333e4ff2128e6371
+qualification:
+  level: V3-test-vps
+  evidence: reviews/2026-10-07-coolify-440-runtime.md
+  release_sha256: sha256:e5ff1870c7aa01f965c227df390c54318b672eedc11ee2cb1e8e60e0aeb7a4b6

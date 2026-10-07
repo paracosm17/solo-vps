@@ -322,8 +322,7 @@ def validate(path: Path) -> None:
     expected_secret_env = {
         "GITHUB_TOKEN": "${{ github.token }}",
         "SOLO_VPS_DEPLOY_SSH_KEY": "${{ secrets.SOLO_VPS_DEPLOY_SSH_KEY }}",
-        "COOLIFY_API_TOKEN_RW": "${{ secrets.COOLIFY_API_TOKEN_RW }}",
-        "COOLIFY_API_TOKEN_DEPLOY": "${{ secrets.COOLIFY_API_TOKEN_DEPLOY }}",
+        "COOLIFY_API_TOKEN": "${{ secrets.COOLIFY_API_TOKEN }}",
         "COOLIFY_API_DEPLOY_CONFIRM": "I_HAVE_REVIEWED_THE_LOOPBACK_COOLIFY_API_DEPLOYMENT",
     }
     if deploy_secret_env != expected_secret_env:
@@ -373,10 +372,8 @@ def validate(path: Path) -> None:
         fail("release revision must be checked before creating deployment credentials")
     if "-R " in deploy_text or "127.0.0.1:6001" in deploy_text or "127.0.0.1:6002" in deploy_text:
         fail("deploy job must not request remote forwarding or unapproved Coolify realtime destinations")
-    if text.count("${{ secrets.COOLIFY_API_TOKEN_RW }}") != 1:
-        fail("COOLIFY_API_TOKEN_RW must be referenced exactly once and only in the deploy step")
-    if text.count("${{ secrets.COOLIFY_API_TOKEN_DEPLOY }}") != 1:
-        fail("COOLIFY_API_TOKEN_DEPLOY must be referenced exactly once and only in the deploy step")
+    if text.count("${{ secrets.COOLIFY_API_TOKEN }}") != 1:
+        fail("COOLIFY_API_TOKEN must be referenced exactly once and only in the deploy step")
     if text.count("${{ secrets.SOLO_VPS_DEPLOY_SSH_KEY }}") != 1:
         fail("SOLO_VPS_DEPLOY_SSH_KEY must be referenced exactly once and only in the deploy step")
     if "${{ needs.publish.outputs.image_ref }}" not in scalar(deploy_env.get("IMAGE_REF")):

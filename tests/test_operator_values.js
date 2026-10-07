@@ -1,0 +1,14 @@
+const assert = require("node:assert/strict");
+const { render, validated } = require("../docs/javascripts/operator-values.js");
+const values = { SERVER_IP: "203.0.113.8", ADMIN_USER: "alice", COOLIFY_DOMAIN: "panel.example.net" };
+const source = "printf '%s' 'IPv4 VPS: '; read -r SERVER_IP\nssh \"${ADMIN_USER}@${SERVER_IP}\"\n  host: YOUR_SERVER_IP\n  user: YOUR_ADMIN_USER\nhttps://coolify.example.com";
+assert.equal(render(source, values), "SERVER_IP='203.0.113.8'\nssh \"${ADMIN_USER}@${SERVER_IP}\"\n  host: 203.0.113.8\n  user: alice\nhttps://panel.example.net");
+assert.equal(render("$ServerIp = Read-Host 'VPS IPv4'", values), "$ServerIp = '203.0.113.8'");
+assert.equal(render(source, {}), source);
+for (const bad of ["$(touch /tmp/pwn)", "1.2.3.999", "1.2.3.4'", "1.2.3.4\nrm -rf /"]) assert.deepEqual(validated({ SERVER_IP: bad }), {});
+for (const bad of ["root", "alice;id", "a'b", "../../root"]) assert.deepEqual(validated({ ADMIN_USER: bad }), {});
+assert.deepEqual(validated({ COOLIFY_DOMAIN: "https://example.com", APP_DOMAIN: "-bad.example", token: "secret" }), {});
+assert.equal(render("printf '%s' 'Repository: '; read -r APPLICATION_REPOSITORY_URL", { APPLICATION_REPOSITORY_URL: "git@github.com:alice/demo.git" }), "APPLICATION_REPOSITORY_URL='git@github.com:alice/demo.git'");
+assert.equal(render("ghcr.io/<github-owner>/solo-vps-demo", { GITHUB_OWNER: "alice" }), "ghcr.io/alice/solo-vps-demo");
+assert.equal(render("ghcr.io/<github-owner>/solo-vps-demo", { GITHUB_OWNER: "Alice" }), "ghcr.io/alice/solo-vps-demo");
+console.log("PASS local command values: shell-safe inputs, substitutions and empty defaults");

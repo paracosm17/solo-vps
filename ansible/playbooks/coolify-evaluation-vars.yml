@@ -1,0 +1,9 @@
+---
+# Candidate commands use the same reviewed release manifest as the normal lifecycle.
+# No copied target versions, image pins, or artifact checksums.
+solo_vps_coolify_evaluation_candidate: true
+solo_vps_coolify_evaluation_sentinel_version: "{{ solo_vps_coolify_sentinel_version }}"
+solo_vps_coolify_evaluation_sentinel_image: "{{ solo_vps_coolify_sentinel_image }}"
+solo_vps_coolify_evaluation_sentinel_image_id: "{{ solo_vps_coolify_sentinel_image_id_x86_64 }}"
+solo_vps_coolify_evaluation_required_directories:
+  - /data/coolify/images

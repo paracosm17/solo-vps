@@ -21,6 +21,20 @@ If a change cannot describe its recovery path, it is not ready for production ex
 
 A previous project checkout is **not** a generic runtime rollback. Reverting source does not undo packages, database migrations, or external state changes.
 
+## Check for updates
+
+Run from your workstation checkout:
+
+```bash
+make updates-check
+make updates-check UPDATE_COMPONENT=coolify
+make updates-plan
+```
+
+`updates-check` reads published GitHub releases for Solo VPS and Coolify. It prints the exact source revision, the reviewed Coolify target and its evidence, and upstream release notes. It never installs a discovered version. `updates-plan` is offline. For an untagged checkout, the installed Solo VPS release comparison is unknown; the exact commit is reported instead. A network failure or API rate limit stops discovery without changing anything.
+
+Updating Solo VPS source and updating Coolify are separate actions. Small reviewed compatibility changes can ship in a Solo VPS patch release; a new Coolify patch does not require a Solo VPS minor release. This source's version-neutral release manifest is `config/coolify-release.yml`; the evaluation commands reuse it. Upstream versions still need release-note review, checksummed artifacts, source checks and a test-VPS upgrade before production use.
+
 ## Update Solo VPS source
 
 Solo VPS source is updated by opening a **new checkout of a reviewed release**, not by running `git pull` in the active checkout. Installation-specific config, inventory and encrypted operator state live outside the source tree, so both checkouts use the same persistent state.
@@ -72,7 +86,7 @@ Use this sequence for a reviewed automation fix that keeps the installed Docker/
 1. Log in as the existing managed administrator. In the old source directory, run `make paths` and record the config/inventory paths. Preserve the old source and any required data backups.
 2. Extract or clone the reviewed source into a new directory. Record its commit ID (`git rev-parse HEAD` for a clone, or the revision supplied with the archive). Run `make paths` there under the same user. The persistent config/inventory paths must match; do not initialize a second installation or copy example config over the active configuration. When running the controller on the VPS itself, preserve the old `~/solo-vps` under a separate backup name, put the new source at `~/solo-vps`, and continue from that standard admin workspace.
 3. Run `make setup` to reconcile the controller prerequisites. Existing keys and configuration are retained. For maintainer regression testing, run `make qa-tools`, then `make qa-static`. The QA gate evaluates the Docker version parsers and firewall listener diagnostics with the pinned Ansible engine, without contacting the VPS through SSH.
-4. Run `make doctor`, `make verify` and `make audit`, one at a time. These establish the state seen by the new source. Record and investigate any failure before mutation.
+4. Run `make doctor`. For the proxy ingress policy in this source, run `make firewall` and `make verify-firewall` before platform reconciliation; keep the administrator session and provider recovery access available. Then run `make verify` and `make audit`, one at a time. Record and investigate any failure before further changes.
 5. For the Docker parser fix, run `make docker`, then `make verify-docker`. Supported installed Docker packages should be retained. Run `make apply` to repeat the complete host baseline through the existing admin inventory.
 6. Run `make platform` to reconcile and verify the managed Coolify installation. After success, repeat `make apply` and `make platform` once to test reruns, then run `make verify` and `make audit` again. Do not run `make secure` solely because the source changed; an existing hardened host already has that policy.
 7. Check the application URL and logs. After all preceding steps pass, reboot deliberately, reconnect as the administrator, and repeat `make verify`, `make audit` and the application check.
@@ -105,14 +119,18 @@ A source rollback is not a Docker package downgrade.
 
 ## Coolify
 
+**Release status: {{ solo_vps_coolify_qualification }}.** The published 0.1.0 installation used 4.3.21. The controlled test-VPS upgrade, interruption/resume, checkpoint restore, one-token delivery/rollback and reboot passed; see [the evidence record](https://github.com/paracosm17/solo-vps/blob/main/reviews/2026-10-07-coolify-440-runtime.md). The release changes realtime to in-container Reverb, so the upgrade rewrites the loopback override, migrates the Pusher backend host/port and retires the owned old standalone realtime container. Existing credentials are preserved. [Upstream release notes](https://github.com/coollabsio/coolify/releases/tag/v{{ solo_vps_coolify_target }}).
+
+Use Solo VPS upgrade commands below. The Coolify **Update** button and automatic upgrades bypass its checkpoint, reviewed artifact hashes and transaction/resume checks; they are not a qualified upgrade path for this installation.
+
 Solo VPS manages Coolify through a pinned, reviewed integration. It keeps ownership of the host and Docker configuration instead of handing that responsibility to an unreviewed installer path.
 
 The supported lifecycle pair in this source revision is:
 
 ```text
-previous supported Coolify: `4.1.2`
-current supported Coolify: `4.3.21`
-transition:                 4.1.2 -> 4.3.21
+previous supported Coolify: `{{ solo_vps_coolify_origin }}`
+current supported Coolify: `{{ solo_vps_coolify_target }}`
+transition:                 {{ solo_vps_coolify_origin }} -> {{ solo_vps_coolify_target }}
 AUTOUPDATE=false
 ```
 
@@ -120,7 +138,9 @@ AUTOUPDATE=false
 
 ### Preflight
 
-Before the supported transition, configure **Servers → localhost → Sentinel → Configuration → Coolify URL** to the working HTTPS dashboard URL in Coolify `4.1.2`, enable and sync Sentinel, and confirm **Sentinel In Sync**. Keep raw management port `8000` and Sentinel port `8888` private. Then run:
+After preparing this source revision on an existing host, run `make firewall` to establish the bounded proxy ingress guard, then `make verify-firewall`. Keep a working administrator SSH session and provider recovery access. This host protection is required before the platform transition; it also runs before Docker restores containers after reboot.
+
+Before the supported transition, configure **Servers → localhost → Sentinel → Configuration → Coolify URL** to the working HTTPS dashboard URL in the origin Coolify release, enable and sync Sentinel, and confirm **Sentinel In Sync**. Keep raw management port `8000` and Sentinel port `8888` private. Then run:
 
 ```bash
 COOLIFY_SENTINEL_URL=https://coolify.example.com make coolify-upgrade-preflight
@@ -167,7 +187,8 @@ Treat dependency changes as source-maintenance changes. The authoritative source
 | restic | `ansible/roles/backup/defaults/main.yml` |
 | sample Python image | `examples/hello-app/Dockerfile` |
 | consumer GitHub Actions | `templates/github-actions/hello-app-ci.yml` |
-| Docker/Coolify lifecycle | `docs/contracts/platform-lifecycle-policy.yml` |
+| Docker lifecycle | `docs/contracts/platform-lifecycle-policy.yml` |
+| Coolify release and components | `config/coolify-release.yml` |
 
 Update one dependency class at a time: review upstream notes → change the authoritative pin → run its validators/tests → `make validate` → obtain real integration evidence when runtime behavior changes.
 
@@ -244,9 +265,9 @@ The supported update scope is:
 
 - source updates use published tags and a new checkout; installation state stays in the external data directory;
 - Docker support is intentionally limited to 29.x rather than generic package auto-upgrades;
-- only the Coolify 4.1.2 -> 4.3.21 transition is represented by the current lifecycle source;
-- Coolify upgrade/resume and replacement-host recovery have integration evidence; the current core setup also passed an independent clean-install replay;
-- the existing database-backup API helper fails closed on 4.3.21; use Coolify UI and a separate B2 restore for this version;
+- only the manifest-selected Coolify transition is represented by the current lifecycle source;
+- historical 4.1.2 → 4.3.21 upgrade/resume and replacement-host recovery have integration evidence; the published 0.1.0 core setup passed an independent clean-install replay. The current transition now has separate controlled V3 evidence;
+- on 4.3.21, database-backup API adoption failed closed because its response omitted required storage identity. API adoption and the UI/B2 backup/restore route need fresh checks on 4.4.0;
 - optional modules retain separate lifecycle contracts.
 
 See [Disaster recovery](disaster-recovery.md) before any change that can affect data or control-plane recovery.

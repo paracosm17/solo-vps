@@ -10,6 +10,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 from scripts.inspect_coolify_proxy import ProxyError, evidence, inspect, safe_ports
+from scripts.coolify_proxy_policy import PolicyError, policy_configuration, execute
+from scripts.coolify_proxy_ingress_guard import GuardError, rules, reconcile, CHAIN
+import yaml
+import shlex
 
 
 def container():
@@ -39,6 +43,143 @@ def container():
 
 
 class CoolifyProxyTests(unittest.TestCase):
+    def test_guard_preserves_shared_rules_is_idempotent_and_check_never_mutates(self):
+        shared = ['-m', 'conntrack', '--ctstate', 'RELATED,ESTABLISHED', '-j', 'RETURN']
+        forward = [['-j', 'ufw-before-forward'], ['-j', 'DOCKER-USER'], ['-j', 'DOCKER-FORWARD']]
+        chains = {'INPUT': [['-j', 'ufw-before-input']], 'FORWARD': copy.deepcopy(forward), 'DOCKER-USER': [shared.copy()]}
+        mutations = []
+        def fake(binary, args, required=True):
+            op, name, *rest = args
+            rc, output = 0, ''
+            if op == '-S':
+                if name not in chains:
+                    rc = 1
+                else:
+                    output = '\n'.join(shlex.join(['-A', name, *entry]) for entry in chains[name])
+            elif op == '-C':
+                rc = 0 if rest in chains.get(name, []) else 1
+            else:
+                mutations.append(args.copy())
+                if op == '-N': chains[name] = []
+                elif op == '-A': chains[name].append(rest)
+                elif op == '-I': chains[name].insert(int(rest[0]) - 1, rest[1:])
+                elif op == '-D': chains[name].remove(rest)
+                else: self.fail('Unexpected shared-chain mutation')
+            return subprocess.CompletedProcess([], rc, output, '')
+        with patch('scripts.coolify_proxy_ingress_guard.invoke', side_effect=fake):
+            self.assertTrue(reconcile('iptables', ['ens18'], False))
+            self.assertIn(shared, chains['DOCKER-USER'])
+            self.assertIn(['-j', 'ufw-before-input'], chains['INPUT'])
+            self.assertEqual(chains['FORWARD'], [['-j', CHAIN], *forward])
+            self.assertFalse(reconcile('iptables', ['ens18'], False))
+            mutations.clear()
+            self.assertFalse(reconcile('iptables', ['ens18'], True))
+            self.assertFalse(mutations)
+            # Docker prepends its normal hooks while restoring workloads.
+            # DOCKER-USER still enters the guard before any shared rules.
+            chains['FORWARD'] = [['-j', 'DOCKER-USER'], ['-j', 'DOCKER-FORWARD'], ['-j', CHAIN]]
+            self.assertFalse(reconcile('iptables', ['ens18'], True))
+            self.assertFalse(reconcile('iptables', ['ens18'], False))
+            self.assertFalse(mutations)
+            chains[CHAIN].append(['-j', 'ACCEPT'])
+            with self.assertRaises(GuardError):
+                reconcile('iptables', ['ens18'], False)
+            self.assertFalse(mutations)
+
+    def test_ingress_guard_is_bounded_to_original_external_forbidden_ports(self):
+        values = rules(['ens18', 'ens18'])
+        self.assertEqual(len(values), 2)
+        for value in values:
+            self.assertEqual(value[value.index('-i') + 1], 'ens18')
+            self.assertEqual(value[value.index('--ctdir') + 1], 'ORIGINAL')
+            self.assertEqual(value[value.index('-j') + 1], 'DROP')
+        self.assertEqual({value[value.index('--ctorigdstport') + 1] for value in values}, {'8080', '443'})
+        for values in ([], ['ens18;bad'], ['']):
+            with self.assertRaises(GuardError):
+                rules(values)
+
+    def test_port_patch_preserves_comments_and_compose_scalar_spelling(self):
+        original = '''# Operator configuration
+services:
+  traefik:
+    container_name: coolify-proxy
+    image: traefik:v3.6
+    labels:
+      coolify.proxy: 'true'
+      custom.value: on
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    environment:
+      VALUE: off # Preserve this comment
+'''
+        updated, changed = policy_configuration(original)
+        self.assertTrue(changed)
+        self.assertIn('custom.value: on', updated)
+        self.assertIn('VALUE: off # Preserve this comment', updated)
+        self.assertTrue(updated.startswith('# Operator configuration\n'))
+
+    def test_restart_image_or_network_drift_is_refused_before_save(self):
+        original = yaml.safe_dump({'services': {'traefik': {'container_name': 'coolify-proxy', 'labels': {'coolify.proxy': 'true'}, 'image': 'traefik:v3.6', 'ports': ['80:80', '443:443', '8080:8080']}}})
+        before = container()
+        before['HostConfig']['PortBindings']['8080/tcp'] = [{'HostIp': '0.0.0.0', 'HostPort': '8080'}]
+        for model in ({'services': {'traefik': {'image': 'traefik:foreign'}}}, {'services': {'traefik': {'image': 'traefik:v3.6'}}, 'networks': {}}):
+            before['NetworkSettings']['Networks'] = {'unexpected-app': {}}
+            with tempfile.TemporaryDirectory() as temp, patch('scripts.coolify_proxy_policy.proxy_state', return_value=before), patch('scripts.coolify_proxy_policy.native', return_value={'configuration': original}) as native, patch('scripts.coolify_proxy_policy.run', return_value=json.dumps(model)):
+                with self.assertRaises(PolicyError):
+                    execute('docker', 'ops', True, Path(temp) / 'absent')
+                self.assertEqual(native.call_count, 1)
+
+    def test_native_policy_changes_only_ports_and_preserves_custom_configuration(self):
+        data = {'services': {'traefik': {'image': 'traefik:v3.6', 'container_name': 'coolify-proxy',
+                'labels': {'coolify.proxy': 'true', 'private.route': 'preserve'},
+                'ports': ['80:80', '443:443', '8080:8080', '443:443/udp'],
+                'command': ['--providers.file.watch=true'], 'volumes': ['volume:/data'],
+                'environment': {'PRIVATE_VALUE': 'stay-private'}},
+                'sidecar': {'image': 'busybox:1', 'command': ['true']}},
+                'networks': {'app': {'external': True, 'name': 'app-network'}}}
+        text, changed = policy_configuration(yaml.safe_dump(data))
+        self.assertTrue(changed)
+        value = yaml.safe_load(text)
+        self.assertEqual(value['services']['traefik']['ports'], ['80:80/tcp', '443:443/tcp'])
+        value['services']['traefik']['ports'] = data['services']['traefik']['ports']
+        self.assertEqual(value, data)
+        self.assertFalse(policy_configuration(text)[1])
+
+    def test_native_policy_refuses_unknown_service_ownership_image_and_network(self):
+        valid = {'container_name': 'coolify-proxy', 'labels': {'coolify.proxy': 'true'}, 'image': 'traefik:v3.6'}
+        for key, value in [('container_name', 'foreign'), ('labels', {}), ('image', 'caddy:2'), ('network_mode', 'host')]:
+            with self.subTest(key=key), self.assertRaises(PolicyError):
+                policy_configuration(yaml.safe_dump({'services': {'traefik': {**valid, key: value}}}))
+
+    def test_native_policy_stopped_proxy_stays_stopped_and_unknown_override_is_preserved(self):
+        valid = {'services': {'traefik': {'container_name': 'coolify-proxy', 'labels': {'coolify.proxy': 'true'}, 'image': 'traefik:v3.6', 'ports': ['80:80', '443:443', '8080:8080']}}}
+        original = yaml.safe_dump(valid)
+        updated, _ = policy_configuration(original)
+        stopped = container()
+        stopped['State']['Running'] = False
+        with tempfile.TemporaryDirectory() as temp, patch('scripts.coolify_proxy_policy.proxy_state', return_value=stopped), patch('scripts.coolify_proxy_policy.native', side_effect=[{'configuration': original}, {}, {'configuration': updated}]) as native:
+            override = Path(temp) / 'override.yml'
+            result = execute('docker', 'ops', True, override)
+            self.assertTrue(result['changed'])
+            self.assertFalse(result['restarted'])
+            self.assertFalse(native.call_args_list[1].args[1]['restart'])
+            override.write_text('# custom operator override')
+            native.reset_mock()
+            with self.assertRaises(PolicyError):
+                execute('docker', 'ops', True, override)
+            native.assert_not_called()
+            self.assertEqual(override.read_text(), '# custom operator override')
+
+    def test_native_policy_check_is_read_only_and_rejects_saved_drift(self):
+        original = yaml.safe_dump({'services': {'traefik': {'container_name': 'coolify-proxy', 'labels': {'coolify.proxy': 'true'}, 'image': 'traefik:v3.6', 'ports': ['80:80', '443:443', '8080:8080']}}})
+        with tempfile.TemporaryDirectory() as temp, patch('scripts.coolify_proxy_policy.proxy_state', return_value=container()), patch('scripts.coolify_proxy_policy.native', return_value={'configuration': original}) as native:
+            with self.assertRaises(PolicyError):
+                execute('docker', 'ops', False, Path(temp) / 'absent')
+            self.assertEqual(native.call_count, 1)
+            self.assertEqual(native.call_args.args[1]['mode'], 'check')
+
     def test_tcp_edge_accepts_ipv4_ipv6_and_unpublished_exposed_ports(self):
         value = container()
         value["NetworkSettings"]["Ports"]["8080/tcp"] = None

@@ -33,12 +33,10 @@ EXPECTED = {
             "published": "${APP_PORT:-8000}",
             "host_ip": "127.0.0.1",
             "protocol": "tcp",
-        }
-    ],
-    "soketi": [
+        },
         {
             "target": 6001,
-            "published": "${SOKETI_PORT:-6001}",
+            "published": "${REVERB_PORT:-${SOKETI_PORT:-6001}}",
             "host_ip": "127.0.0.1",
             "protocol": "tcp",
         },
@@ -74,7 +72,7 @@ def main() -> int:
         return fail("override must contain only the services mapping")
     services = data.get("services")
     if not isinstance(services, dict) or set(services) != set(EXPECTED):
-        return fail("override must modify only coolify and soketi")
+        return fail("override must modify only coolify")
 
     for service, expected_ports in EXPECTED.items():
         definition = services.get(service)

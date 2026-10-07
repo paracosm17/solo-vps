@@ -21,6 +21,20 @@ identify exact current + target versions
 
 Предыдущий checkout проекта **не** является generic runtime rollback. Возврат source revision не отменяет package changes, database migrations или external state changes.
 
+## Проверка обновлений
+
+На компьютере, из checkout проекта:
+
+```bash
+make updates-check
+make updates-check UPDATE_COMPONENT=coolify
+make updates-plan
+```
+
+`updates-check` читает опубликованные GitHub Releases Solo VPS и Coolify. Он показывает точный commit исходников, проверенный целевой pin Coolify, уровень его доказательств и ссылки на release notes. Обнаруженная версия автоматически не устанавливается. `updates-plan` работает без сети. Для checkout без точного тега сравнение релизов Solo VPS неизвестно: вместо него показывается commit. Ошибка сети или лимит API останавливает проверку без изменений.
+
+Обновление исходников Solo VPS и обновление Coolify — отдельные действия. Небольшая проверенная совместимость может выходить в patch-релизе Solo VPS: каждый Coolify patch не требует нового minor-релиза. Версии и SHA256 лежат в одном файле с постоянным именем `config/coolify-release.yml`; команды испытания используют его же. Новую upstream-версию сначала нужно изучить, закрепить артефакты, проверить код и пройти обновление на тестовом VPS.
+
 ## Обновление исходников Solo VPS
 
 Исходники Solo VPS обновляются через **новый checkout проверенного релиза**, а не через `git pull` в активном каталоге. Конфигурация конкретной установки, inventory и зашифрованное состояние оператора находятся вне исходников, поэтому оба checkout используют одно persistent state.
@@ -72,7 +86,7 @@ make audit
 1. Войдите под существующим управляемым администратором. В старом каталоге исходников выполните `make paths` и запишите пути config/inventory. Сохраните старые исходники и необходимые резервные копии данных.
 2. Распакуйте или клонируйте проверенную версию в новый каталог. Запишите commit ID: `git rev-parse HEAD` для клона или ревизию, указанную вместе с архивом. Под тем же пользователем выполните там `make paths`. Пути persistent config/inventory должны совпадать; не инициализируйте вторую установку и не заменяйте активную конфигурацию примером. Если контроллер работает на самом VPS, сохраните старый `~/solo-vps` под отдельным именем резервной копии, поместите новые исходники в `~/solo-vps` и продолжайте из этого стандартного admin workspace.
 3. Выполните `make setup` для согласования зависимостей контроллера. Существующие ключи и конфигурация сохраняются. Для регрессионной проверки разработчиком выполните `make qa-tools`, затем `make qa-static`. QA проверяет разбор версий Docker и диагностику слушающих портов на закреплённом движке Ansible, без обращения к VPS через SSH.
-4. По одной выполните `make doctor`, `make verify` и `make audit`. Это исходное состояние, которое видит новый код. Зафиксируйте и разберите любую ошибку до изменения сервера.
+4. Выполните `make doctor`. Для защиты ingress proxy в этих исходниках перед согласованием платформы выполните `make firewall` и `make verify-firewall`; сохраните SSH-сессию администратора и доступ к console/rescue. Затем по одной выполните `make verify` и `make audit`. Зафиксируйте и разберите любую ошибку до следующих изменений.
 5. Для исправления разбора версии Docker выполните `make docker`, затем `make verify-docker`. Поддерживаемые установленные пакеты Docker должны сохраниться. Выполните `make apply`, чтобы повторить весь host baseline через существующий admin inventory.
 6. Выполните `make platform` для согласования и проверки управляемой установки Coolify. После успеха ещё раз выполните `make apply` и `make platform`, проверяя повторяемость, затем `make verify` и `make audit`. Не запускайте `make secure` только из-за смены исходников: на уже защищённом хосте эта политика действует.
 7. Проверьте URL приложения и логи. Только после успеха всех предыдущих шагов выполните запланированную перезагрузку, снова подключитесь под администратором и повторите `make verify`, `make audit` и проверку приложения.
@@ -105,14 +119,18 @@ Source rollback не является downgrade Docker package.
 
 ## Coolify
 
+**Статус версии: {{ solo_vps_coolify_qualification }}.** Опубликованный Solo VPS 0.1.0 устанавливал 4.3.21. На тестовом VPS проверены переход, прерывание/продолжение, восстановление checkpoint, деплой/откат одним токеном и перезагрузка; см. [результаты проверки](https://github.com/paracosm17/solo-vps/blob/main/reviews/2026-10-07-coolify-440-runtime.md). Realtime теперь работает внутри Coolify через Reverb: обновление заменяет override локальных портов, переносит настройки backend Pusher и удаляет принадлежащий Coolify старый отдельный realtime-контейнер. Существующие секреты сохраняются. [Release notes upstream](https://github.com/coollabsio/coolify/releases/tag/v{{ solo_vps_coolify_target }}).
+
+Используйте команды Solo VPS ниже. Кнопка **Update** в Coolify и автоматические обновления обходят локальную копию, проверенные SHA256 и контроль транзакции/resume; для этой установки такой путь ещё не подтверждён.
+
 Solo VPS управляет Coolify через закреплённую и проверяемую интеграцию. Управление хостом и Docker остаётся у Solo VPS, а не передаётся непроверенному установщику.
 
 Поддерживаемая lifecycle pair в этой source revision:
 
 ```text
-previous supported Coolify: `4.1.2`
-current supported Coolify: `4.3.21`
-transition:                 4.1.2 -> 4.3.21
+previous supported Coolify: `{{ solo_vps_coolify_origin }}`
+current supported Coolify: `{{ solo_vps_coolify_target }}`
+transition:                 {{ solo_vps_coolify_origin }} -> {{ solo_vps_coolify_target }}
 AUTOUPDATE=false
 ```
 
@@ -120,7 +138,9 @@ AUTOUPDATE=false
 
 ### Preflight
 
-Перед поддерживаемым переходом в Coolify `4.1.2` задайте **Servers → localhost → Sentinel → Configuration → Coolify URL** равным рабочему HTTPS-адресу панели, включите Sentinel, выполните Sync и подтвердите **Sentinel In Sync**. Raw-порты `8000` и `8888` должны оставаться закрытыми. Затем выполните:
+После подготовки этих исходников на существующем хосте запустите `make firewall`, затем `make verify-firewall`: они устанавливают и проверяют ограниченную защиту ingress proxy. Сохраните рабочую SSH-сессию администратора и доступ к console/rescue провайдера. Эта защита нужна до обновления платформы и выполняется перед восстановлением контейнеров Docker после перезагрузки.
+
+Перед поддерживаемым переходом в исходной версии Coolify задайте **Servers → localhost → Sentinel → Configuration → Coolify URL** равным рабочему HTTPS-адресу панели, включите Sentinel, выполните Sync и подтвердите **Sentinel In Sync**. Raw-порты `8000` и `8888` должны оставаться закрытыми. Затем выполните:
 
 ```bash
 COOLIFY_SENTINEL_URL=https://coolify.example.com make coolify-upgrade-preflight
@@ -167,7 +187,8 @@ make coolify-upgrade-resume
 | restic | `ansible/roles/backup/defaults/main.yml` |
 | sample Python image | `examples/hello-app/Dockerfile` |
 | consumer GitHub Actions | `templates/github-actions/hello-app-ci.yml` |
-| Docker/Coolify lifecycle | `docs/contracts/platform-lifecycle-policy.yml` |
+| Docker lifecycle | `docs/contracts/platform-lifecycle-policy.yml` |
+| Версия Coolify и его компоненты | `config/coolify-release.yml` |
 
 Обновляйте один dependency class за раз: review upstream notes → change authoritative pin → run validators/tests → `make validate` → получите real integration evidence, если изменилось runtime behavior.
 
@@ -244,9 +265,9 @@ make verify-backup-tooling
 
 - исходники обновляются по опубликованному тегу в новый каталог; данные установки остаются во внешнем каталоге состояния;
 - поддержка Docker ограничена веткой 29.x; автоматического перехода на новую основную версию нет;
-- для Coolify поддерживается переход 4.1.2 → 4.3.21;
-- обновление Coolify, продолжение после прерывания и восстановление VPS проверены на тестовом сервере; базовая установка также прошла независимую проверку на чистом VPS;
-- API-помощник для резервных копий PostgreSQL на 4.3.21 отказывается принимать неполный ответ; используйте панель Coolify и восстановление из B2 в отдельную базу;
+- для Coolify поддерживается переход из manifest;
+- исторический переход 4.1.2 → 4.3.21, продолжение после прерывания и восстановление VPS проверены на тестовом сервере; базовая установка 0.1.0 прошла независимую проверку на чистом VPS. Текущий переход имеет отдельные доказательства V3;
+- на 4.3.21 API-помощник резервных копий отказывался принимать ответ без требуемого идентификатора хранилища. API и путь через панель/B2 требуют повторной проверки на 4.4.0;
 - дополнительные компоненты имеют собственные инструкции обновления.
 
 Перед изменением, которое может повлиять на данные или восстановление Coolify, прочитайте [инструкцию восстановления VPS](disaster-recovery.md).

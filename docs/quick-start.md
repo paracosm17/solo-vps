@@ -4,6 +4,8 @@ By the end of this part, you will have a configured Ubuntu VPS and a Coolify das
 
 Follow the steps in order. Each command block says where to run it: **workstation**, **VPS**, or **browser**.
 
+Open **Your values for commands** at the top of the page and enter your IP, administrator username and domains once. Copyable blocks use these values, kept only in this tab until it closes. Clear them with the form button. Do not enter passwords, keys or tokens. Without JavaScript, use the original commands and input prompts. Linux/WSL prompts use `printf` + `read`, compatible with Bash and zsh.
+
 ## Before you begin
 
 Prepare:
@@ -41,7 +43,7 @@ The project directory remains `solo-vps`. Copyable command blocks ask for the VP
 === "Linux"
 
     ```bash
-    read -r -p 'VPS IPv4 address: ' SERVER_IP
+    printf '%s' 'VPS IPv4 address: '; read -r SERVER_IP
     ssh "root@${SERVER_IP}"
     ```
 
@@ -95,7 +97,7 @@ Clone the public `main` branch using Git. The ZIP option is available if you hav
     === "Linux"
 
         ```bash
-        read -r -p 'VPS IPv4 address: ' SERVER_IP
+        printf '%s' 'VPS IPv4 address: '; read -r SERVER_IP
         scp solo-vps.zip "root@${SERVER_IP}:/root/solo-vps.zip"
         ```
 
@@ -179,7 +181,7 @@ This key lets you sign in from your workstation as the configured `admin.user`. 
     If the key already exists, use it without creating another one. Send its public part:
 
     ```bash
-    read -r -p 'VPS IPv4 address: ' SERVER_IP
+    printf '%s' 'VPS IPv4 address: '; read -r SERVER_IP
     cat ~/.ssh/id_ed25519.pub | ssh "root@${SERVER_IP}" 'cd ~/solo-vps && make human-admin-key-stdin'
     ```
 
@@ -217,8 +219,8 @@ Wait for `PASS Solo VPS host apply`.
 === "Linux"
 
     ```bash
-    read -r -p 'VPS IPv4 address: ' SERVER_IP
-    read -r -p 'Linux administrator username: ' ADMIN_USER
+    printf '%s' 'VPS IPv4 address: '; read -r SERVER_IP
+    printf '%s' 'Linux administrator username: '; read -r ADMIN_USER
     ssh "${ADMIN_USER}@${SERVER_IP}"
     ```
 
@@ -256,8 +258,8 @@ Wait for `PASS Solo VPS SSH security transition`. The command also prepares the 
 === "Linux"
 
     ```bash
-    read -r -p 'VPS IPv4 address: ' SERVER_IP
-    read -r -p 'Linux administrator username: ' ADMIN_USER
+    printf '%s' 'VPS IPv4 address: '; read -r SERVER_IP
+    printf '%s' 'Linux administrator username: '; read -r ADMIN_USER
     ssh "${ADMIN_USER}@${SERVER_IP}"
     ```
 
@@ -282,8 +284,8 @@ Run subsequent server commands here as the configured administrator.
 === "Linux"
 
     ```bash
-    read -r -p 'VPS IPv4 address: ' SERVER_IP
-    read -r -p 'Linux administrator username: ' ADMIN_USER
+    printf '%s' 'VPS IPv4 address: '; read -r SERVER_IP
+    printf '%s' 'Linux administrator username: '; read -r ADMIN_USER
     scp -r "${ADMIN_USER}@${SERVER_IP}:solo-vps" .
     ```
 
@@ -316,8 +318,8 @@ Wait for `PASS Solo VPS Coolify bootstrap`. You do not need to repeat the instal
 === "Linux"
 
     ```bash
-    read -r -p 'VPS IPv4 address: ' SERVER_IP
-    read -r -p 'Linux administrator username: ' ADMIN_USER
+    printf '%s' 'VPS IPv4 address: '; read -r SERVER_IP
+    printf '%s' 'Linux administrator username: '; read -r ADMIN_USER
     ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:18000:127.0.0.1:8000 -L 127.0.0.1:6001:127.0.0.1:6001 -L 127.0.0.1:6002:127.0.0.1:6002 "${ADMIN_USER}@${SERVER_IP}"
     ```
 

@@ -2,6 +2,7 @@ SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
 PYTHON ?= python3
+NODE ?= node
 
 # Keep the Git checkout source-only. Mutable per-installation controller state lives
 # under one persistent user-owned data root and survives source replacement/reclone.
@@ -87,10 +88,10 @@ COOLIFY_UPGRADE_RESUME_CONFIRM ?=
 COOLIFY_UPGRADE_RESUME_CONFIRM_REQUIRED := I_HAVE_REVIEWED_THE_INTERRUPTED_COOLIFY_UPGRADE
 COOLIFY_EVALUATION_TARGET_ID ?=
 COOLIFY_EVALUATION_DATA_DIR ?=
-COOLIFY_EVALUATION_MARKER := $(COOLIFY_EVALUATION_DATA_DIR)/.coolify-4.3.21-disposable-evaluation
+COOLIFY_EVALUATION_MARKER := $(COOLIFY_EVALUATION_DATA_DIR)/.coolify-disposable-evaluation
 COOLIFY_SENTINEL_URL ?=
 COOLIFY_EVALUATION_CONFIRM ?=
-COOLIFY_EVALUATION_CONFIRM_REQUIRED := I_HAVE_VERIFIED_A_DISPOSABLE_COOLIFY_4_3_21_TARGET
+COOLIFY_EVALUATION_CONFIRM_REQUIRED := I_HAVE_VERIFIED_A_DISPOSABLE_COOLIFY_TARGET
 COOLIFY_EVALUATION_INTERRUPT_AFTER_MARKER ?= false
 RELEASE_PROCESS_VALIDATOR := scripts/validate_release_process.py
 HOSTED_CI_CONTRACT_VALIDATOR := scripts/validate_hosted_ci_contract.py
@@ -106,6 +107,20 @@ ACCESS_PREPARE := scripts/prepare_access.py
 ADMIN_HANDOFF := scripts/handoff_admin_workspace.py
 HUMAN_ADMIN_KEY_CONFIGURE := scripts/configure_human_admin_key.py
 RELEASE_VERSION ?=
+UPDATE_COMPONENT ?= all
+
+.PHONY: updates-check updates-plan test-updates-check test-doc-command-values
+updates-check: ## Read-only upstream release discovery; never applies updates
+	@$(PYTHON) scripts/check_updates.py --online --component "$(UPDATE_COMPONENT)"
+
+updates-plan: ## Offline source identity and reviewed Coolify target
+	@$(PYTHON) scripts/check_updates.py
+
+test-updates-check: ## Test read-only update discovery
+	@$(PYTHON) -m unittest tests.test_check_updates tests.test_coolify_release -v
+
+test-doc-command-values: ## Test shell-safe local documentation values (requires Node.js)
+	@$(NODE) tests/test_operator_values.js
 DISPOSABLE_TARGET_HOST ?=
 DISPOSABLE_TARGET_BOOTSTRAP_USER ?= root
 BOOTSTRAP_USER ?=
@@ -253,7 +268,7 @@ export ANSIBLE_CONFIG
 export ANSIBLE_COLLECTIONS_PATH
 export PYTHONDONTWRITEBYTECODE := 1
 
-.PHONY: docs docs-install docs-build validate-docs-i18n validate-platform-lifecycle test-platform-lifecycle platform-lifecycle-plan coolify-upgrade-preflight coolify-upgrade coolify-upgrade-resume coolify-evaluation-init check-coolify-evaluation-args coolify-evaluate-4-3-21-preflight coolify-evaluate-4-3-21-upgrade coolify-evaluate-4-3-21-resume verify-coolify-4-3-21-candidate validate-external-uptime test-external-uptime uptime-plan uptime-evidence validate-documentation-governance test-documentation-governance validate-operator-surface test-operator-surface apply secure platform backup recover update help-ops help-dev help-all validate-application-migration-contract test-application-migration-contract check-database-backup-args database-backup-plan database-backup-adopt database-backup-configure database-backup-trigger database-backup-verify database-restore-inspect database-restore-exercise validate-disaster-recovery test-disaster-recovery recovery-kit-export recovery-kit-verify recovery-kit-extract coolify-instance-restore-inspect coolify-instance-restore-plan coolify-instance-restore-apply help paths setup validate-state-layout test-state-layout test-inventory-config controller-check ssh-key init human-admin-key-file human-admin-key-stdin use-bootstrap use-admin prepare-access admin-handoff deps check-ansible-deps validate validate-yaml validate-firewall-contract test-firewall-contract validate-docker-contract test-docker-contract validate-onboarding-contract test-onboarding-contract validate-qa-contract test-qa-contract validate-readme-contract test-readme-contract validate-architecture-docs test-architecture-docs validate-community-policy test-community-policy validate-upgrade-guide test-upgrade-guide validate-release-process test-release-process validate-hosted-ci-contract test-hosted-ci-contract validate-disposable-clean-target test-disposable-clean-target prove-disposable-clean-target ci-fast-source ci-fast release-dry-run qa-tools qa-check qa-static validate-example-config validate-coolify-contract test-coolify-install-backend validate-example-app test-example-app validate-ci-template test-ci-template validate-coolify-image-handoff test-coolify-image-handoff test-coolify-deploy-api test-ci-deploy-transport validate-dependency-hygiene validate-secrets-policy test-sops-policy validate-secrets-toolchain test-secrets-toolchain test-workstation-secrets validate-public-product-hygiene test-public-product-hygiene verify-vps-secrets-boundary secrets-tools secrets-tools-offline check-secrets-tools test-sops-roundtrip secrets-crypto-proof secrets-crypto-proof-offline init-sops-policy validate-config ansible-syntax doctor doctor-local doctor-admin-local doctor-platform-local preflight bootstrap verify firewall verify-firewall updates verify-updates docker verify-docker coolify-readiness coolify coolify-recover verify-coolify ssh-harden verify-ssh validate-backup-tooling validate-backup-credentials test-backup-credentials validate-backup-policy test-backup-policy validate-backup-runtime test-backup-runtime validate-database-backup-contract test-database-backup-contract validate-database-backup-runtime test-database-backup-runtime test-doctor-platform validate-verify-contract test-verify-contract validate-audit-contract test-audit-contract validate-ops-visibility test-ops-visibility validate-observability-tooling test-observability-tooling validate-observability-credentials test-observability-credentials validate-metrics-credentials test-metrics-credentials validate-metrics-runtime test-metrics-runtime validate-observability-log-drain test-observability-log-drain validate-observability-runtime test-observability-runtime verify-platform audit ops-status ops-logs observability-tooling verify-observability-tooling observability-secrets-init observability-secrets-check observability-secrets-push verify-observability-credentials verify-observability-log-drain verify-observability-log-drain-disabled diagnose-observability-log-drain test-observability-loki observability-runtime verify-observability-runtime audit-observability-confidentiality check-ops-log-args check-backup-policy check-backup-retention-confirm backup-tooling verify-backup-tooling backup-readiness backup-runtime backup-repository-init backup-repository-adopt backup-status backup-check backup-now backup-schedule-enable backup-maintenance-schedule-enable backup-retention-plan backup-retention-apply backup-restore-test backup-restore-staging check-local-config check-local-inventory check-local-files check-ssh-hardening-confirm check-coolify-recovery-confirm check-coolify-api-deploy-confirm check-ci-deploy-transport-confirm plan-coolify-deploy-api check-coolify-deploy-api deploy-coolify-image-api prove-coolify-deploy-rollback plan-ci-deploy-transport ci-deploy-transport verify-ci-deploy-transport backup-secrets-init backup-secrets-check backup-secrets-push verify-backup-credentials
+.PHONY: docs docs-install docs-build validate-docs-i18n validate-platform-lifecycle test-platform-lifecycle platform-lifecycle-plan coolify-upgrade-preflight coolify-upgrade coolify-upgrade-resume coolify-evaluation-init check-coolify-evaluation-args coolify-evaluate-preflight coolify-evaluate-upgrade coolify-evaluate-resume verify-coolify-candidate validate-external-uptime test-external-uptime uptime-plan uptime-evidence validate-documentation-governance test-documentation-governance validate-operator-surface test-operator-surface apply secure platform backup recover update help-ops help-dev help-all validate-application-migration-contract test-application-migration-contract check-database-backup-args database-backup-plan database-backup-adopt database-backup-configure database-backup-trigger database-backup-verify database-restore-inspect database-restore-exercise validate-disaster-recovery test-disaster-recovery recovery-kit-export recovery-kit-verify recovery-kit-extract coolify-instance-restore-inspect coolify-instance-restore-plan coolify-instance-restore-apply help paths setup validate-state-layout test-state-layout test-inventory-config controller-check ssh-key init human-admin-key-file human-admin-key-stdin use-bootstrap use-admin prepare-access admin-handoff deps check-ansible-deps validate validate-yaml validate-firewall-contract test-firewall-contract validate-docker-contract test-docker-contract validate-onboarding-contract test-onboarding-contract validate-qa-contract test-qa-contract validate-readme-contract test-readme-contract validate-architecture-docs test-architecture-docs validate-community-policy test-community-policy validate-upgrade-guide test-upgrade-guide validate-release-process test-release-process validate-hosted-ci-contract test-hosted-ci-contract validate-disposable-clean-target test-disposable-clean-target prove-disposable-clean-target ci-fast-source ci-fast release-dry-run qa-tools qa-check qa-static validate-example-config validate-coolify-contract test-coolify-install-backend validate-example-app test-example-app validate-ci-template test-ci-template validate-coolify-image-handoff test-coolify-image-handoff test-coolify-deploy-api test-ci-deploy-transport validate-dependency-hygiene validate-secrets-policy test-sops-policy validate-secrets-toolchain test-secrets-toolchain test-workstation-secrets validate-public-product-hygiene test-public-product-hygiene verify-vps-secrets-boundary secrets-tools secrets-tools-offline check-secrets-tools test-sops-roundtrip secrets-crypto-proof secrets-crypto-proof-offline init-sops-policy validate-config ansible-syntax doctor doctor-local doctor-admin-local doctor-platform-local preflight bootstrap verify firewall verify-firewall updates verify-updates docker verify-docker coolify-readiness coolify coolify-recover verify-coolify ssh-harden verify-ssh validate-backup-tooling validate-backup-credentials test-backup-credentials validate-backup-policy test-backup-policy validate-backup-runtime test-backup-runtime validate-database-backup-contract test-database-backup-contract validate-database-backup-runtime test-database-backup-runtime test-doctor-platform validate-verify-contract test-verify-contract validate-audit-contract test-audit-contract validate-ops-visibility test-ops-visibility validate-observability-tooling test-observability-tooling validate-observability-credentials test-observability-credentials validate-metrics-credentials test-metrics-credentials validate-metrics-runtime test-metrics-runtime validate-observability-log-drain test-observability-log-drain validate-observability-runtime test-observability-runtime verify-platform audit ops-status ops-logs observability-tooling verify-observability-tooling observability-secrets-init observability-secrets-check observability-secrets-push verify-observability-credentials verify-observability-log-drain verify-observability-log-drain-disabled diagnose-observability-log-drain test-observability-loki observability-runtime verify-observability-runtime audit-observability-confidentiality check-ops-log-args check-backup-policy check-backup-retention-confirm backup-tooling verify-backup-tooling backup-readiness backup-runtime backup-repository-init backup-repository-adopt backup-status backup-check backup-now backup-schedule-enable backup-maintenance-schedule-enable backup-retention-plan backup-retention-apply backup-restore-test backup-restore-staging check-local-config check-local-inventory check-local-files check-ssh-hardening-confirm check-coolify-recovery-confirm check-coolify-api-deploy-confirm check-ci-deploy-transport-confirm plan-coolify-deploy-api check-coolify-deploy-api deploy-coolify-image-api prove-coolify-deploy-rollback plan-ci-deploy-transport ci-deploy-transport verify-ci-deploy-transport backup-secrets-init backup-secrets-check backup-secrets-push verify-backup-credentials
 
 help: ## Show the supported operator command surface
 	@printf '%s\n' \
@@ -315,6 +330,8 @@ help-ops: ## Show operational and advanced service commands
 		'  make backup-now' \
 		'  make backup-restore-test' \
 		'  make platform-lifecycle-plan' \
+		'  make updates-check' \
+		'  make updates-plan' \
 		'  make coolify-upgrade-preflight' \
 		'  make uptime-plan UPTIME_HEALTH_URL=https://app.example.com/healthz' \
 		'  make verify-observability-runtime' \
@@ -446,7 +463,7 @@ validate-platform-lifecycle: ## Validate CRIT-011 Docker/Coolify version and upg
 	@$(PYTHON) $(PLATFORM_LIFECYCLE_CONTRACT_VALIDATOR) .
 
 test-platform-lifecycle: ## Run CRIT-011 Docker/Coolify lifecycle regression tests
-	@$(PYTHON) -m unittest tests.test_platform_lifecycle tests.test_platform_lifecycle_contract tests.test_coolify_upgrade_checkpoint tests.test_coolify_sentinel_inspect
+	@$(PYTHON) -m unittest tests.test_platform_lifecycle tests.test_platform_lifecycle_contract tests.test_coolify_upgrade_checkpoint tests.test_coolify_sentinel_inspect tests.test_remove_legacy_coolify_realtime
 
 platform-lifecycle-plan: validate-platform-lifecycle ## Show the reviewed Docker/Coolify lifecycle policy without network or mutation
 	@$(PYTHON) $(PLATFORM_LIFECYCLE) plan --policy "$(PLATFORM_LIFECYCLE_POLICY)"
@@ -470,7 +487,7 @@ coolify-evaluation-init: ## Initialize isolated controller state for the disposa
 	@test "$(abspath $(COOLIFY_EVALUATION_DATA_DIR))" != "$(abspath $(SOLO_VPS_DEFAULT_DATA_DIR))" || { printf '%s\n' 'ERROR: evaluation state must not use the normal Solo VPS data directory.' >&2; exit 2; }
 	@test "$(abspath $(SOLO_VPS_DATA_DIR))" = "$(abspath $(COOLIFY_EVALUATION_DATA_DIR))" || { printf '%s\n' 'ERROR: export SOLO_VPS_DATA_DIR=$$COOLIFY_EVALUATION_DATA_DIR before initialization.' >&2; exit 2; }
 	@install -d -m 0700 "$(COOLIFY_EVALUATION_DATA_DIR)"
-	@if test -e "$(COOLIFY_EVALUATION_MARKER)"; then grep -Fxq 'target_id=$(COOLIFY_EVALUATION_TARGET_ID)' "$(COOLIFY_EVALUATION_MARKER)" || { printf '%s\n' 'ERROR: evaluation state is already bound to another target ID.' >&2; exit 2; }; else printf '%s\n' 'purpose=coolify-4.3.21-disposable-evaluation' 'target_id=$(COOLIFY_EVALUATION_TARGET_ID)' > "$(COOLIFY_EVALUATION_MARKER)"; chmod 0600 "$(COOLIFY_EVALUATION_MARKER)"; fi
+	@if test -e "$(COOLIFY_EVALUATION_MARKER)"; then grep -Fxq 'target_id=$(COOLIFY_EVALUATION_TARGET_ID)' "$(COOLIFY_EVALUATION_MARKER)" || { printf '%s\n' 'ERROR: evaluation state is already bound to another target ID.' >&2; exit 2; }; else printf '%s\n' 'purpose=coolify-disposable-evaluation' 'target_id=$(COOLIFY_EVALUATION_TARGET_ID)' > "$(COOLIFY_EVALUATION_MARKER)"; chmod 0600 "$(COOLIFY_EVALUATION_MARKER)"; fi
 	@$(MAKE) --no-print-directory init
 
 check-coolify-evaluation-args:
@@ -481,19 +498,19 @@ check-coolify-evaluation-args:
 	@test -f "$(COOLIFY_EVALUATION_MARKER)" && grep -Fxq 'target_id=$(COOLIFY_EVALUATION_TARGET_ID)' "$(COOLIFY_EVALUATION_MARKER)" || { printf '%s\n' 'ERROR: run make coolify-evaluation-init for this disposable target first.' >&2; exit 2; }
 	@test -n "$(COOLIFY_SENTINEL_URL)" || { printf '%s\n' 'ERROR: COOLIFY_SENTINEL_URL is required and must be the candidate Coolify HTTPS dashboard URL.' >&2; exit 2; }
 
-coolify-evaluate-4-3-21-preflight: check-local-files check-coolify-evaluation-args ## Read-only disposable evaluation of 4.1.2 -> 4.3.21 and Sentinel prerequisites
-	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/coolify-evaluate-4-3-21-preflight.yml --extra-vars "@$(CONFIG)" --extra-vars "solo_vps_coolify_evaluation_target_id=$(COOLIFY_EVALUATION_TARGET_ID) solo_vps_coolify_evaluation_sentinel_url=$(COOLIFY_SENTINEL_URL)"
+coolify-evaluate-preflight: check-local-files check-coolify-evaluation-args ## Read-only disposable evaluation of previous -> reviewed target and Sentinel prerequisites
+	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/coolify-evaluate-preflight.yml --extra-vars "@$(CONFIG)" --extra-vars "solo_vps_coolify_evaluation_target_id=$(COOLIFY_EVALUATION_TARGET_ID) solo_vps_coolify_evaluation_sentinel_url=$(COOLIFY_SENTINEL_URL)"
 
-coolify-evaluate-4-3-21-upgrade: check-local-files check-coolify-evaluation-args ## MUTATING: evaluate exact 4.1.2 -> 4.3.21 only on a reviewed disposable VPS
-	@test "$(COOLIFY_EVALUATION_CONFIRM)" = "$(COOLIFY_EVALUATION_CONFIRM_REQUIRED)" || { printf '%s\n' 'ERROR: candidate mutation requires COOLIFY_EVALUATION_CONFIRM=I_HAVE_VERIFIED_A_DISPOSABLE_COOLIFY_4_3_21_TARGET.' >&2; exit 2; }
-	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/coolify-evaluate-4-3-21-upgrade.yml --extra-vars "@$(CONFIG)" --extra-vars "solo_vps_coolify_evaluation_target_id=$(COOLIFY_EVALUATION_TARGET_ID) solo_vps_coolify_evaluation_sentinel_url=$(COOLIFY_SENTINEL_URL) solo_vps_coolify_evaluation_confirm=$(COOLIFY_EVALUATION_CONFIRM) solo_vps_coolify_evaluation_interrupt_after_marker=$(COOLIFY_EVALUATION_INTERRUPT_AFTER_MARKER) solo_vps_coolify_upgrade_confirm=$(COOLIFY_UPGRADE_CONFIRM_REQUIRED)"
+coolify-evaluate-upgrade: check-local-files check-coolify-evaluation-args ## MUTATING: evaluate exact previous -> reviewed target only on a reviewed disposable VPS
+	@test "$(COOLIFY_EVALUATION_CONFIRM)" = "$(COOLIFY_EVALUATION_CONFIRM_REQUIRED)" || { printf '%s\n' 'ERROR: candidate mutation requires COOLIFY_EVALUATION_CONFIRM=I_HAVE_VERIFIED_A_DISPOSABLE_COOLIFY_TARGET.' >&2; exit 2; }
+	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/coolify-evaluate-upgrade.yml --extra-vars "@$(CONFIG)" --extra-vars "solo_vps_coolify_evaluation_target_id=$(COOLIFY_EVALUATION_TARGET_ID) solo_vps_coolify_evaluation_sentinel_url=$(COOLIFY_SENTINEL_URL) solo_vps_coolify_evaluation_confirm=$(COOLIFY_EVALUATION_CONFIRM) solo_vps_coolify_evaluation_interrupt_after_marker=$(COOLIFY_EVALUATION_INTERRUPT_AFTER_MARKER) solo_vps_coolify_upgrade_confirm=$(COOLIFY_UPGRADE_CONFIRM_REQUIRED)"
 
-coolify-evaluate-4-3-21-resume: check-local-files check-coolify-evaluation-args ## MUTATING: forward-resume an interrupted disposable candidate evaluation
-	@test "$(COOLIFY_EVALUATION_CONFIRM)" = "$(COOLIFY_EVALUATION_CONFIRM_REQUIRED)" || { printf '%s\n' 'ERROR: candidate resume requires COOLIFY_EVALUATION_CONFIRM=I_HAVE_VERIFIED_A_DISPOSABLE_COOLIFY_4_3_21_TARGET.' >&2; exit 2; }
-	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/coolify-evaluate-4-3-21-resume.yml --extra-vars "@$(CONFIG)" --extra-vars "solo_vps_coolify_evaluation_target_id=$(COOLIFY_EVALUATION_TARGET_ID) solo_vps_coolify_evaluation_sentinel_url=$(COOLIFY_SENTINEL_URL) solo_vps_coolify_evaluation_confirm=$(COOLIFY_EVALUATION_CONFIRM) solo_vps_coolify_upgrade_resume_confirm=$(COOLIFY_UPGRADE_RESUME_CONFIRM_REQUIRED)"
+coolify-evaluate-resume: check-local-files check-coolify-evaluation-args ## MUTATING: forward-resume an interrupted disposable candidate evaluation
+	@test "$(COOLIFY_EVALUATION_CONFIRM)" = "$(COOLIFY_EVALUATION_CONFIRM_REQUIRED)" || { printf '%s\n' 'ERROR: candidate resume requires COOLIFY_EVALUATION_CONFIRM=I_HAVE_VERIFIED_A_DISPOSABLE_COOLIFY_TARGET.' >&2; exit 2; }
+	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/coolify-evaluate-resume.yml --extra-vars "@$(CONFIG)" --extra-vars "solo_vps_coolify_evaluation_target_id=$(COOLIFY_EVALUATION_TARGET_ID) solo_vps_coolify_evaluation_sentinel_url=$(COOLIFY_SENTINEL_URL) solo_vps_coolify_evaluation_confirm=$(COOLIFY_EVALUATION_CONFIRM) solo_vps_coolify_upgrade_resume_confirm=$(COOLIFY_UPGRADE_RESUME_CONFIRM_REQUIRED)"
 
-verify-coolify-4-3-21-candidate: check-local-files check-coolify-evaluation-args ## Read-only verification of Coolify 4.3.21 plus Sentinel on the disposable target
-	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/verify-coolify-4-3-21-candidate.yml --extra-vars "@$(CONFIG)" --extra-vars "solo_vps_coolify_evaluation_target_id=$(COOLIFY_EVALUATION_TARGET_ID) solo_vps_coolify_evaluation_sentinel_url=$(COOLIFY_SENTINEL_URL)"
+verify-coolify-candidate: check-local-files check-coolify-evaluation-args ## Read-only verification of Coolify reviewed target plus Sentinel on the disposable target
+	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/verify-coolify-candidate.yml --extra-vars "@$(CONFIG)" --extra-vars "solo_vps_coolify_evaluation_target_id=$(COOLIFY_EVALUATION_TARGET_ID) solo_vps_coolify_evaluation_sentinel_url=$(COOLIFY_SENTINEL_URL)"
 
 validate-external-uptime: ## Validate the CRIT-015 provider-neutral external outage/alert contract without network access
 	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) $(EXTERNAL_UPTIME_CONTRACT_VALIDATOR) .
@@ -654,7 +671,7 @@ prove-disposable-clean-target: validate-disposable-clean-target test-disposable-
 
 ci-fast-source: validate-ai-coding validate-platform-lifecycle test-platform-lifecycle validate-documentation-governance test-documentation-governance validate-operator-surface test-operator-surface validate-application-migration-contract test-application-migration-contract validate-hosted-ci-contract test-hosted-ci-contract validate-disposable-clean-target test-disposable-clean-target validate-disaster-recovery test-disaster-recovery validate-backup-runtime test-backup-runtime validate-metrics-credentials test-metrics-credentials validate-metrics-runtime test-metrics-runtime validate-backup-policy test-backup-policy validate-database-backup-contract test-database-backup-contract validate-database-backup-runtime test-database-backup-runtime validate-state-layout test-state-layout validate-yaml validate-onboarding-contract test-onboarding-contract validate-coolify-contract test-coolify-install-backend validate-ci-template test-ci-template test-coolify-deploy-api validate-public-product-hygiene test-public-product-hygiene validate-qa-contract test-qa-contract validate-readme-contract test-readme-contract validate-architecture-docs test-architecture-docs validate-release-process test-release-process validate-external-uptime test-external-uptime ## Run the bounded source-only part of the public hosted CI gate
 
-ci-fast-source: test-source-update-prepare
+ci-fast-source: test-source-update-prepare test-updates-check test-doc-command-values
 
 ci-fast: ci-fast-source qa-tools qa-static ## Run the full public hosted CI fast gate, including the pinned real Ansible QA layer
 
@@ -690,7 +707,7 @@ qa-check: ## Verify exact persistent QA tool and Ansible collection versions wit
 
 qa-static: qa-check ## Run yamllint, real Ansible syntax checks, and ansible-lint using only the pinned local QA environment
 	@$(QA_YAMLLINT) -c .yamllint $(QA_YAML_PATHS)
-	@$(QA_PYTHON) -m unittest tests.test_docker_version_templates tests.test_firewall_listener_templates
+	@$(QA_PYTHON) -m unittest tests.test_docker_version_templates tests.test_firewall_listener_templates tests.test_coolify_release_templates
 	@ANSIBLE_COLLECTIONS_PATH="$(abspath $(QA_COLLECTIONS_DIR))" $(MAKE) --no-print-directory ansible-syntax ANSIBLE_PLAYBOOK="$(abspath $(QA_ANSIBLE_PLAYBOOK))" ANSIBLE_DOC="$(abspath $(QA_ANSIBLE_DOC))"
 	@ANSIBLE_COLLECTIONS_PATH="$(abspath $(QA_COLLECTIONS_DIR))" $(QA_ANSIBLE_LINT) --offline ansible/
 
@@ -753,7 +770,7 @@ plan-coolify-deploy-api: ## Print the exact loopback Coolify API mutation plan w
 check-coolify-deploy-api: ## Read-only validate the isolated Docker Image resource through loopback Coolify API
 	@test -n "$(COOLIFY_RESOURCE_UUID)" || { printf '%s\n' 'ERROR: COOLIFY_RESOURCE_UUID is required.' >&2; exit 2; }
 	@test -n "$(COOLIFY_IMAGE_REF)" || { printf '%s\n' 'ERROR: COOLIFY_IMAGE_REF is required.' >&2; exit 2; }
-	@test -n "$$COOLIFY_API_TOKEN_RW" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN_RW must be exported for API check; do not put it on the command line.' >&2; exit 2; }
+	@test -n "$$COOLIFY_API_TOKEN" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN must be exported for API check; do not put it on the command line.' >&2; exit 2; }
 	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) $(COOLIFY_DEPLOY_API) --base-url "$(COOLIFY_API_BASE_URL)" --resource-uuid "$(COOLIFY_RESOURCE_UUID)" --image-ref "$(COOLIFY_IMAGE_REF)" --check
 
 check-coolify-api-deploy-confirm: ## Refuse loopback Coolify API mutation without explicit operator confirmation
@@ -766,16 +783,14 @@ check-coolify-api-deploy-confirm: ## Refuse loopback Coolify API mutation withou
 deploy-coolify-image-api: check-coolify-api-deploy-confirm ## Deploy one exact immutable GHCR digest through loopback Coolify API
 	@test -n "$(COOLIFY_RESOURCE_UUID)" || { printf '%s\n' 'ERROR: COOLIFY_RESOURCE_UUID is required.' >&2; exit 2; }
 	@test -n "$(COOLIFY_IMAGE_REF)" || { printf '%s\n' 'ERROR: COOLIFY_IMAGE_REF is required.' >&2; exit 2; }
-	@test -n "$$COOLIFY_API_TOKEN_RW" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN_RW must be exported for API deployment; do not put it on the command line.' >&2; exit 2; }
-	@test -n "$$COOLIFY_API_TOKEN_DEPLOY" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN_DEPLOY must be exported for API deployment; do not put it on the command line.' >&2; exit 2; }
+	@test -n "$$COOLIFY_API_TOKEN" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN must be exported for API deployment; do not put it on the command line.' >&2; exit 2; }
 	@COOLIFY_API_DEPLOY_CONFIRM="$(COOLIFY_API_DEPLOY_CONFIRM)" PYTHONDONTWRITEBYTECODE=1 $(PYTHON) $(COOLIFY_DEPLOY_API) --base-url "$(COOLIFY_API_BASE_URL)" --resource-uuid "$(COOLIFY_RESOURCE_UUID)" --image-ref "$(COOLIFY_IMAGE_REF)" --apply
 
 # Maintainer-only destructive proof. Intentionally hidden from `make help` because
 # it starts one failed deployment before requiring automatic rollback to known-good.
 prove-coolify-deploy-rollback:
 	@test -n "$(COOLIFY_RESOURCE_UUID)" || { printf '%s\n' 'ERROR: COOLIFY_RESOURCE_UUID is required.' >&2; exit 2; }
-	@test -n "$$COOLIFY_API_TOKEN_RW" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN_RW must be exported for rollback proof; do not put it on the command line.' >&2; exit 2; }
-	@test -n "$$COOLIFY_API_TOKEN_DEPLOY" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN_DEPLOY must be exported for rollback proof; do not put it on the command line.' >&2; exit 2; }
+	@test -n "$$COOLIFY_API_TOKEN" || { printf '%s\n' 'ERROR: COOLIFY_API_TOKEN must be exported for rollback proof; do not put it on the command line.' >&2; exit 2; }
 	@test "$(COOLIFY_ROLLBACK_PROOF_CONFIRM)" = "$(COOLIFY_ROLLBACK_PROOF_CONFIRM_REQUIRED)" || { \
 		printf '%s\n' 'ERROR: rollback proof deliberately starts a failed deployment.' \
 		  'Re-run with COOLIFY_ROLLBACK_PROOF_CONFIRM=$(COOLIFY_ROLLBACK_PROOF_CONFIRM_REQUIRED)' >&2; \
@@ -1044,10 +1059,10 @@ ansible-syntax: check-ansible-deps ## Run Ansible syntax checks against safe exa
 	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-upgrade-preflight.yml --syntax-check -e @$(EXAMPLE_CONFIG)
 	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-upgrade.yml --syntax-check -e @$(EXAMPLE_CONFIG)
 	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-upgrade-resume.yml --syntax-check -e @$(EXAMPLE_CONFIG)
-	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-evaluate-4-3-21-preflight.yml --syntax-check -e @$(EXAMPLE_CONFIG) -e solo_vps_coolify_evaluation_target_id=syntax-check -e solo_vps_coolify_evaluation_sentinel_url=https://coolify.example.com
-	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-evaluate-4-3-21-upgrade.yml --syntax-check -e @$(EXAMPLE_CONFIG) -e solo_vps_coolify_evaluation_target_id=syntax-check -e solo_vps_coolify_evaluation_sentinel_url=https://coolify.example.com
-	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-evaluate-4-3-21-resume.yml --syntax-check -e @$(EXAMPLE_CONFIG) -e solo_vps_coolify_evaluation_target_id=syntax-check -e solo_vps_coolify_evaluation_sentinel_url=https://coolify.example.com
-	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/verify-coolify-4-3-21-candidate.yml --syntax-check -e @$(EXAMPLE_CONFIG) -e solo_vps_coolify_evaluation_target_id=syntax-check -e solo_vps_coolify_evaluation_sentinel_url=https://coolify.example.com
+	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-evaluate-preflight.yml --syntax-check -e @$(EXAMPLE_CONFIG) -e solo_vps_coolify_evaluation_target_id=syntax-check -e solo_vps_coolify_evaluation_sentinel_url=https://coolify.example.com
+	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-evaluate-upgrade.yml --syntax-check -e @$(EXAMPLE_CONFIG) -e solo_vps_coolify_evaluation_target_id=syntax-check -e solo_vps_coolify_evaluation_sentinel_url=https://coolify.example.com
+	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-evaluate-resume.yml --syntax-check -e @$(EXAMPLE_CONFIG) -e solo_vps_coolify_evaluation_target_id=syntax-check -e solo_vps_coolify_evaluation_sentinel_url=https://coolify.example.com
+	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/verify-coolify-candidate.yml --syntax-check -e @$(EXAMPLE_CONFIG) -e solo_vps_coolify_evaluation_target_id=syntax-check -e solo_vps_coolify_evaluation_sentinel_url=https://coolify.example.com
 	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/backup-tooling.yml --syntax-check -e @$(EXAMPLE_CONFIG)
 	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/verify-backup-tooling.yml --syntax-check -e @$(EXAMPLE_CONFIG)
 	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/backup-readiness.yml --syntax-check -e @$(EXAMPLE_CONFIG)

@@ -4,6 +4,8 @@ Continue from [part one](../quick-start.md): your VPS is configured and the Cool
 
 Every required action is on this page. Reference pages are for additional configuration after you finish.
 
+Open **Your values for commands** at the top of the page and enter your IP, administrator username and domains once. Copyable blocks use these values, kept only in this tab until it closes. Clear them with the form button. Do not enter passwords, keys or tokens. Without JavaScript, use the original commands and input prompts. Linux/WSL prompts use `printf` + `read`, compatible with Bash and zsh.
+
 ## Before you begin
 
 Your workstation needs Git, Python 3.12 or newer, and the same Solo VPS source you used on the server. For a ZIP, extract it into a separate `solo-vps` directory. Start commands in the directory containing `Makefile` and `scripts`.
@@ -64,11 +66,11 @@ Before committing, make sure Git has a global author name and email for the new 
 
     ```bash
     if ! git config --global user.name >/dev/null; then
-      read -r -p 'Git author name: ' GIT_AUTHOR_NAME
+      printf '%s' 'Git author name: '; read -r GIT_AUTHOR_NAME
       git config --global user.name "$GIT_AUTHOR_NAME"
     fi
     if ! git config --global user.email >/dev/null; then
-      read -r -p 'Git author email: ' GIT_AUTHOR_EMAIL
+      printf '%s' 'Git author email: '; read -r GIT_AUTHOR_EMAIL
       git config --global user.email "$GIT_AUTHOR_EMAIL"
     fi
     ```
@@ -99,7 +101,7 @@ Your separate repository now contains the application, Dockerfile and complete w
 === "Linux"
 
     ```bash
-    read -r -p 'New application repository URL: ' APPLICATION_REPOSITORY_URL
+    printf '%s' 'New application repository URL: '; read -r APPLICATION_REPOSITORY_URL
     git remote add origin "$APPLICATION_REPOSITORY_URL"
     git push -u origin main
     ```
@@ -218,8 +220,8 @@ GitHub Actions will use this key. Your personal administrator key is not needed 
     Transfer only the public part to the VPS:
 
     ```bash
-    read -r -p 'VPS IPv4 address: ' SERVER_IP
-    read -r -p 'Linux administrator username: ' ADMIN_USER
+    printf '%s' 'VPS IPv4 address: '; read -r SERVER_IP
+    printf '%s' 'Linux administrator username: '; read -r ADMIN_USER
     scp ~/.ssh/solo-vps-demo-ci.pub "${ADMIN_USER}@${SERVER_IP}:/home/${ADMIN_USER}/.ssh/solo-vps-demo-ci.pub"
     ```
 
@@ -240,8 +242,8 @@ The private file without `.pub` stays on your workstation.
 === "Linux"
 
     ```bash
-    read -r -p 'VPS IPv4 address: ' SERVER_IP
-    read -r -p 'Linux administrator username: ' ADMIN_USER
+    printf '%s' 'VPS IPv4 address: '; read -r SERVER_IP
+    printf '%s' 'Linux administrator username: '; read -r ADMIN_USER
     ssh "${ADMIN_USER}@${SERVER_IP}"
     ```
 
@@ -264,7 +266,7 @@ If that section already exists, edit its field instead of adding a duplicate. A 
 **On the VPS as the administrator, in the same directory:**
 
 ```bash
-read -r -p 'VPS IPv4 address: ' SERVER_IP
+printf '%s' 'VPS IPv4 address: '; read -r SERVER_IP
 make plan-ci-deploy-transport CI_DEPLOY_SERVER_HOST="$SERVER_IP" CI_DEPLOY_PUBLIC_KEY_FILE="$HOME/.ssh/solo-vps-demo-ci.pub"
 ```
 
@@ -294,8 +296,10 @@ The command prints only the ready-to-use `SHA256:...` value. Copy it **in full, 
 
 **Second — `SOLO_VPS_SSH_KNOWN_HOSTS`, the server's own key line:**
 
+**On the VPS in your trusted SSH session (not in workstation WSL):**
+
 ```bash
-read -r -p 'VPS IPv4 address: ' SERVER_IP
+printf '%s' 'VPS IPv4 address: '; read -r SERVER_IP
 awk -v host="$SERVER_IP" '{print host " " $1 " " $2}' /etc/ssh/ssh_host_ed25519_key.pub
 ```
 
@@ -303,21 +307,18 @@ Copy the entire single line `IP ssh-ed25519 ...`. This is `SOLO_VPS_SSH_KNOWN_HO
 
 The first value checks the key CI uses to connect. The second lets CI recognize your server. Both are public; the private server key is not needed.
 
-## 10. Create two scoped Coolify API tokens
+## 10. Create one Coolify API token
 
 **In Coolify as the administrator:**
 
-1. Open sidebar **Settings**, then **Configuration → Advanced**.
-2. Enable **API Access** and save the change.
-3. Select **Keys & Tokens** in the left sidebar, then the **API Tokens** tab. The page heading is **Security**.
-4. Create the first token with **Description** `solo-vps-demo CI read-write`. Keep **30 days** expiry, keep `read` selected and add `write`. Leave `deploy`, `root` and `read:sensitive` unchecked.
-5. Select **Create** and immediately copy the value into your password manager as `COOLIFY_API_TOKEN_RW`: it is shown only once.
-6. Create a second token with **Description** `solo-vps-demo CI deploy`. Keep **30 days** expiry and select `deploy`. In Coolify 4.3.21, `deploy` is an exclusive non-root permission, so the **Permissions** line should contain only `deploy`.
-7. Select **Create** and immediately copy the value as `COOLIFY_API_TOKEN_DEPLOY`.
+1. Open **Settings → Configuration → Advanced**, enable **API Access** and save.
+2. Open **Keys & Tokens → API Tokens** in the team containing your application.
+3. Create `solo-vps-demo CI` with **30 days** expiry and all three permissions: **read**, **write**, **deploy**. Leave `root` and `read:sensitive` unchecked.
+4. Save the value in your password manager as `COOLIFY_API_TOKEN`; it is displayed only once.
 
-The split is intentional. Coolify 4.3.21 separates read/write API routes from deployment routes and its token UI does not create one non-root token containing `read`, `write` and `deploy` together. Solo VPS therefore uses two least-privilege tokens instead of a `root` token. Both tokens cover the current Coolify team rather than just one application; use the team containing `solo-vps-demo` for this walkthrough.
+The same token checks the application, changes its immutable image and starts deployment. Its scope is the Coolify team, not one application.
 
-Open the application and copy its UUID from the address bar: the segment after `/application/`, ending before the next `/` or `?`, if present. Do not use the project, environment or server UUID. This is `COOLIFY_RESOURCE_UUID`.
+Copy the application's UUID from its URL: the part after `/application/` until the next `/` or `?`. This is `COOLIFY_RESOURCE_UUID`, not a project or server UUID.
 
 ## 11. Fill in the GitHub production environment {#github-production}
 
@@ -330,8 +331,7 @@ Open the application and copy its UUID from the address bar: the segment after `
 | Name | Secret |
 | --- | --- |
 | `SOLO_VPS_DEPLOY_SSH_KEY` | The entire private CI key, including the `BEGIN OPENSSH PRIVATE KEY` and `END OPENSSH PRIVATE KEY` lines |
-| `COOLIFY_API_TOKEN_RW` | The `read` + `write` token from the previous step |
-| `COOLIFY_API_TOKEN_DEPLOY` | The deploy-only token from the previous step |
+| `COOLIFY_API_TOKEN` | The combined `read`, `write`, `deploy` token |
 
 To copy the private **CI key**, run **on your workstation**:
 
@@ -484,7 +484,7 @@ A re-run uses the original commit. If `main` has advanced, the freshness check s
 | Domain does not open | A record, no incorrect AAAA record, provider ports 80/443, Proxy Running and deployment log |
 | Deploy job is skipped after merge | `SOLO_VPS_DEPLOY_ENABLED=true` belongs in repository variables; inspect the `main` run, not the PR |
 | CI SSH verification fails | Secret must contain the private CI key; fingerprint identifies that key; known_hosts identifies the server at the same IP |
-| API returns 401/403 | API Access, both token expiries, `read` + `write` on `COOLIFY_API_TOKEN_RW`, and deploy-only `COOLIFY_API_TOKEN_DEPLOY` |
+| API returns 401/403 | API Access, token expiry and `read`, `write`, `deploy` on `COOLIFY_API_TOKEN` |
 | CI reports timeout or unknown status | Inspect Coolify Deployments first: the original deployment may still be running. Follow the [rollback guide](deployment-rollback.md) for further action |
 
-UI labels were reviewed for the supported Coolify `4.3.21` line and against the current upstream documentation. Further details: [Coolify Docker Image deployment](https://coolify.io/docs/applications/), [Coolify API tokens](https://coolify.io/docs/api-reference/authorization), [GitHub environments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
+The original UI walkthrough was exercised on Coolify `4.3.21`; the current release has controlled upgrade, one-token deployment/rollback, websocket and terminal evidence. A fresh UI walkthrough remains a separate check. Further details: [Coolify Docker Image deployment](https://coolify.io/docs/applications/), [Coolify API tokens](https://coolify.io/docs/api-reference/authorization), [GitHub environments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).

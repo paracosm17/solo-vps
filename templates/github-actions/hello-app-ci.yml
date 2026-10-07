@@ -243,8 +243,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           SOLO_VPS_DEPLOY_SSH_KEY: ${{ secrets.SOLO_VPS_DEPLOY_SSH_KEY }}
-          COOLIFY_API_TOKEN_RW: ${{ secrets.COOLIFY_API_TOKEN_RW }}
-          COOLIFY_API_TOKEN_DEPLOY: ${{ secrets.COOLIFY_API_TOKEN_DEPLOY }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
           COOLIFY_API_DEPLOY_CONFIRM: I_HAVE_REVIEWED_THE_LOOPBACK_COOLIFY_API_DEPLOYMENT
         run: |
           set -euo pipefail
@@ -283,8 +282,7 @@ jobs:
           [[ "${COOLIFY_RESOURCE_UUID}" =~ ^[a-z0-9]{8,64}$ ]] || fail_deploy_config 'Set COOLIFY_RESOURCE_UUID in environment production to the application UUID.'
           [[ "${SOLO_VPS_DEPLOY_SSH_FINGERPRINT}" =~ ^SHA256:[A-Za-z0-9+/]+$ ]] || fail_deploy_config 'SOLO_VPS_DEPLOY_SSH_FINGERPRINT must start with SHA256:. Copy the full fingerprint from first-app step 9.'
           [[ -n "${SOLO_VPS_DEPLOY_SSH_KEY}" ]] || fail_deploy_config 'Add the private CI key as secret SOLO_VPS_DEPLOY_SSH_KEY in environment production.'
-          [[ -n "${COOLIFY_API_TOKEN_RW}" ]] || fail_deploy_config 'Add read/write secret COOLIFY_API_TOKEN_RW in environment production.'
-          [[ -n "${COOLIFY_API_TOKEN_DEPLOY}" ]] || fail_deploy_config 'Add deploy-only secret COOLIFY_API_TOKEN_DEPLOY in environment production.'
+          [[ -n "${COOLIFY_API_TOKEN}" ]] || fail_deploy_config 'Add read/write/deploy secret COOLIFY_API_TOKEN in environment production.'
           [[ "${SOLO_VPS_SSH_KNOWN_HOSTS}" != *$'\n'* ]] || fail_deploy_config 'SOLO_VPS_SSH_KNOWN_HOSTS must contain exactly one server-key line, without a trailing newline.'
 
           read -r known_host known_type known_key known_extra <<< "${SOLO_VPS_SSH_KNOWN_HOSTS}"

@@ -10,12 +10,6 @@
   changed_when: false
   register: solo_vps_coolify_verify_main_initial_raw
 
-- name: Inspect the Coolify realtime container before health wait
-  ansible.builtin.command:
-    argv: ["{{ solo_vps_coolify_docker_binary }}", container, inspect, coolify-realtime]
-  changed_when: false
-  register: solo_vps_coolify_verify_realtime_initial_raw
-
 - name: Wait for the Coolify application healthcheck
   ansible.builtin.command:
     argv:
@@ -43,7 +37,7 @@
 
 - name: Probe the loopback Coolify realtime readiness endpoint
   ansible.builtin.uri:
-    url: http://127.0.0.1:6001/ready
+    url: http://127.0.0.1:6001/up
     method: GET
     status_code: 200
     return_content: false
@@ -69,18 +63,12 @@
   changed_when: false
   register: solo_vps_coolify_verify_main_raw
 
-- name: Re-inspect the Coolify realtime container after health wait
-  ansible.builtin.command:
-    argv: ["{{ solo_vps_coolify_docker_binary }}", container, inspect, coolify-realtime]
-  changed_when: false
-  register: solo_vps_coolify_verify_realtime_raw
-
 - name: Derive runtime verification evidence
   ansible.builtin.set_fact:
     solo_vps_coolify_verify_docker_config: >-
       {{ solo_vps_coolify_verify_docker_config_raw.content | b64decode | from_json }}
     solo_vps_coolify_verify_main: "{{ (solo_vps_coolify_verify_main_raw.stdout | from_json)[0] }}"
-    solo_vps_coolify_verify_realtime: "{{ (solo_vps_coolify_verify_realtime_raw.stdout | from_json)[0] }}"
+    solo_vps_coolify_verify_realtime: "{{ (solo_vps_coolify_verify_main_raw.stdout | from_json)[0] }}"
 
 - name: Report Coolify runtime evidence before enforcing it
   ansible.builtin.debug:

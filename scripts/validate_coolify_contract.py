@@ -3,6 +3,11 @@
 
 from __future__ import annotations
 
+try:
+    from scripts.coolify_release import load_release, load_defaults, variables
+except ModuleNotFoundError:
+    from coolify_release import load_release, load_defaults, variables
+
 import argparse
 import pathlib
 import re
@@ -29,8 +34,8 @@ def fail(message: str) -> int:
 def main() -> int:
     args = parse_args()
     try:
-        data = yaml.safe_load(args.defaults.read_text(encoding="utf-8"))
-    except (OSError, yaml.YAMLError) as exc:
+        data = load_defaults(args.defaults)
+    except (OSError, ValueError, yaml.YAMLError) as exc:
         return fail(f"cannot read/parse {args.defaults}: {exc}")
 
     if not isinstance(data, dict):
@@ -73,7 +78,7 @@ def main() -> int:
         names.add(name)
         # The YAML URLs intentionally use a Jinja base variable, so validate both
         # the source host contract and the committed checksum locally.
-        if not isinstance(url, str) or "solo_vps_coolify_release_base_url" not in url:
+        if not isinstance(url, str) or not url.startswith(f"https://raw.githubusercontent.com/coollabsio/coolify/v{version}/"):
             return fail(f"{name}: URL must derive from the pinned release base URL")
         if not isinstance(checksum, str) or not SHA256_RE.fullmatch(checksum):
             return fail(f"{name}: checksum must be sha256:<64 lowercase hex>")

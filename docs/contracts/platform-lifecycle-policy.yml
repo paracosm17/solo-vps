@@ -14,12 +14,9 @@ docker:
   automatic_major_upgrade: false
 
 coolify:
-  current_supported: "4.3.21"
-  previous_supported: "4.1.2"
+  release_manifest: config/coolify-release.yml
   automatic_updates: false
   supported_upgrade:
-    from: "4.1.2"
-    to: "4.3.21"
     exact_target_artifacts: true
     require_fresh_restic_backup: false
     require_verified_offsite_instance_database_backup: false
@@ -31,5 +28,4 @@ coolify:
 
 validation:
   docker_29_maintained_host: V3
-  coolify_current_maintained_host: V3
-  coolify_previous_to_current_upgrade: V3-disposable-vps
+  coolify_release_evidence: config/coolify-release.yml#qualification

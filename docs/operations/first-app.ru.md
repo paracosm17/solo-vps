@@ -4,6 +4,8 @@
 
 Все обязательные действия находятся на этой странице. Справочник понадобится только для дополнительных настроек после завершения.
 
+Откройте форму **«Ваши значения для команд»** вверху страницы и один раз введите IP, имя администратора и нужные домены. Значения подставятся в блоки для копирования и сохранятся только в этой вкладке до её закрытия. Можно очистить их кнопкой в форме. Пароли, ключи и токены вводить не нужно. Без JavaScript используйте исходные команды с вводом значений. В Linux/WSL используйте Bash или zsh; запросы `printf` + `read` работают в обеих оболочках.
+
 ## Перед началом
 
 На компьютере нужны Git, Python 3.12 или новее и та же копия Solo VPS, которую вы использовали на сервере. Для ZIP распакуйте исходники в отдельный каталог `solo-vps`. Команды запускаются из каталога с `Makefile` и `scripts`.
@@ -64,11 +66,11 @@
 
     ```bash
     if ! git config --global user.name >/dev/null; then
-      read -r -p 'Имя автора Git: ' GIT_AUTHOR_NAME
+      printf '%s' 'Имя автора Git: '; read -r GIT_AUTHOR_NAME
       git config --global user.name "$GIT_AUTHOR_NAME"
     fi
     if ! git config --global user.email >/dev/null; then
-      read -r -p 'Email автора Git: ' GIT_AUTHOR_EMAIL
+      printf '%s' 'Email автора Git: '; read -r GIT_AUTHOR_EMAIL
       git config --global user.email "$GIT_AUTHOR_EMAIL"
     fi
     ```
@@ -99,7 +101,7 @@ git commit -m "Create demo application"
 === "Linux"
 
     ```bash
-    read -r -p 'URL нового репозитория приложения: ' APPLICATION_REPOSITORY_URL
+    printf '%s' 'URL нового репозитория приложения: '; read -r APPLICATION_REPOSITORY_URL
     git remote add origin "$APPLICATION_REPOSITORY_URL"
     git push -u origin main
     ```
@@ -218,8 +220,8 @@ ghcr.io/<github-owner>/solo-vps-demo@sha256:<64-hex-digest>
     Передайте на VPS только публичную часть:
 
     ```bash
-    read -r -p 'IPv4 VPS: ' SERVER_IP
-    read -r -p 'Имя администратора Linux: ' ADMIN_USER
+    printf '%s' 'IPv4 VPS: '; read -r SERVER_IP
+    printf '%s' 'Имя администратора Linux: '; read -r ADMIN_USER
     scp ~/.ssh/solo-vps-demo-ci.pub "${ADMIN_USER}@${SERVER_IP}:/home/${ADMIN_USER}/.ssh/solo-vps-demo-ci.pub"
     ```
 
@@ -240,8 +242,8 @@ ghcr.io/<github-owner>/solo-vps-demo@sha256:<64-hex-digest>
 === "Linux"
 
     ```bash
-    read -r -p 'IPv4 VPS: ' SERVER_IP
-    read -r -p 'Имя администратора Linux: ' ADMIN_USER
+    printf '%s' 'IPv4 VPS: '; read -r SERVER_IP
+    printf '%s' 'Имя администратора Linux: '; read -r ADMIN_USER
     ssh "${ADMIN_USER}@${SERVER_IP}"
     ```
 
@@ -264,7 +266,7 @@ ci_deploy:
 **На VPS под администратором, в том же каталоге:**
 
 ```bash
-read -r -p 'IPv4 VPS: ' SERVER_IP
+printf '%s' 'IPv4 VPS: '; read -r SERVER_IP
 make plan-ci-deploy-transport CI_DEPLOY_SERVER_HOST="$SERVER_IP" CI_DEPLOY_PUBLIC_KEY_FILE="$HOME/.ssh/solo-vps-demo-ci.pub"
 ```
 
@@ -294,8 +296,10 @@ ssh-keygen -lf ~/.ssh/solo-vps-demo-ci.pub -E sha256 | awk '{print $2}'
 
 **Второе — `SOLO_VPS_SSH_KNOWN_HOSTS`, строка ключа самого сервера:**
 
+**На VPS, в открытой доверенной SSH-сессии (не в WSL на компьютере):**
+
 ```bash
-read -r -p 'IPv4 VPS: ' SERVER_IP
+printf '%s' 'IPv4 VPS: '; read -r SERVER_IP
 awk -v host="$SERVER_IP" '{print host " " $1 " " $2}' /etc/ssh/ssh_host_ed25519_key.pub
 ```
 
@@ -303,21 +307,18 @@ awk -v host="$SERVER_IP" '{print host " " $1 " " $2}' /etc/ssh/ssh_host_ed25519_
 
 Первое значение проверяет ключ, с которым входит CI. Второе позволяет CI узнать ваш сервер. Оба публичные; приватный серверный ключ не нужен.
 
-## 10. Создайте два scoped API-токена в Coolify
+## 10. Создайте единый API-токен в Coolify
 
 **В Coolify под администратором:**
 
-1. Откройте **Settings** в левом меню, затем **Configuration → Advanced**.
-2. Включите **API Access** и сохраните изменение.
-3. В левом меню нажмите **Keys & Tokens**, затем вкладку **API Tokens**. Заголовок открывшейся страницы — **Security**.
-4. Создайте первый токен: **Description** — `solo-vps-demo CI read-write`. Оставьте срок **30 days**, сохраните выбранное `read` и добавьте `write`. `deploy`, `root` и `read:sensitive` не отмечайте.
-5. Нажмите **Create** и сразу сохраните значение в менеджере паролей как `COOLIFY_API_TOKEN_RW`: повторно оно не показывается.
-6. Создайте второй токен: **Description** — `solo-vps-demo CI deploy`. Оставьте **30 days** и выберите `deploy`. В Coolify 4.3.21 `deploy` — отдельное exclusive non-root право, поэтому в строке **Permissions** должно остаться только `deploy`.
-7. Нажмите **Create** и сразу сохраните значение как `COOLIFY_API_TOKEN_DEPLOY`.
+1. Откройте **Settings → Configuration → Advanced**, включите **API Access** и сохраните.
+2. Откройте **Keys & Tokens → API Tokens** в команде, где находится приложение.
+3. Создайте токен `solo-vps-demo CI` со сроком **30 days** и тремя правами: **read**, **write**, **deploy**. Не выбирайте `root` и `read:sensitive`.
+4. Сохраните значение в менеджере паролей как `COOLIFY_API_TOKEN`: повторно оно не показывается.
 
-Разделение сделано намеренно. Coolify 4.3.21 отделяет read/write API routes от deployment routes, а UI токенов не создаёт один non-root токен с `read`, `write` и `deploy` одновременно. Поэтому Solo VPS использует два токена с минимальными правами вместо `root`. Оба токена действуют в рамках текущей команды Coolify, а не только одного приложения; для демонстрации используйте команду, где создан `solo-vps-demo`.
+Один токен используется для проверки приложения, изменения immutable image и запуска деплоя. Он действует в рамках команды Coolify, а не одного приложения.
 
-Откройте приложение и скопируйте его UUID из адресной строки — часть после `/application/` и до следующего `/` или `?`, если они есть. Не берите UUID проекта, окружения или сервера. Это значение для `COOLIFY_RESOURCE_UUID`.
+Откройте приложение и скопируйте UUID из URL: часть после `/application/` до следующего `/` или `?`. Это `COOLIFY_RESOURCE_UUID`, не UUID проекта или сервера.
 
 ## 11. Заполните окружение production в GitHub {#github-production}
 
@@ -325,13 +326,12 @@ awk -v host="$SERVER_IP" '{print host " " $1 " " $2}' /etc/ssh/ssh_host_ed25519_
 
 1. Откройте **Settings → Environments**.
 2. Нажмите **New environment**, введите `production`, затем **Configure environment**. Если оно уже существует, откройте его.
-3. В **Environment secrets → Add Secret** создайте три секрета:
+3. В **Environment secrets → Add Secret** создайте два секрета:
 
 | Name | Secret |
 | --- | --- |
 | `SOLO_VPS_DEPLOY_SSH_KEY` | Весь приватный CI-ключ, включая строки `BEGIN OPENSSH PRIVATE KEY` и `END OPENSSH PRIVATE KEY` |
-| `COOLIFY_API_TOKEN_RW` | Токен `read` + `write` из предыдущего шага |
-| `COOLIFY_API_TOKEN_DEPLOY` | Deploy-only токен из предыдущего шага |
+| `COOLIFY_API_TOKEN` | Единый токен с правами `read`, `write`, `deploy` |
 
 Чтобы скопировать приватный **CI-ключ**, выполните **на компьютере**:
 
@@ -484,7 +484,7 @@ GitHub хранит два секрета **для деплоя**. Coolify хр�
 | Домен не открывается | A-запись, отсутствие ошибочной AAAA, порты 80/443 у провайдера, Proxy Running и лог деплоя |
 | Deploy job пропущен после merge | `SOLO_VPS_DEPLOY_ENABLED=true` нужна в repository variables; смотрите запуск `main`, не PR |
 | SSH-проверка CI не прошла | Secret должен содержать приватный CI-ключ; fingerprint — от него; known_hosts — от сервера с тем же IP |
-| API отвечает 401/403 | API Access, срок обоих токенов, `read` + `write` у `COOLIFY_API_TOKEN_RW` и только `deploy` у `COOLIFY_API_TOKEN_DEPLOY` |
+| API отвечает 401/403 | API Access, срок токена и права `read`, `write`, `deploy` у `COOLIFY_API_TOKEN` |
 | CI сообщает timeout или неизвестный статус | Сначала откройте Coolify Deployments: исходный деплой ещё может идти. Порядок дальнейших действий — в [инструкции по откату](deployment-rollback.md) |
 
-Названия UI проверены для поддерживаемой линии Coolify `4.3.21` и сверены с актуальной upstream-документацией. Для уточнений: [деплой Docker Image в Coolify](https://coolify.io/docs/applications/), [API-токены Coolify](https://coolify.io/docs/api-reference/authorization), [окружения GitHub](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
+Исходный путь по UI проверен на Coolify `4.3.21`; для текущей версии проверены обновление, деплой/откат одним токеном, websocket и терминал. Проход интерфейса с нуля остаётся отдельной проверкой. Для уточнений: [деплой Docker Image в Coolify](https://coolify.io/docs/applications/), [API-токены Coolify](https://coolify.io/docs/api-reference/authorization), [окружения GitHub](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).

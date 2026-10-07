@@ -2,12 +2,12 @@
 - name: Run target preflight before disposable Coolify candidate inspection
   ansible.builtin.import_playbook: preflight.yml
 
-- name: Inspect the disposable 4.1.2 to 4.3.21 evaluation path without mutation
+- name: Inspect the disposable previous to reviewed target evaluation path without mutation
   hosts: all
   become: true
   gather_facts: true
   vars_files:
-    - coolify-4.3.21-evaluation-vars.yml
+    - coolify-evaluation-vars.yml
   tasks:
     - name: Verify evaluation-only Sentinel prerequisites
       ansible.builtin.import_role:

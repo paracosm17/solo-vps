@@ -35,7 +35,7 @@ It is built for developers running their own services, side projects or small pr
 
 **Solo VPS configures the host. Coolify runs the applications. GitHub Actions builds the images.** After connecting the delivery workflow, a push to your application's `main` branch starts the checks and deployment. You can follow the result in GitHub and Coolify without opening an SSH session for each release.
 
-The maintained setup is **one application VPS** with Coolify **4.3.21**. Backups and monitoring are optional and can be configured after your first application is running. Multi-server clusters, high availability and automated team access management are outside the current scope.
+The maintained setup is **one application VPS**. The reviewed Coolify release, supported upgrade origin and qualification are defined in [the release manifest](config/coolify-release.yml); see [upgrades](docs/upgrades.md) for the procedure. Backups and monitoring are optional and can be configured after your first application is running. Multi-server clusters, high availability and automated team access management are outside the current scope.
 
 ## Quick Start
 
