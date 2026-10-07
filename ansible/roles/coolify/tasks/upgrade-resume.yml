@@ -111,6 +111,9 @@
   changed_when: false
   no_log: true
 
+- name: Release legacy realtime ports before retrying the exact target
+  ansible.builtin.import_tasks: retire-legacy-realtime.yml
+
 - name: Retry only the current supported Coolify target
   ansible.builtin.command:
     argv:

@@ -120,6 +120,10 @@ def validate(root: Path) -> None:
     require("--require-existing --reverb --check" in preflight, "custom realtime configuration must be rejected before mutation")
     require("release_identity={{ solo_vps_coolify_release_identity }}" in apply, "transaction must bind reviewed artifacts and port override")
     require("'release_identity=' ~ solo_vps_coolify_release_identity" in resume, "resume must enforce the same reviewed artifacts and override")
+    require(apply.index('retire-legacy-realtime.yml') < apply.index('Start the exact target Coolify release'),
+            'legacy realtime ports must be released before the embedded runtime starts')
+    require(resume.index('retire-legacy-realtime.yml') < resume.index('Retry only the current supported Coolify target'),
+            'resume must release legacy realtime ports before retrying the target')
     marker_checks = [condition for task in yaml.safe_load(resume)
                      for condition in task.get("ansible.builtin.assert", {}).get("that", [])
                      if isinstance(condition, str) and "solo_vps_coolify_upgrade_resume_marker_raw" in condition]

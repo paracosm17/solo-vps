@@ -463,7 +463,7 @@ validate-platform-lifecycle: ## Validate CRIT-011 Docker/Coolify version and upg
 	@$(PYTHON) $(PLATFORM_LIFECYCLE_CONTRACT_VALIDATOR) .
 
 test-platform-lifecycle: ## Run CRIT-011 Docker/Coolify lifecycle regression tests
-	@$(PYTHON) -m unittest tests.test_platform_lifecycle tests.test_platform_lifecycle_contract tests.test_coolify_upgrade_checkpoint tests.test_coolify_sentinel_inspect
+	@$(PYTHON) -m unittest tests.test_platform_lifecycle tests.test_platform_lifecycle_contract tests.test_coolify_upgrade_checkpoint tests.test_coolify_sentinel_inspect tests.test_remove_legacy_coolify_realtime
 
 platform-lifecycle-plan: validate-platform-lifecycle ## Show the reviewed Docker/Coolify lifecycle policy without network or mutation
 	@$(PYTHON) $(PLATFORM_LIFECYCLE) plan --policy "$(PLATFORM_LIFECYCLE_POLICY)"
