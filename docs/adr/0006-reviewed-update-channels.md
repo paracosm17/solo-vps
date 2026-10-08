@@ -25,6 +25,16 @@ Coolify's explicit proxy Compose invocation does not load an implicit override. 
 
 ## Consequences and qualification
 
+Traefik updates are a separate explicit native lifecycle, also described by the
+shared release manifest. The controller verifies reviewed source content and an
+immutable target digest, changes only the image scalar, records a private checkpoint
+before Save and retains a transaction for explicit resume. Rollback pins the saved
+previous digest because native StartProxy pulls before recreation; registry access
+is required. Saved proxy files are retained for manual recovery and current
+certificates are not overwritten automatically. The ordinary ports-only reconciler
+does not change the proxy image. Image IDs may expose a containerd index or classic
+Docker platform-config identity; both reviewed representations are explicit.
+
 Operators update Solo VPS source when a newer reviewed integration is needed, and update Coolify as a separate explicit action. The checkout cannot verify arbitrary future Coolify versions. This preserves one host owner and one application platform owner.
 
 The disposable `4.3.21 → 4.4.0` transition passed V3 qualification: interruption/resume, checkpoint database restore, no-op rerun, private ports, working Reverb/terminal, Sentinel delivery, unchanged Docker/SSH identity, one-token immutable app delivery/rollback and reboot. See [the runtime record](https://github.com/paracosm17/solo-vps/blob/main/reviews/2026-10-07-coolify-440-runtime.md). Fresh installation, production migration and release publication remain separate gates and owner actions.

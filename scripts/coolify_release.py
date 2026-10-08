@@ -44,6 +44,24 @@ def validate_manifest(data: object) -> dict:
         raise ValueError("Sentinel requires reviewed x86_64 content identity")
     if not SHA256.fullmatch(str(data['upgrade_from']['sentinel'].get('image_id_x86_64', ''))):
         raise ValueError('origin Sentinel requires reviewed x86_64 content identity')
+    if 'proxy' in data:
+        proxy = data['proxy']
+        if not isinstance(proxy, dict) or not SEMVER.fullmatch(str(proxy.get('version', ''))):
+            raise ValueError('proxy requires an exact semantic version')
+        if not SHA256.fullmatch(str(proxy.get('image_id_x86_64', ''))):
+            raise ValueError('proxy requires a reviewed x86_64 content identity')
+        if 'image_config_id_x86_64' in proxy and not SHA256.fullmatch(str(proxy['image_config_id_x86_64'])):
+            raise ValueError('proxy requires a reviewed classic Docker content identity')
+        if not re.fullmatch(r'traefik:v' + re.escape(proxy['version']) + r'@sha256:[0-9a-f]{64}', str(proxy.get('image', ''))):
+            raise ValueError('proxy image must pin the official exact version and digest')
+        origins = proxy.get('upgrade_from')
+        if not isinstance(origins, list) or not origins:
+            raise ValueError('proxy requires reviewed source identities')
+        for item in origins:
+            if not isinstance(item, dict) or not SEMVER.fullmatch(str(item.get('version', ''))) or not SHA256.fullmatch(str(item.get('image_id_x86_64', ''))):
+                raise ValueError('invalid reviewed proxy source identity')
+        if len({x['image_id_x86_64'] for x in origins}) != len(origins):
+            raise ValueError('duplicate proxy source identities')
     qualification = data.get("qualification")
     if not isinstance(qualification, dict) or not isinstance(qualification.get("level"), str) or not isinstance(qualification.get("evidence"), str):
         raise ValueError("release qualification and evidence are required")

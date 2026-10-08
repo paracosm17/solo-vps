@@ -119,7 +119,7 @@ A source rollback is not a Docker package downgrade.
 
 ## Coolify
 
-**Release status: {{ solo_vps_coolify_qualification }}.** The published 0.1.0 installation used 4.3.21. The controlled test-VPS upgrade, interruption/resume, checkpoint restore, one-token delivery/rollback and reboot passed; see [the evidence record](https://github.com/paracosm17/solo-vps/blob/main/reviews/2026-10-07-coolify-440-runtime.md). The release changes realtime to in-container Reverb, so the upgrade rewrites the loopback override, migrates the Pusher backend host/port and retires the owned old standalone realtime container. Existing credentials are preserved. [Upstream release notes](https://github.com/coollabsio/coolify/releases/tag/v{{ solo_vps_coolify_target }}).
+**Release status: {{ solo_vps_coolify_qualification }}.** This revision reviews the patch transition shown below; realtime remains in-container Reverb. Read [the current evidence record](https://github.com/paracosm17/solo-vps/blob/main/reviews/2026-10-08-coolify-442-runtime.md) and [upstream release notes](https://github.com/coollabsio/coolify/releases/tag/v{{ solo_vps_coolify_target }}). Installations still on Solo VPS 0.1.0 must first complete the documented 0.2.0 transition; see [its evidence](https://github.com/paracosm17/solo-vps/blob/main/reviews/2026-10-07-coolify-440-runtime.md).
 
 Use Solo VPS upgrade commands below. The Coolify **Update** button and automatic upgrades bypass its checkpoint, reviewed artifact hashes and transaction/resume checks; they are not a qualified upgrade path for this installation.
 
@@ -174,6 +174,30 @@ make coolify-upgrade-resume
 ```
 
 Otherwise use the disaster-recovery path with verified recovery inputs. Never delete a transaction marker simply to bypass the safety gate.
+
+## Traefik reverse proxy
+
+Update Coolify first. From the active controller checkout:
+
+```bash
+make proxy-upgrade-preflight
+PROXY_UPGRADE_CONFIRM=I_HAVE_REVIEWED_THE_PROXY_UPGRADE_PLAN make proxy-upgrade
+make verify
+make audit
+```
+
+The reviewed image and source identities live in `config/coolify-release.yml`. The command changes only the image scalar through Coolify's native Save/Start actions. Analytics, dynamic configuration and certificates remain intact. It requires a healthy owned proxy with TCP 80/443 only, and rejects unexpected content, configuration drift and networks a native restart cannot preserve. Existing application containers are retained; proxy recreation briefly interrupts incoming requests.
+
+Before production execution, prepare and verify a fresh encrypted off-host backup of the Coolify database/configuration and proxy files/image. The upgrade itself creates a root-private checkpoint `/var/lib/solo-vps/checkpoints/proxy-*` before Save: configuration, proxy files and previous image archive, with checksums. Export that generated checkpoint afterward. After success, check HTTPS application URLs and analytics delivery as well as verify/audit.
+
+After interruption, review the retained checkpoint and use `PROXY_UPGRADE_CONFIRM=I_HAVE_REVIEWED_THE_PROXY_UPGRADE_PLAN make proxy-upgrade-resume`. To restore configuration and the previous image:
+
+```bash
+PROXY_UPGRADE_CONFIRM=I_HAVE_REVIEWED_THE_PROXY_UPGRADE_PLAN \
+PROXY_UPGRADE_CHECKPOINT=/var/lib/solo-vps/checkpoints/proxy-EXAMPLE make proxy-upgrade-rollback
+```
+
+Rollback restores configuration and image through Coolify, pinning the previous image's recorded digest. Coolify's native start requires registry access; a failed pull stops before recreation. It does not overwrite current certificates or extract the proxy-files archive; that archive remains available for reviewed manual recovery. Concurrent changes or a different pending transaction stop automatic recovery. Ordinary proxy port reconciliation does not update Traefik.
 
 ## Pinned controller and project dependencies
 
