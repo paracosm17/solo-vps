@@ -60,3 +60,16 @@ the patch changes no host bootstrap/hardening/firewall implementation. Prior
 corrected 0.2.0 host-layer controlled evidence remains scoped to those unchanged
 operations. A fresh Coolify 4.4.2 installation and uninterrupted new-user V4 replay
 remain unproven. Optional integrations retain their own qualification.
+
+## Publication and exact source
+
+The [v0.2.1 annotated release](https://github.com/paracosm17/solo-vps/releases/tag/v0.2.1)
+was published from `d2dc56a1f881b243e837d7499f268387193a735d` after required
+[Repository CI](https://github.com/paracosm17/solo-vps/actions/runs/37714360140)
+and [Pages deployment](https://github.com/paracosm17/solo-vps/actions/runs/37714360238)
+passed at that exact commit. Full release dry-run/pinned QA and independent
+Gitleaks scanning of 68 reachable commits passed with no findings. Both targets
+then verified this exact snapshot (`ok=163 changed=0 failed=0`) and checked out
+the immutable release tag. Public application health and EN/RU upgrade docs
+returned HTTP 200 from the workstation. This post-publication note changes
+documentation only and does not change the frozen release snapshot.
