@@ -197,7 +197,7 @@ PROXY_UPGRADE_CONFIRM=I_HAVE_REVIEWED_THE_PROXY_UPGRADE_PLAN \
 PROXY_UPGRADE_CHECKPOINT=/var/lib/solo-vps/checkpoints/proxy-EXAMPLE make proxy-upgrade-rollback
 ```
 
-Rollback restores configuration and image through Coolify. It does not overwrite current certificates or extract the proxy-files archive; that archive remains available for reviewed manual recovery. Concurrent changes or a different pending transaction stop automatic recovery. Ordinary proxy port reconciliation does not update Traefik.
+Rollback restores configuration and image through Coolify, pinning the previous image's recorded digest. Coolify's native start requires registry access; a failed pull stops before recreation. It does not overwrite current certificates or extract the proxy-files archive; that archive remains available for reviewed manual recovery. Concurrent changes or a different pending transaction stop automatic recovery. Ordinary proxy port reconciliation does not update Traefik.
 
 ## Pinned controller and project dependencies
 

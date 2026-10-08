@@ -84,6 +84,12 @@ def private_json(path, data):
 
 
 def checkpoint(before, original, target, fingerprint, networks):
+    image_details = json.loads(run(['/usr/bin/docker', 'image', 'inspect', before['Image']]))[0]
+    digests = [value.split('@', 1)[1] for value in image_details.get('RepoDigests', [])
+               if value.startswith(('traefik@sha256:', 'docker.io/library/traefik@sha256:'))]
+    if not digests or image_details['Id'] != before['Image']:
+        raise PolicyError('Previous image requires an immutable official repository digest')
+    pinned_old = before['Config']['Image'].split('@', 1)[0] + '@' + sorted(digests)[0]
     if shutil.disk_usage(CHECKPOINTS).free < 1024**3:
         raise PolicyError('Insufficient checkpoint space')
     directory = Path(tempfile.mkdtemp(prefix='proxy-', dir=CHECKPOINTS))
@@ -112,6 +118,7 @@ def checkpoint(before, original, target, fingerprint, networks):
     record = {'schema': 1, 'state': 'prepared', 'checkpoint': str(directory), 'fingerprint': fingerprint,
               'original_sha256': digest(original), 'target_sha256': digest(target),
               'old_image': before['Config']['Image'], 'old_id': before['Image'],
+              'old_image_pinned': pinned_old,
               'networks': networks, 'files': hashes}
     private_json(directory / 'transaction.json', record)
     return record
@@ -181,13 +188,14 @@ def execute(manifest, admin, mode, confirmation='', recovery=None, interrupt=Fal
         if record['old_id'] not in versions:
             raise PolicyError('Unreviewed recovery image identity')
         version = versions[record['old_id']]
-        old = (recovery / 'native.yml').read_text()
-        if digest(original) not in (record['original_sha256'], record['target_sha256']):
+        old = replace_image((recovery / 'native.yml').read_text(), record['old_image_pinned'])
+        if digest(original) not in (record['original_sha256'], record['target_sha256'], digest(old)):
             raise PolicyError('Concurrent configuration changes require manual recovery review')
         if not before or before['Image'] not in {record['old_id']} | target_ids(policy):
             raise PolicyError('Unexpected proxy image during recovery')
         run([docker, 'image', 'load', '--input', str(recovery / 'previous-image.tar')])
-        run([docker, 'image', 'tag', record['old_id'], record['old_image']])
+        # Native StartProxy pulls before recreation. Pin the previous digest so a
+        # mutable tag can never replace the checkpoint image during recovery.
         native(docker, {'mode': 'save', 'admin_user': admin, 'configuration': old, 'original_sha256': digest(original), 'restart': True})
         wait_verified(record['old_id'], version, record['networks'])
         record['state'] = 'rolled_back'

@@ -105,6 +105,20 @@ class ProxyUpgradeTests(unittest.TestCase):
                 checkpoint.assert_not_called()
                 self.assertEqual(native.call_count,1)
 
+    def test_rollback_pins_mutable_source_before_native_pull(self):
+        release=copy.deepcopy(load_release());release['proxy']['upgrade_from'][0]['image_id_x86_64']='old-id'
+        from scripts.coolify_proxy_upgrade import digest
+        with tempfile.TemporaryDirectory() as root:
+            proxy=Path(root);(proxy/'docker-compose.yml').write_text(CONFIG);(proxy/'native.yml').write_text(CONFIG)
+            pinned='traefik:v3.6@sha256:'+'b'*64
+            record={'state':'prepared','checkpoint':str(proxy),'original_sha256':digest(CONFIG),'target_sha256':'target','old_id':'old-id','old_image_pinned':pinned,'networks':['coolify']}
+            with patch('scripts.coolify_proxy_upgrade.load_release',return_value=release), patch('scripts.coolify_proxy_upgrade.PROXY',proxy), patch('scripts.coolify_proxy_upgrade.STATE',proxy), patch('scripts.coolify_proxy_upgrade.read_checkpoint',return_value=record), patch('scripts.coolify_proxy_upgrade.proxy_state',return_value=before()), patch('scripts.coolify_proxy_upgrade.native',return_value={'configuration':CONFIG}) as native, patch('scripts.coolify_proxy_upgrade.run'), patch('scripts.coolify_proxy_upgrade.wait_verified') as verified:
+                self.assertTrue(execute(Path('unused'),'ops','rollback',CONFIRM,proxy)['recovered'])
+                payload=native.call_args.args[1]
+                self.assertEqual(yaml.safe_load(payload['configuration'])['services']['traefik']['image'],pinned)
+                self.assertTrue(payload['restart'])
+                verified.assert_called_once_with('old-id','3.6.25',['coolify'])
+
     def test_drift_after_interrupted_save_never_restarts(self):
         release=load_release(); fingerprint='bound'
         with tempfile.TemporaryDirectory() as root:
