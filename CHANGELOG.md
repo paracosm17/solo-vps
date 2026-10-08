@@ -6,6 +6,18 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-08
+
+### Added
+
+- Explicit native Traefik upgrade/preflight/resume/rollback with immutable image identities, private checksummed checkpoints and preserved analytics/TLS settings; versions remain in the shared release manifest.
+- Controlled Coolify 4.4.0 → 4.4.2 patch qualification and Traefik 3.6.25 → 3.7.14 interruption/resume and rollback evidence.
+
+### Fixed
+
+- Make documentation command-field labels and controls readable in the dark theme.
+- Preserve native YAML image spelling on no-op proxy reruns and pin the previous image digest during recovery instead of following a floating tag.
+
 ## [0.2.0] - 2026-10-07
 
 ### Added
