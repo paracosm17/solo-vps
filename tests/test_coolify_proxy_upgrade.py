@@ -41,6 +41,10 @@ class ProxyUpgradeTests(unittest.TestCase):
         self.assertEqual(result.replace('"traefik:v3.7.14@sha256:' + 'a'*64 + '"', "'traefik:v3.6'"), CONFIG)
         self.assertIn('CUSTOM: on', result)
 
+    def test_same_image_retains_native_scalar_spelling_without_restart(self):
+        for value in (CONFIG,CONFIG.replace("'traefik:v3.6'",'traefik:v3.6')):
+            self.assertEqual(replace_image(value,'traefik:v3.6'),value)
+
     def test_alias_duplicate_image_and_unsafe_ports_fail_closed(self):
         for value in (CONFIG.replace("image: 'traefik:v3.6'", "image: &image 'traefik:v3.6'"),
                       CONFIG.replace("image: 'traefik:v3.6'", "image: 'traefik:v3.6'\n    image: 'traefik:v3.7'"),

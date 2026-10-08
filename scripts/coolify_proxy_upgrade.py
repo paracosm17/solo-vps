@@ -48,6 +48,8 @@ def replace_image(configuration, image):
     node = field(field(field(yaml.compose(configuration), 'services'), 'traefik'), 'image')
     if not isinstance(node, yaml.ScalarNode) or configuration[node.start_mark.index:node.end_mark.index].startswith(('&', '*')):
         raise PolicyError('Aliased proxy image requires operator review')
+    if node.value == image:
+        return configuration
     return configuration[:node.start_mark.index] + json.dumps(image) + configuration[node.end_mark.index:]
 
 
