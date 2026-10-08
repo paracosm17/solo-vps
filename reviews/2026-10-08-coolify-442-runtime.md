@@ -47,6 +47,9 @@ was installed through native Save/Start before testing the transition.
   a redundant image-only restart. The correction preserves identical image scalar
   spelling; ordinary `make proxy-upgrade` rerun passed `ok=24 changed=0 failed=0`.
 - Recent proxy/Sentinel logs contained no error/fatal lines or bind-conflict markers.
+- A controlled reboot retained the proxy and application image/container/mounts;
+  application health returned 200, analytics remained enabled with Sentinel in sync,
+  and full post-reboot verification passed `ok=163 changed=0 failed=0`.
 
 Full proxy files (including certificates), original Compose and old image archives
 remain root-private on the target. Automatic rollback restores configuration/image;

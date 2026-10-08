@@ -52,6 +52,15 @@ For the `0.2.0` maintenance alpha, the current clean-target evidence is the owne
 
 ## Prepare the changelog
 
+For the `0.2.1` maintenance patch, host bootstrap, administrator hardening, Docker
+and firewall code are unchanged from the corrected `0.2.0` controlled clean-target
+source. The shared install artifacts and realtime topology are also unchanged.
+Retain that host-layer V3 evidence only for those equivalent operations; qualify
+the new Coolify/Traefik runtime with the separate existing-host patch replay.
+This does not prove a fresh Coolify 4.4.2 installation or an uninterrupted V4
+new-user walkthrough. Release notes must disclose those limits. See the
+[patch runtime record](https://github.com/paracosm17/solo-vps/blob/main/reviews/2026-10-08-coolify-442-runtime.md).
+
 Keep ongoing work under:
 
 ```markdown
