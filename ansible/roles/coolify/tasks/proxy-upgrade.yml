@@ -1,0 +1,56 @@
+---
+- name: Verify the host-owned proxy ingress guard
+  ansible.builtin.import_role:
+    name: firewall
+    tasks_from: verify-proxy-ingress-guard
+
+- name: Require explicit lifecycle mode and confirmation
+  ansible.builtin.assert:
+    that:
+      - solo_vps_proxy_mode | default('preflight') in ['preflight', 'upgrade', 'resume', 'rollback']
+      - solo_vps_proxy_mode | default('preflight') == 'preflight' or solo_vps_proxy_confirm | default('') == 'I_HAVE_REVIEWED_THE_PROXY_UPGRADE_PLAN'
+      - not (solo_vps_proxy_test_interrupt | default(false) | bool) or (solo_vps_coolify_evaluation_candidate | default(false) | bool)
+
+- name: Prepare the private proxy lifecycle helper directory
+  ansible.builtin.file:
+    path: /var/lib/solo-vps/proxy-upgrade/helpers
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Install the exact controller proxy lifecycle helpers
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../scripts/{{ item }}"
+    dest: "/var/lib/solo-vps/proxy-upgrade/helpers/{{ item }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop:
+    - coolify_proxy_upgrade.py
+    - coolify_proxy_policy.py
+    - coolify_release.py
+
+- name: Install the reviewed integration manifest for this explicit operation
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../config/coolify-release.yml"
+    dest: /var/lib/solo-vps/proxy-upgrade/helpers/release.yml
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Execute the private native proxy lifecycle
+  ansible.builtin.command:
+    argv: >-
+      {{ ['/usr/bin/python3', '/var/lib/solo-vps/proxy-upgrade/helpers/coolify_proxy_upgrade.py',
+          '--manifest', '/var/lib/solo-vps/proxy-upgrade/helpers/release.yml',
+          '--admin-user', admin.user, '--mode', solo_vps_proxy_mode | default('preflight'),
+          '--confirm', solo_vps_proxy_confirm | default('')]
+         + (['--checkpoint', solo_vps_proxy_checkpoint] if solo_vps_proxy_checkpoint | default('') | length > 0 else [])
+         + (['--test-interrupt-after-save'] if solo_vps_proxy_test_interrupt | default(false) | bool else []) }}
+  register: solo_vps_proxy_result
+  changed_when: solo_vps_proxy_result.rc == 0 and (solo_vps_proxy_result.stdout | from_json).changed
+
+- name: Report bounded proxy lifecycle evidence
+  ansible.builtin.debug:
+    msg: "{{ solo_vps_proxy_result.stdout | from_json }}"

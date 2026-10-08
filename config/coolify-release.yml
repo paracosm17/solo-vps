@@ -2,19 +2,19 @@
 # Reviewed integration release. Update this file for a compatible upstream release.
 # Hashes are mandatory: setting a version alone never trusts floating artifacts.
 schema_version: 1
-version: "4.4.0"
+version: "4.4.2"
 registry: docker.io
 realtime: embedded
 upgrade_from:
-  version: "4.3.21"
+  version: "4.4.0"
   registry: docker.io
-  realtime: separate
+  realtime: embedded
   sentinel:
     # Coolify updates its agent independently, including before a platform upgrade.
     accept_target: true
-    version: "1.0.1"
+    version: "1.0.2"
     registry: docker.io
-    image_id_x86_64: sha256:23b28fee258052080eaf89ffdc2acc318eaa58d1238ee5d56247daa27738a548
+    image_id_x86_64: sha256:9355fc746d5ca550b8c16577c514337a12dda54f88bb1876333e4ff2128e6371
 artifacts:
   docker-compose.yml: sha256:2532ee9258e10ad4e86cb3c2b46c29fe9329f5a0dace0f7da410744feec279bd
   docker-compose.prod.yml: sha256:4cd00e83e117e847e6d6bdfe64f2a2f958bb09965692c5230fa9231a0315f80f
@@ -24,6 +24,17 @@ sentinel:
   registry: docker.io
   image_id_x86_64: sha256:9355fc746d5ca550b8c16577c514337a12dda54f88bb1876333e4ff2128e6371
 qualification:
-  level: V3-test-vps
-  evidence: reviews/2026-10-07-coolify-440-runtime.md
-  release_sha256: sha256:e5ff1870c7aa01f965c227df390c54318b672eedc11ee2cb1e8e60e0aeb7a4b6
+  level: V2-candidate
+  evidence: reviews/2026-10-08-coolify-442-runtime.md
+  release_sha256: sha256:5e6ff2b2460369e1e35eb62f47f6195a586097f9735dc657e63de6501c248e76
+proxy:
+  version: "3.7.14"
+  image: traefik:v3.7.14@sha256:e849695bc5c317da0cec22bfee4794fd9e15871fe554f864d31b625983e883ff
+  image_id_x86_64: sha256:e849695bc5c317da0cec22bfee4794fd9e15871fe554f864d31b625983e883ff
+  # Classic Docker stores expose the platform config ID; containerd exposes the index ID.
+  image_config_id_x86_64: sha256:5a93040e5abdf181145d7c242964eca7999ffd700e0447b242ef212f3ee44d55
+  upgrade_from:
+    - version: "3.6.25"
+      image_id_x86_64: sha256:31267173a15b4944e797a76ffd9c419707c8d8b32fe5b610f80cd0cfa05f372d
+    - version: "3.7.14"
+      image_id_x86_64: sha256:b588cb566045e1ebb185948a8e2456f9705cb915b5f0fb5ee698184233997817

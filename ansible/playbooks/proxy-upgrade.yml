@@ -1,0 +1,13 @@
+---
+- name: Run target preflight before explicit native proxy lifecycle
+  ansible.builtin.import_playbook: preflight.yml
+
+- name: Perform only the explicitly requested proxy lifecycle
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Run the checkpointed native Traefik lifecycle
+      ansible.builtin.import_role:
+        name: coolify
+        tasks_from: proxy-upgrade

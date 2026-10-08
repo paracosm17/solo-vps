@@ -119,7 +119,7 @@ Source rollback не является downgrade Docker package.
 
 ## Coolify
 
-**Статус версии: {{ solo_vps_coolify_qualification }}.** Опубликованный Solo VPS 0.1.0 устанавливал 4.3.21. На тестовом VPS проверены переход, прерывание/продолжение, восстановление checkpoint, деплой/откат одним токеном и перезагрузка; см. [результаты проверки](https://github.com/paracosm17/solo-vps/blob/main/reviews/2026-10-07-coolify-440-runtime.md). Realtime теперь работает внутри Coolify через Reverb: обновление заменяет override локальных портов, переносит настройки backend Pusher и удаляет принадлежащий Coolify старый отдельный realtime-контейнер. Существующие секреты сохраняются. [Release notes upstream](https://github.com/coollabsio/coolify/releases/tag/v{{ solo_vps_coolify_target }}).
+**Статус версии: {{ solo_vps_coolify_qualification }}.** Эта ревизия проверяет указанный ниже переход между patch-версиями; realtime остаётся внутри Coolify через Reverb. Прочитайте [актуальные результаты проверки](https://github.com/paracosm17/solo-vps/blob/main/reviews/2026-10-08-coolify-442-runtime.md) и [release notes upstream](https://github.com/coollabsio/coolify/releases/tag/v{{ solo_vps_coolify_target }}). Установки Solo VPS 0.1.0 сначала должны пройти документированный переход на 0.2.0; см. [его результаты](https://github.com/paracosm17/solo-vps/blob/main/reviews/2026-10-07-coolify-440-runtime.md).
 
 Используйте команды Solo VPS ниже. Кнопка **Update** в Coolify и автоматические обновления обходят локальную копию, проверенные SHA256 и контроль транзакции/resume; для этой установки такой путь ещё не подтверждён.
 
@@ -174,6 +174,30 @@ make coolify-upgrade-resume
 ```
 
 Иначе используйте disaster-recovery path с проверенными recovery inputs. Никогда не удаляйте transaction marker только ради обхода safety gate.
+
+## Traefik reverse proxy
+
+Сначала обновите Coolify. Из действующего checkout контроллера выполните:
+
+```bash
+make proxy-upgrade-preflight
+PROXY_UPGRADE_CONFIRM=I_HAVE_REVIEWED_THE_PROXY_UPGRADE_PLAN make proxy-upgrade
+make verify
+make audit
+```
+
+Проверенный образ и допустимые исходные образы заданы в `config/coolify-release.yml`. Команда меняет только поле image через штатные Save/Start Coolify. Аналитика, dynamic configuration и сертификаты сохраняются. Нужен здоровый proxy Coolify с опубликованными только TCP 80/443. Неизвестные образы, расхождение конфигурации и сети, которые штатный перезапуск не сохранит, блокируют операцию. Контейнеры приложений сохраняются; пересоздание proxy ненадолго прерывает входящие запросы.
+
+Перед Save создаётся приватный checkpoint `/var/lib/solo-vps/checkpoints/proxy-*`: сохранённая конфигурация, файлы proxy и архив предыдущего образа с контрольными суммами. Перед обновлением прода сохраните зашифрованную копию вне сервера. После обновления проверьте HTTPS приложений и доставку аналитики, а также verify/audit.
+
+После прерывания изучите checkpoint и выполните `PROXY_UPGRADE_CONFIRM=I_HAVE_REVIEWED_THE_PROXY_UPGRADE_PLAN make proxy-upgrade-resume`. Для возврата сохранённой конфигурации и прежнего образа:
+
+```bash
+PROXY_UPGRADE_CONFIRM=I_HAVE_REVIEWED_THE_PROXY_UPGRADE_PLAN \
+PROXY_UPGRADE_CHECKPOINT=/var/lib/solo-vps/checkpoints/proxy-EXAMPLE make proxy-upgrade-rollback
+```
+
+Откат восстанавливает конфигурацию и образ через Coolify. Текущие сертификаты не перезаписывает и архив файлов proxy не распаковывает: этот архив остаётся для ручного восстановления после проверки. Изменённая конфигурация или другая незавершённая транзакция блокируют автоматический откат. Обычная настройка портов proxy не обновляет Traefik.
 
 ## Pinned controller и project dependencies
 

@@ -463,7 +463,16 @@ validate-platform-lifecycle: ## Validate CRIT-011 Docker/Coolify version and upg
 	@$(PYTHON) $(PLATFORM_LIFECYCLE_CONTRACT_VALIDATOR) .
 
 test-platform-lifecycle: ## Run CRIT-011 Docker/Coolify lifecycle regression tests
-	@$(PYTHON) -m unittest tests.test_platform_lifecycle tests.test_platform_lifecycle_contract tests.test_coolify_upgrade_checkpoint tests.test_coolify_sentinel_inspect tests.test_remove_legacy_coolify_realtime
+	@$(PYTHON) -m unittest tests.test_platform_lifecycle tests.test_platform_lifecycle_contract tests.test_coolify_upgrade_checkpoint tests.test_coolify_sentinel_inspect tests.test_remove_legacy_coolify_realtime tests.test_coolify_proxy_upgrade
+
+.PHONY: proxy-upgrade-preflight proxy-upgrade proxy-upgrade-resume proxy-upgrade-rollback
+
+proxy-upgrade-preflight: check-local-files ## Inspect native proxy identity/configuration before an explicit upgrade
+	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/proxy-upgrade.yml --extra-vars "@$(CONFIG)" --extra-vars "solo_vps_proxy_mode=preflight"
+
+proxy-upgrade proxy-upgrade-resume proxy-upgrade-rollback: check-local-files ## Explicit checkpointed native Traefik upgrade, resume or recovery
+	@test "$(PROXY_UPGRADE_CONFIRM)" = "I_HAVE_REVIEWED_THE_PROXY_UPGRADE_PLAN" || { printf '%s\n' 'ERROR: review the proxy preflight/checkpoint and set PROXY_UPGRADE_CONFIRM=I_HAVE_REVIEWED_THE_PROXY_UPGRADE_PLAN.' >&2; exit 2; }
+	@$(ANSIBLE_PLAYBOOK) -i "$(INVENTORY)" $(PLAYBOOK_DIR)/proxy-upgrade.yml --extra-vars "@$(CONFIG)" --extra-vars "solo_vps_proxy_mode=$(if $(filter proxy-upgrade,$@),upgrade,$(if $(filter proxy-upgrade-resume,$@),resume,rollback)) solo_vps_proxy_confirm=$(PROXY_UPGRADE_CONFIRM) solo_vps_proxy_checkpoint=$(PROXY_UPGRADE_CHECKPOINT)"
 
 platform-lifecycle-plan: validate-platform-lifecycle ## Show the reviewed Docker/Coolify lifecycle policy without network or mutation
 	@$(PYTHON) $(PLATFORM_LIFECYCLE) plan --policy "$(PLATFORM_LIFECYCLE_POLICY)"
@@ -1059,6 +1068,7 @@ ansible-syntax: check-ansible-deps ## Run Ansible syntax checks against safe exa
 	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-upgrade-preflight.yml --syntax-check -e @$(EXAMPLE_CONFIG)
 	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-upgrade.yml --syntax-check -e @$(EXAMPLE_CONFIG)
 	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-upgrade-resume.yml --syntax-check -e @$(EXAMPLE_CONFIG)
+	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/proxy-upgrade.yml --syntax-check -e @$(EXAMPLE_CONFIG)
 	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-evaluate-preflight.yml --syntax-check -e @$(EXAMPLE_CONFIG) -e solo_vps_coolify_evaluation_target_id=syntax-check -e solo_vps_coolify_evaluation_sentinel_url=https://coolify.example.com
 	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-evaluate-upgrade.yml --syntax-check -e @$(EXAMPLE_CONFIG) -e solo_vps_coolify_evaluation_target_id=syntax-check -e solo_vps_coolify_evaluation_sentinel_url=https://coolify.example.com
 	@$(ANSIBLE_PLAYBOOK) -i $(EXAMPLE_INVENTORY) $(PLAYBOOK_DIR)/coolify-evaluate-resume.yml --syntax-check -e @$(EXAMPLE_CONFIG) -e solo_vps_coolify_evaluation_target_id=syntax-check -e solo_vps_coolify_evaluation_sentinel_url=https://coolify.example.com
