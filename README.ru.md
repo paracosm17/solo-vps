@@ -76,10 +76,12 @@ make setup → make apply → make secure → make platform → make verify
 | Выбрать следующие шаги настройки | [После базовой настройки](https://paracosm17.github.io/solo-vps/ru/operations/after-basic-setup/) |
 | Сделать копию базы или сервера | [PostgreSQL](https://paracosm17.github.io/solo-vps/ru/operations/postgresql-backups/) · [Внешние копии](https://paracosm17.github.io/solo-vps/ru/operations/offsite-backups/) |
 | Добавить уведомления, историю логов или метрики | [Uptime](https://paracosm17.github.io/solo-vps/ru/operations/external-uptime/) · [Логи](https://paracosm17.github.io/solo-vps/ru/operations/observability/) · [Метрики](https://paracosm17.github.io/solo-vps/ru/operations/metrics/) |
-| Обновить или восстановить установку | [Обновления](https://paracosm17.github.io/solo-vps/ru/upgrades/) · [Восстановление VPS](https://paracosm17.github.io/solo-vps/ru/disaster-recovery/) |
+| Обновить или восстановить установку | [Как обновиться](https://paracosm17.github.io/solo-vps/ru/operations/updates/) · [Восстановление VPS](https://paracosm17.github.io/solo-vps/ru/disaster-recovery/) |
 | Найти нужную команду | [Справочник команд](https://paracosm17.github.io/solo-vps/ru/command-reference/) |
 
 Перед размещением важных данных сохраните резервные копии и данные доступа для восстановления вне VPS. Откат деплоя возвращает образ приложения, но не отменяет миграции базы и изменения данных.
+
+Проверки компонентов и границы восстановления описаны в [подробном справочнике обновлений](https://paracosm17.github.io/solo-vps/ru/upgrades/).
 
 ## Участие и поддержка
 

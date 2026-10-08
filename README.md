@@ -76,10 +76,12 @@ Basic setup ends after part two. Continue with your own application or add the o
 | Plan the next setup steps | [After basic setup](https://paracosm17.github.io/solo-vps/operations/after-basic-setup/) |
 | Back up a database or the server | [PostgreSQL](https://paracosm17.github.io/solo-vps/operations/postgresql-backups/) · [Off-site backups](https://paracosm17.github.io/solo-vps/operations/offsite-backups/) |
 | Add alerts, log history or metrics | [Uptime](https://paracosm17.github.io/solo-vps/operations/external-uptime/) · [Logs](https://paracosm17.github.io/solo-vps/operations/observability/) · [Metrics](https://paracosm17.github.io/solo-vps/operations/metrics/) |
-| Update or recover an installation | [Upgrades](https://paracosm17.github.io/solo-vps/upgrades/) · [Lost VPS recovery](https://paracosm17.github.io/solo-vps/disaster-recovery/) |
+| Update or recover an installation | [How to update](https://paracosm17.github.io/solo-vps/operations/updates/) · [Lost VPS recovery](https://paracosm17.github.io/solo-vps/disaster-recovery/) |
 | Look up a command | [Command reference](https://paracosm17.github.io/solo-vps/command-reference/) |
 
 Keep recovery credentials and backups outside the VPS before relying on it for important data. Deployment rollback restores an application image; it does not undo database migrations or data changes.
+
+The [detailed upgrade reference](https://paracosm17.github.io/solo-vps/upgrades/) covers component checks and recovery boundaries.
 
 ## Contributing and support
 

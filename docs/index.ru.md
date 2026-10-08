@@ -62,5 +62,5 @@ Solo VPS использует следующие компоненты:
 - Нужно проверить хост и его логи: [Статус и логи](operations/status-and-logs.md).
 - Случился сбой или планируется обслуживание: [Сбои и обслуживание](operations/incidents-and-maintenance.md).
 - Нужно заменить потерянный VPS: [Восстановление после потери VPS](disaster-recovery.md).
-- Нужно обновить хост или Coolify: [Обновления](upgrades.md).
+- Появилось обновление: [Как обновить Solo VPS, Coolify и Traefik](operations/updates.md) и [подробные процедуры компонентов](upgrades.md).
 - Нужна точная команда или границы системы: [Справочник команд](command-reference.md) и [Архитектура](architecture.md).
