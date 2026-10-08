@@ -309,4 +309,4 @@ This chapter is complete when these boundaries are clear:
 - planned maintenance has a baseline and recovery material before the change, then verification afterward;
 - a Docker/Coolify upgrade is not an ordinary "while I am here" package update.
 
-For rarer operations, continue with the dedicated [Docker/Coolify upgrade guide](../upgrades.md) and [lost-VPS recovery guide](../disaster-recovery.md).
+For a planned release update, start with [Update Solo VPS, Coolify and Traefik](updates.md). Detailed [component upgrade procedures](../upgrades.md) and [lost-VPS recovery](../disaster-recovery.md) are separate guides.

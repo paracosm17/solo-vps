@@ -147,6 +147,9 @@ plugins:
             Secrets with SOPS + age: Секреты через SOPS + age
             Security audit: Аудит безопасности
             Maintenance: Обслуживание
+            Updates: Обновления
+            Update your installation: Как обновиться
+            Detailed upgrade procedures: Подробные процедуры
             Upgrade Solo VPS & Coolify: Обновление Solo VPS и Coolify
             Reference: Справочник
             Command reference: Справочник команд
@@ -227,6 +230,9 @@ nav:
           - Deployment rollback: operations/deployment-rollback.md
       - Operations:
           - Status & logs: operations/status-and-logs.md
+  - Updates:
+      - Update your installation: operations/updates.md
+      - Detailed upgrade procedures: upgrades.md
   - Backup & recovery:
       - Backups:
           - restic off-site backups: backups-restic.md
@@ -247,7 +253,6 @@ nav:
           - Security audit: security-audit.md
       - Maintenance:
           - Failures & maintenance: operations/incidents-and-maintenance.md
-          - Upgrade Solo VPS & Coolify: upgrades.md
   - Reference:
       - Prepare the server:
           - Preflight & doctor: preflight.md

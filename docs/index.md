@@ -62,5 +62,5 @@ Choose chapters 3–7 to fit your application. [After basic setup](operations/af
 - Check host status and bounded logs: [Status & logs](operations/status-and-logs.md).
 - Handle an incident or planned maintenance: [Failures and maintenance](operations/incidents-and-maintenance.md).
 - Replace a lost VPS: [Lost VPS recovery](disaster-recovery.md).
-- Update the host or Coolify: [Upgrade guide](upgrades.md).
+- An update is available: [Update Solo VPS, Coolify and Traefik](operations/updates.md), with [detailed component procedures](upgrades.md).
 - Find an exact command or system boundary: [Command reference](command-reference.md) and [Architecture](architecture.md).

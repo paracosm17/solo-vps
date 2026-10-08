@@ -1,5 +1,7 @@
 # Upgrade guide
 
+For an existing installation, start with [Update Solo VPS, Coolify and Traefik](operations/updates.md). This reference explains component checks, recovery and host/dependency maintenance in detail.
+
 Update each component through its documented procedure. Check the supported versions, prepare recovery inputs, apply the change and verify the result.
 
 ## Upgrade safety model
