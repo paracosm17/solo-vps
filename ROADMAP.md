@@ -1,10 +1,10 @@
 # Solo VPS — ROADMAP
 
-> **Last updated:** 2026-10-07
-> **Current phase:** 0.2.0 alpha publication after verified production migration
+> **Last updated:** 2026-10-08
+> **Current phase:** 0.2.1 maintenance alpha validation
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** publish 0.2.0 from a clean exact commit after required CI/Pages/scans and release dry-run; retain bounded production and separate clean-host evidence.
+> **Next action:** complete the authorized production patch upgrade, then publish 0.2.1 after exact-commit CI/Pages/scans and release dry-run.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -56,6 +56,14 @@ V5  real production-use evidence
 ---
 
 ## 2. Active maintenance work
+
+`v0.2.0` is published. The reviewed Coolify 4.4.0 → 4.4.2 patch and explicit
+Traefik 3.6.25 → pinned 3.7.14 lifecycle have controlled V3 evidence for
+interruption/resume, proxy rollback/re-upgrade, isolated checkpoint database
+restore, analytics delivery, TLS routes, verification/audit and no-op rerun.
+See [the bounded patch record](reviews/2026-10-08-coolify-442-runtime.md).
+Fresh encrypted off-host production control/proxy recovery inputs were verified;
+production execution and exact-release publication gates remain next.
 
 The owner confirms `v0.1.0` alpha is public and two real applications run on it. Their public health endpoints responded successfully on 2026-10-07; this is a point-in-time check, not a production audit.
 

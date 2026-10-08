@@ -188,7 +188,7 @@ make audit
 
 The reviewed image and source identities live in `config/coolify-release.yml`. The command changes only the image scalar through Coolify's native Save/Start actions. Analytics, dynamic configuration and certificates remain intact. It requires a healthy owned proxy with TCP 80/443 only, and rejects unexpected content, configuration drift and networks a native restart cannot preserve. Existing application containers are retained; proxy recreation briefly interrupts incoming requests.
 
-Before Save, it retains a root-private checkpoint `/var/lib/solo-vps/checkpoints/proxy-*`: saved configuration, proxy files and the previous image archive, with checksums. Keep an encrypted off-host copy before production execution. After success, check HTTPS application URLs and analytics delivery as well as verify/audit.
+Before production execution, prepare and verify a fresh encrypted off-host backup of the Coolify database/configuration and proxy files/image. The upgrade itself creates a root-private checkpoint `/var/lib/solo-vps/checkpoints/proxy-*` before Save: configuration, proxy files and previous image archive, with checksums. Export that generated checkpoint afterward. After success, check HTTPS application URLs and analytics delivery as well as verify/audit.
 
 After interruption, review the retained checkpoint and use `PROXY_UPGRADE_CONFIRM=I_HAVE_REVIEWED_THE_PROXY_UPGRADE_PLAN make proxy-upgrade-resume`. To restore configuration and the previous image:
 
