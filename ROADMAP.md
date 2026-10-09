@@ -1,7 +1,7 @@
 # Solo VPS — ROADMAP
 
 > **Last updated:** 2026-10-10
-> **Current phase:** 0.2.3 maintenance alpha candidate; controlled upgrade verified
+> **Current phase:** 0.2.3 maintenance alpha published; installed release verified
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
 > **Next action:** independently replay the current installation route on a fresh host; keep optional integrations separately qualified.
@@ -57,7 +57,7 @@ V5  real production-use evidence
 
 ## 2. Active maintenance work
 
-`v0.2.3` qualifies Coolify 4.4.3 → 4.4.6. The controlled test transition and isolated migration fixtures passed; production upgrade completed. Production full verification/audit and no-op passed; hosted exact-main checks, release dry-run and publication remain release gates. Operational source is `ef4139b`; release metadata does not change that implementation.
+`v0.2.3` is published at `7373ae6487fac3370f3f38fcd1111aa9280f56de`. Exact-main CI/Pages, release dry-run with pinned QA and independent history scanning passed. Both VPS checkouts match the immutable annotated tag; exact-commit Coolify verification passed with `changed=0`. Production full verification/audit and no-op passed.
 
 Coolify 4.4.3 → 4.4.6 has controlled V3 interruption/resume, isolated checkpoint restore and exact IPv6/dedup migration fixtures, analytics, TLS/WebSocket/SSH, verify/audit and no-op evidence. Production preserves all 14 business containers, Traefik 3.7.14, credentials, environment records and six HTTPS health routes. Fresh recovery inputs and generated checkpoints are verified encrypted off-host. See [test qualification](reviews/2026-10-09-coolify-446-runtime.md) and [production result](reviews/2026-10-10-coolify-446-production.md).
 
@@ -120,7 +120,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-001 backup/restore/DR | RECOVERY PASS / V3 | Clean replacement host rebuilt from off-VPS inputs; Coolify, PostgreSQL, immutable app, HTTPS, new restic snapshot and restore-test passed; optional recovery stays V3 |
 | CRIT-002 failed deploy rollback | DONE / V3 | failed immutable candidate restores the known-good image; database rollback excluded |
 | CRIT-003 workstation admin key | DONE / V3 | independent human key, sudo, root denial and hardening gate proven |
-| CRIT-004 hosted self-CI / clean target | HISTORICAL CORE V4 / HOSTED PASS | Original V4 retained separately; controlled host V3 remains bounded; exact 0.2.2 release CI/Pages passed; fresh 4.4.6 replay remains next |
+| CRIT-004 hosted self-CI / clean target | HISTORICAL CORE V4 / HOSTED PASS | Original V4 retained separately; controlled host V3 remains bounded; exact 0.2.3 release CI/Pages passed; fresh 4.4.6 replay remains next |
 | CRIT-005 observability confidentiality | DONE / V3 | Repository-managed non-root Alloy uses a protected Unix socket boundary |
 | CRIT-006 Quick Start complexity | CORE V4 PASS | owner completed both public chapters unaided at `0fdba7f`; first-run copy/paste feedback addressed in docs-only follow-up |
 | CRIT-007 operator help surface | DONE / V2 | bounded `help`, `help-ops`, `help-dev`, `help-all` |
@@ -133,10 +133,10 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-014 private security channel | DONE | GitHub Private Vulnerability Reporting enabled; public **Report a vulnerability** entry verified |
 | CRIT-015 external outage detection | DONE / V3 | Provider-level VPS shutdown/restart produced real DOWN/UP emails outside the VPS; operator observed delivery within a few minutes, with no latency SLA claimed |
 | CRIT-016 migration safety | DONE / V2 | app-owned preflight and image-only rollback boundary |
-| CRIT-017 release/upgrade story | V3 / V5 PASS | 0.2.3 candidate; 4.4.6 patch qualification and bounded production migration passed; source tags stay immutable |
+| CRIT-017 release/upgrade story | V3 / V5 PASS | 0.2.3 published; 4.4.6 patch qualification and bounded production migration passed; source tags stay immutable |
 | CRIT-018 documentation duplication | DONE / V2 | user, architecture, plan and evidence roles separated |
 | CRIT-019 optional-feature leakage | DONE / V2 | optional capabilities do not gate the core Quick Start |
-| CRIT-020 revision metadata | CANDIDATE | Operational source ef4139b verified; exact release-tag alignment follows hosted gates |
+| CRIT-020 revision metadata | DONE | 0.2.3 immutable annotated tag resolves to 7373ae6; both installed checkouts match it |
 
 The Coolify-native Custom FluentBit experiment is **rejected as the maintained default**. Grafana Cloud credential encryption/delivery integration PASS remains historical evidence. Repository-managed non-root Alloy is the maintained retained-log implementation.
 
@@ -165,7 +165,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M17 — `make doctor` expansion | P2 | DONE | V2 + maintained-host use |
 | M18 — `make verify` | P2 | DONE | V2 + maintained-host use |
 | M19 — Security Audit | P2 | DONE | V3 |
-| M20 — Automated Integration Testing | P2 | CORE REPLAY PASS / PATCH V3 | Original core V4 separate; exact 0.2.2 source/hosted checks passed; fresh current-version replay remains unproven |
+| M20 — Automated Integration Testing | P2 | CORE REPLAY PASS / PATCH V3 | Original core V4 separate; exact 0.2.3 source/hosted checks passed; fresh current-version replay remains unproven |
 | M21 — Author Shell / Ops UX | P3 | DEFERRED | post-release optional work |
 | M22 — UI-first Operational Visibility | P2 | DONE | V3 |
 | M23 — Application Error Tracking UX | P3 | DEFERRED | post-release optional work |
@@ -175,7 +175,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M27 — Architecture Documentation & ADR | P2 | DONE | V2 |
 | M28 — SECURITY / CONTRIBUTING / LICENSE | P2 | DONE | V2; private reporting enabled and public reporter entry verified |
 | M29 — Upgrade Guide | P2 | V3 / V5 PASS | 4.4.6 and previous Traefik patch upgrade/resume/recovery passed; production verification passed; independent fresh browser replay separate |
-| M30 — Release Process | P2 | DONE | 0.1.0–0.2.2 public process passed; every subsequent tag requires its own exact-source checks |
+| M30 — Release Process | P2 | DONE | 0.1.0–0.2.3 public process passed; every subsequent tag requires its own exact-source checks |
 
 ---
 
