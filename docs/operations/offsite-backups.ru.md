@@ -207,7 +207,7 @@ Backup PostgreSQL приложения **не содержит состояни�
 
 В Coolify откройте **Settings → Backup**.
 
-Если показана кнопка **Configure Backup**, нажмите её. Если Coolify просит сначала проверить localhost server, выполните **Validate Server** и вернитесь в Backup.
+Если показана кнопка **Configure Backup**, нажмите её. Если Coolify просит сначала проверить локальный сервер, выполните **Validate Server** и вернитесь в Backup.
 
 В Scheduled Backup:
 

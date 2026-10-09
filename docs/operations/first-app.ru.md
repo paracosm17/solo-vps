@@ -4,6 +4,8 @@
 
 Все обязательные действия находятся на этой странице. Справочник понадобится только для дополнительных настроек после завершения.
 
+Для этого сценария выбирайте в Coolify **Docker Image**: GitHub Actions проверяет и собирает образ, GHCR хранит его, а VPS запускает точный digest. Источники Git и GitHub/GitLab Apps удобны, если вы хотите поручить Coolify сборку из исходников и управление вебхуками. Это дополнительные варианты с другим распределением ответственности. Для нескольких связанных контейнеров используйте Docker Compose с заранее собранными образами, закреплёнными по версии или digest.
+
 Откройте форму **«Ваши значения для команд»** вверху страницы и один раз введите IP, имя администратора и нужные домены. Значения подставятся в блоки для копирования и сохранятся только в этой вкладке до её закрытия. Можно очистить их кнопкой в форме. Пароли, ключи и токены вводить не нужно. Без JavaScript используйте исходные команды с вводом значений. В Linux/WSL используйте Bash или zsh; запросы `printf` + `read` работают в обеих оболочках.
 
 ## Перед началом
@@ -143,7 +145,7 @@ ghcr.io/<github-owner>/solo-vps-demo@sha256:<64-hex-digest>
 
 1. Откройте **Projects** и создайте проект `solo-vps-demo`.
 2. Откройте его окружение `production`.
-3. Откройте в environment меню создания нового ресурса, выберите **Docker Image**, затем существующий сервер **localhost**.
+3. Откройте в environment меню создания нового ресурса, выберите **Docker Image**, затем существующий сервер с именем из `server.hostname` (или его именем, заданным в панели).
 4. В **Image Name** вставьте только имя образа: `ghcr.io/<github-owner>/solo-vps-demo`, подставив своего владельца.
 5. Завершите создание ресурса.
 
@@ -487,4 +489,4 @@ GitHub хранит два секрета **для деплоя**. Coolify хр�
 | API отвечает 401/403 | API Access, срок токена и права `read`, `write`, `deploy` у `COOLIFY_API_TOKEN` |
 | CI сообщает timeout или неизвестный статус | Сначала откройте Coolify Deployments: исходный деплой ещё может идти. Порядок дальнейших действий — в [инструкции по откату](deployment-rollback.md) |
 
-Исходный путь по UI проверен на Coolify `4.3.21`; для текущей версии проверены обновление, деплой/откат одним токеном, websocket и терминал. Проход интерфейса с нуля остаётся отдельной проверкой. Для уточнений: [деплой Docker Image в Coolify](https://coolify.io/docs/applications/), [API-токены Coolify](https://coolify.io/docs/api-reference/authorization), [окружения GitHub](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
+Для уточнений: [деплой Docker Image в Coolify](https://coolify.io/docs/applications/), [API-токены Coolify](https://coolify.io/docs/api-reference/authorization), [окружения GitHub](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).

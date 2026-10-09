@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import re
 from pathlib import Path
 
@@ -189,7 +190,7 @@ def validate(root: Path) -> None:
     russian: list[Path] = []
     for path in sorted(docs.rglob("*.md")):
         rel = path.relative_to(docs).as_posix()
-        if rel in excluded:
+        if any(fnmatch.fnmatchcase(rel, pattern) for pattern in excluded):
             continue
         if path.name.endswith(".ru.md"):
             russian.append(path)

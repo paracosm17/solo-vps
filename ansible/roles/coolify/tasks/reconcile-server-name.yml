@@ -1,0 +1,10 @@
+---
+- name: Initialize the built-in Coolify server display name from the configured hostname
+  ansible.builtin.script:
+    cmd: >-
+      {{ (role_path ~ '/../../../scripts/coolify_server_name.py') | quote }}
+      --docker {{ solo_vps_coolify_docker_binary | quote }}
+      --admin-user {{ admin.user | quote }} --hostname {{ server.hostname | quote }}
+    executable: /usr/bin/python3
+  register: solo_vps_coolify_server_name_result
+  changed_when: (solo_vps_coolify_server_name_result.stdout | from_json).changed

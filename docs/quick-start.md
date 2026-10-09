@@ -299,7 +299,7 @@ If `solo-vps` already exists locally, choose another empty destination directory
 make platform
 ```
 
-This installs Coolify, prepares the localhost server and proxy, and verifies the bootstrap runtime. Full verification follows dashboard and Sentinel onboarding in step 10.
+This installs Coolify, prepares the local server and proxy, and verifies the bootstrap runtime. Full verification follows dashboard and Sentinel onboarding in step 10.
 
 Wait for `PASS Solo VPS Coolify bootstrap`. You do not need to repeat the installation.
 
@@ -330,9 +330,9 @@ Keep this terminal open. Waiting without a shell prompt is normal for the SSH tu
 1. Open [http://127.0.0.1:18000](http://127.0.0.1:18000).
 2. Create the first administrator account with a name, email and password.
 3. On **Welcome to Coolify**, choose **Skip Setup**.
-4. Open **Servers → localhost**.
+4. Open **Servers → `server.hostname`**.
 
-Solo VPS already created this server. Expect **Server is reachable and validated** and **Proxy Running**. Use the existing `localhost`.
+Coolify creates its built-in local server; Solo VPS gives it the configured `server.hostname` display name. Existing custom UI names are preserved. Expect **Server is reachable and validated** and **Proxy Running**. Use this existing server; its SSH address remains `host.docker.internal`.
 
 ## 10. Set the dashboard domain
 
@@ -352,11 +352,11 @@ The example is `coolify.example.com`. With Cloudflare, select **DNS only**. Add 
 4. Select **Save**.
 5. Open that HTTPS address in a new tab and sign in.
 
-These are instance settings. **Servers → localhost → IP Address/Domain** is the SSH connection address; it remains `host.docker.internal`.
+These are instance settings. **Servers → `server.hostname` → IP Address/Domain** is the SSH connection address; it remains `host.docker.internal`.
 
 The dashboard should open over HTTPS with a valid certificate. Use its domain for everyday access. You can close the tunnel with **Ctrl+C** in its terminal.
 
-**In Coolify → Servers → localhost → Sentinel → Configuration**, set **Coolify URL** to the same HTTPS dashboard URL, leave debug off, save, enable Sentinel and sync it. Wait for **Sentinel In Sync**. Do not expose raw ports `8000` or `8888` to make this work. Then, on the VPS as the administrator, run:
+**In Coolify → Servers → `server.hostname` → Sentinel → Configuration**, set **Coolify URL** to the same HTTPS dashboard URL, leave debug off, save, enable Sentinel and sync it. Wait for **Sentinel In Sync**. Do not expose raw ports `8000` or `8888` to make this work. Then, on the VPS as the administrator, run:
 
 ```bash
 make verify-coolify

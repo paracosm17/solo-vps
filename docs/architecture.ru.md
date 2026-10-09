@@ -13,12 +13,10 @@ README.md, PROJECT_PASSPORT.md, ROADMAP.md and
 Если два документа кажутся противоречащими друг другу, используйте порядок:
 
 ```text
-accepted ADR / explicit owner decision
--> PROJECT_PASSPORT.md
--> README.md
--> ROADMAP.md
--> current implementation
--> legacy research
+код, тесты и runtime-проверки: фактическое поведение
+-> README.md: поддерживаемый пользовательский сценарий
+-> PROJECT_PASSPORT.md и ADR: границы архитектуры
+-> ROADMAP.md: состояние разработки и следующий шаг
 ```
 
 Это не позволяет историческому эксперименту или незавершённому roadmap item незаметно превратиться в user contract.
@@ -87,13 +85,13 @@ make setup
 
 ### Доставка приложения
 
-Manual first-app path:
+Первое приложение:
 
 ```text
-source repository -> Coolify -> Dockerfile build -> domain/TLS -> health check
+GitHub Actions -> GHCR immutable image -> Coolify Docker Image -> domain/TLS -> health check
 ```
 
-Optional CI/CD path:
+Автоматический деплой:
 
 ```text
 git push -> GitHub Actions -> GHCR immutable digest
@@ -156,23 +154,16 @@ Grafana Cloud  -> optional retained historical application logs
 
 ## Принятые ADR
 
-Владелец проекта принял ADR 0001–0004 ниже. **Acceptance устанавливает architecture boundary**, но само по себе не доказывает runtime behavior.
+Записи о проектных решениях хранятся в репозитории. Принятое решение задаёт границы архитектуры, но само по себе не доказывает работоспособность реализации.
 
 | ADR | Статус | Решение |
 | --- | --- | --- |
-| [`ADR-0001`](adr/0001-coolify-installation-boundary.md) | **Accepted** | Сохранить Ansible ownership host/Docker baseline и использовать pinned интеграцию Coolify |
-| [`ADR-0002`](adr/0002-controller-side-sops-decryption.md) | **Accepted** | Оставить production age private key на workstation оператора; второй controller server не нужен |
-| [`ADR-0003`](adr/0003-coolify-native-database-backups.md) | **Accepted** | Использовать Coolify-native logical backups для Coolify-managed PostgreSQL вместо конкурирующего dump scheduler |
-| [`ADR-0004`](adr/0004-external-operator-state.md) | **Accepted** | Хранить per-installation controller state вне disposable Git checkout |
-| [`ADR-0006`](adr/0006-reviewed-update-channels.md) | **Accepted** | Разделить проверку версий, подготовку исходников по тегу и проверенное обновление Coolify |
-
-## Предложенные ADR
-
-Предложенные записи не меняют поддерживаемую архитектуру до получения указанного evidence.
-
-| ADR | Статус | Решение |
-| --- | --- | --- |
-| [`ADR-0005`](adr/0005-coolify-sentinel-trust-boundary.md) | **Accepted** | Принимать обязательный Sentinel только внутри проверенной high-trust границы Coolify после disposable runtime proof |
+| [`ADR-0001`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0001-coolify-installation-boundary.md) | **Accepted** | Сохранить Ansible ownership host/Docker baseline и использовать pinned интеграцию Coolify |
+| [`ADR-0002`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0002-controller-side-sops-decryption.md) | **Accepted** | Оставить production age private key на workstation оператора; второй controller server не нужен |
+| [`ADR-0003`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0003-coolify-native-database-backups.md) | **Accepted** | Использовать Coolify-native logical backups для Coolify-managed PostgreSQL вместо конкурирующего dump scheduler |
+| [`ADR-0004`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0004-external-operator-state.md) | **Accepted** | Хранить per-installation controller state вне disposable Git checkout |
+| [`ADR-0005`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0005-coolify-sentinel-trust-boundary.md) | **Accepted** | Принимать обязательный Sentinel только внутри проверенной high-trust границы Coolify после disposable runtime proof |
+| [`ADR-0006`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0006-reviewed-update-channels.md) | **Accepted** | Разделить проверку версий, подготовку исходников по тегу и проверенное обновление Coolify |
 
 Долгоживущую boundary меняйте через update/supersede ADR, а затем согласованно обновляйте user docs и implementation.
 

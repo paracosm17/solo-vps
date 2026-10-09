@@ -4,6 +4,8 @@ Continue from [part one](../quick-start.md): your VPS is configured and the Cool
 
 Every required action is on this page. Reference pages are for additional configuration after you finish.
 
+Choose **Docker Image** in Coolify for this workflow: GitHub Actions tests and builds the image, GHCR stores it, and the VPS deploys its immutable digest. Git-source options and GitHub/GitLab Apps are useful when you intentionally want Coolify to build from source and manage webhooks. They are optional alternatives, with different build and deployment responsibilities. For several related containers, use Docker Compose with prebuilt pinned images.
+
 Open **Your values for commands** at the top of the page and enter your IP, administrator username and domains once. Copyable blocks use these values, kept only in this tab until it closes. Clear them with the form button. Do not enter passwords, keys or tokens. Without JavaScript, use the original commands and input prompts. Linux/WSL prompts use `printf` + `read`, compatible with Bash and zsh.
 
 ## Before you begin
@@ -143,7 +145,7 @@ The example is `app.example.com`. With Cloudflare, select **DNS only**. Add an A
 
 1. Open **Projects** and create a project named `solo-vps-demo`.
 2. Open its `production` environment.
-3. Open the environment's new-resource picker, choose **Docker Image**, then select the existing **localhost** server.
+3. Open the environment's new-resource picker, choose **Docker Image**, then select the existing server named after `server.hostname` (or its custom UI name).
 4. Set **Image Name** to just `ghcr.io/<github-owner>/solo-vps-demo`, replacing the owner.
 5. Complete resource creation.
 
@@ -487,4 +489,4 @@ A re-run uses the original commit. If `main` has advanced, the freshness check s
 | API returns 401/403 | API Access, token expiry and `read`, `write`, `deploy` on `COOLIFY_API_TOKEN` |
 | CI reports timeout or unknown status | Inspect Coolify Deployments first: the original deployment may still be running. Follow the [rollback guide](deployment-rollback.md) for further action |
 
-The original UI walkthrough was exercised on Coolify `4.3.21`; the current release has controlled upgrade, one-token deployment/rollback, websocket and terminal evidence. A fresh UI walkthrough remains a separate check. Further details: [Coolify Docker Image deployment](https://coolify.io/docs/applications/), [Coolify API tokens](https://coolify.io/docs/api-reference/authorization), [GitHub environments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
+Further details: [Coolify Docker Image deployment](https://coolify.io/docs/applications/), [Coolify API tokens](https://coolify.io/docs/api-reference/authorization), [GitHub environments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).

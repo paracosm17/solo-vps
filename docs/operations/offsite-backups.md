@@ -197,7 +197,7 @@ An application PostgreSQL backup does **not** contain Coolify projects, resource
 
 Open **Settings → Backup** in Coolify.
 
-If **Configure Backup** is shown, select it. If Coolify first asks you to validate the localhost server, use **Validate Server** and return to Backup.
+If **Configure Backup** is shown, select it. If Coolify first asks you to validate the local server, use **Validate Server** and return to Backup.
 
 Under Scheduled Backup:
 

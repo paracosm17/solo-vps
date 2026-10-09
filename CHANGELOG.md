@@ -6,6 +6,19 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-09
+
+### Changed
+
+- Qualify Coolify 4.4.2 → 4.4.3 with controlled interruption/resume, checkpoint restore and preserved production workloads; retain Traefik 3.7.14.
+- Initialize the built-in Coolify server name from configured hostname while preserving custom names and connection/resource identities.
+- Keep the external CI/immutable Docker Image reference and explain Git-source/App/Compose alternatives.
+
+### Fixed
+
+- Render current versions from the shared manifest and remove historical platform notes from public EN/RU guides.
+- Exclude ADRs and internal maintainer pages from site publication/search; retain repository decisions.
+
 ## [0.2.1] - 2026-10-08
 
 ### Added

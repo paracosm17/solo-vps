@@ -1,10 +1,10 @@
 # Solo VPS — ROADMAP
 
-> **Last updated:** 2026-10-08
-> **Current phase:** 0.2.1 maintenance alpha published; production patch verified
+> **Last updated:** 2026-10-09
+> **Current phase:** 0.2.2 maintenance alpha qualified; production patch verified
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** complete an independent uninterrupted fresh-user replay of the current Coolify installation route; keep optional integrations separately qualified.
+> **Next action:** complete exact-source 0.2.2 publication gates, then independently replay the current installation route on a fresh host; keep optional integrations separately qualified.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -56,6 +56,8 @@ V5  real production-use evidence
 ---
 
 ## 2. Active maintenance work
+
+Coolify 4.4.2 → 4.4.3 has controlled V3 interruption/resume, isolated checkpoint restore, native hostname/custom-name behavior, analytics, TLS/WebSocket/SSH, verify/audit and no-op evidence. The bounded production V5 result preserves all 14 business containers and Traefik 3.7.14, credentials and six HTTPS health routes. See [test qualification](reviews/2026-10-09-coolify-443-runtime.md) and [production result](reviews/2026-10-09-coolify-443-production.md). Public documentation now excludes internal decision pages/search and describes the current integration. Exact-source CI/Pages, QA, history scan and release dry-run remain publication gates. Fresh 4.4.3 installation is unproven; previous evidence remains separately scoped below.
 
 `v0.2.0` is published. The reviewed Coolify 4.4.0 → 4.4.2 patch and explicit
 Traefik 3.6.25 → pinned 3.7.14 lifecycle have controlled V3 evidence for
@@ -135,7 +137,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-001 backup/restore/DR | RECOVERY PASS / V3 | Clean replacement host rebuilt from off-VPS inputs; Coolify, PostgreSQL, immutable app, HTTPS, new restic snapshot and restore-test passed; optional recovery stays V3 |
 | CRIT-002 failed deploy rollback | DONE / V3 | failed immutable candidate restores the known-good image; database rollback excluded |
 | CRIT-003 workstation admin key | DONE / V3 | independent human key, sudo, root denial and hardening gate proven |
-| CRIT-004 hosted self-CI / clean target | HISTORICAL CORE V4 / HOSTED PASS | Original V4 retained separately; controlled host V3 remains bounded; exact 0.2.1 release CI/Pages passed; fresh 4.4.2 replay remains next |
+| CRIT-004 hosted self-CI / clean target | HISTORICAL CORE V4 / HOSTED PASS | Original V4 retained separately; controlled host V3 remains bounded; exact 0.2.1 release CI/Pages passed; fresh 4.4.3 replay remains next |
 | CRIT-005 observability confidentiality | DONE / V3 | Repository-managed non-root Alloy uses a protected Unix socket boundary |
 | CRIT-006 Quick Start complexity | CORE V4 PASS | owner completed both public chapters unaided at `0fdba7f`; first-run copy/paste feedback addressed in docs-only follow-up |
 | CRIT-007 operator help surface | DONE / V2 | bounded `help`, `help-ops`, `help-dev`, `help-all` |
@@ -169,7 +171,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M6 — Automatic Security Updates | P1 | DONE | Core V4 |
 | M7 — Docker Host | P1 | DONE | Docker 29.x, core V4 |
 | M8 — Optional Tailscale Administrative Plane | P3 | DEFERRED | post-release optional work |
-| M9 — Coolify Installation Backend | P1 | DONE / BOUNDED | Prior 4.4.0 corrected fresh-host V3 retained for unchanged host layer; fresh 4.4.2 installation remains unproven; original V4 separate |
+| M9 — Coolify Installation Backend | P1 | DONE / BOUNDED | Prior 4.4.0 corrected fresh-host V3 retained for unchanged host layer; fresh 4.4.3 installation remains unproven; original V4 separate |
 | M10 — First End-to-End Application | P1 | DONE | Core V4 |
 | M11 — GitHub Actions + GHCR Template | P1 | CORE V4 PASS | owner deployed and updated demo using the public guide at `0fdba7f`; original source V4 retained; new single-token workflow V3, not unchanged since |
 | M12 — Dependency & Image Hygiene | P2 | DONE | V2 |
@@ -221,4 +223,4 @@ The maintained product topology remains one VPS; another permanent or additional
 - release-commit hosted CI/Pages checks and exact-ref secret/state scans;
 - clean release dry-run and final review; new runtime/publication work keeps its own evidence and authorization.
 
-**Current validation:** V3 for the 4.4.2/Traefik existing-host patch and V5 for the bounded production result. Unchanged host setup retains its prior controlled 4.4.0 V3 evidence; fresh 4.4.2 installation remains unproven. Original 0.1.0 core V4 and optional/recovery evidence stay separately scoped.
+**Current validation:** V3 for the 4.4.3 existing-host patch and V5 for the bounded production result; previous Traefik qualification remains unchanged. Unchanged host setup retains its prior controlled 4.4.0 V3 evidence; fresh 4.4.3 installation remains unproven. Original 0.1.0 core V4 and optional/recovery evidence stay separately scoped.

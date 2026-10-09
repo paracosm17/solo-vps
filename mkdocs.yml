@@ -14,15 +14,15 @@ exclude_docs: |
   coolify-4.3.21-evaluation.md
   release-process.md
   testing.md
+  adr/*.md
+  dependency-hygiene*.md
+  documentation-site*.md
+  license-choice*.md
 
 # These pages are intentionally reachable from contextual links but do not
 # belong in the main task navigation.
 not_in_nav: |
-  dependency-hygiene*.md
-  documentation-site*.md
-  license-choice*.md
   operations/grafana-cloud-log-drain*.md
-  adr/*.md
 
 site_url: https://paracosm17.github.io/solo-vps/
 repo_url: https://github.com/paracosm17/solo-vps

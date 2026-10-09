@@ -260,7 +260,7 @@ Creates/updates the isolated documentation environment and starts the local Mate
 
 Builds the documentation with `mkdocs build --strict`. Use this before a documentation commit.
 
-See [Documentation site](documentation-site.md) for manual setup and GitHub Pages publishing.
+See [Documentation site](https://github.com/paracosm17/solo-vps/blob/main/docs/documentation-site.md) for manual setup and GitHub Pages publishing.
 
 ## Project validation
 

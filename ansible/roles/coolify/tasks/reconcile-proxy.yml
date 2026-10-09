@@ -14,6 +14,9 @@
   delay: 5
   until: solo_vps_proxy_platform_health.stdout | trim == 'healthy'
 
+- name: Initialize the built-in server display name without replacing custom names
+  ansible.builtin.import_tasks: reconcile-server-name.yml
+
 - name: Reconcile only proxy ports through native Coolify configuration and lifecycle
   ansible.builtin.script:
     cmd: >-

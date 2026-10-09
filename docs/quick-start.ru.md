@@ -299,7 +299,7 @@ cd ~/solo-vps
 make platform
 ```
 
-Команда устанавливает Coolify, подготавливает сервер localhost и proxy и проверяет первоначальный запуск. Полная проверка выполняется после настройки панели и Sentinel в шаге 10.
+Команда устанавливает Coolify, подготавливает локальный сервер и proxy и проверяет первоначальный запуск. Полная проверка выполняется после настройки панели и Sentinel в шаге 10.
 
 Дождитесь `PASS Solo VPS Coolify bootstrap`. Повторно запускать установку не нужно.
 
@@ -330,9 +330,9 @@ make platform
 1. Откройте [http://127.0.0.1:18000](http://127.0.0.1:18000).
 2. Создайте первого администратора: имя, email и пароль.
 3. На экране **Welcome to Coolify** выберите **Skip Setup**.
-4. Откройте **Servers → localhost**.
+4. Откройте **Servers → `server.hostname`**.
 
-Solo VPS уже создал этот сервер. Ожидайте **Server is reachable and validated** и **Proxy Running**. Используйте существующий `localhost`.
+Coolify создаёт встроенный локальный сервер, а Solo VPS задаёт ему отображаемое имя из `server.hostname`. Ранее заданное в панели имя сохраняется. Ожидайте **Server is reachable and validated** и **Proxy Running**. Используйте этот сервер; его SSH-адрес остаётся `host.docker.internal`.
 
 ## 10. Настройте домен панели
 
@@ -352,11 +352,11 @@ Solo VPS уже создал этот сервер. Ожидайте **Server is
 4. Нажмите **Save**.
 5. Откройте этот HTTPS-адрес в новой вкладке и войдите.
 
-Это настройки всей панели. Поле **Servers → localhost → IP Address/Domain** отвечает за SSH-подключение к серверу; в нём остаётся `host.docker.internal`.
+Это настройки всей панели. Поле **Servers → `server.hostname` → IP Address/Domain** отвечает за SSH-подключение к серверу; в нём остаётся `host.docker.internal`.
 
 Панель должна открыться по HTTPS с действующим сертификатом. Используйте домен для повседневного доступа. Туннель можно закрыть сочетанием **Ctrl+C** в его терминале.
 
-**В Coolify → Servers → localhost → Sentinel → Configuration** укажите в поле **Coolify URL** тот же HTTPS-адрес панели, оставьте debug выключенным, сохраните настройки, включите Sentinel и выполните Sync. Дождитесь **Sentinel In Sync**. Не открывайте raw-порты `8000` или `8888` ради связи. Затем на VPS под администратором выполните:
+**В Coolify → Servers → `server.hostname` → Sentinel → Configuration** укажите в поле **Coolify URL** тот же HTTPS-адрес панели, оставьте debug выключенным, сохраните настройки, включите Sentinel и выполните Sync. Дождитесь **Sentinel In Sync**. Не открывайте raw-порты `8000` или `8888` ради связи. Затем на VPS под администратором выполните:
 
 ```bash
 make verify-coolify

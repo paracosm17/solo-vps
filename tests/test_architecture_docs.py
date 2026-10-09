@@ -37,7 +37,7 @@ class ArchitectureDocsTests(unittest.TestCase):
         path = root / relative
         text = path.read_text(encoding="utf-8")
         self.assertIn(old, text)
-        path.write_text(text.replace(old, new, 1), encoding="utf-8")
+        path.write_text(text.replace(old, new), encoding="utf-8")
 
     def test_current_contract_passes(self) -> None:
         validate_architecture(ROOT)
