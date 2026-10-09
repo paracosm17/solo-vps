@@ -54,7 +54,7 @@ Verifier проверяет loopback health endpoints и подтверждае�
 
 ```text
 Servers
-→ localhost
+→ server.hostname
 → Security
 → Terminal Access
 ```

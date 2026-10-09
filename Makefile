@@ -117,7 +117,7 @@ updates-plan: ## Offline source identity and reviewed Coolify target
 	@$(PYTHON) scripts/check_updates.py
 
 test-updates-check: ## Test read-only update discovery
-	@$(PYTHON) -m unittest tests.test_check_updates tests.test_coolify_release -v
+	@$(PYTHON) -m unittest tests.test_check_updates tests.test_coolify_release tests.test_coolify_server_name -v
 
 test-doc-command-values: ## Test shell-safe local documentation values (requires Node.js)
 	@$(NODE) tests/test_operator_values.js

@@ -1,18 +1,14 @@
----
-# Reviewed integration release. Update this file for a compatible upstream release.
-# Hashes are mandatory: setting a version alone never trusts floating artifacts.
 schema_version: 1
-version: "4.4.2"
+version: 4.4.3
 registry: docker.io
 realtime: embedded
 upgrade_from:
-  version: "4.4.0"
+  version: 4.4.2
   registry: docker.io
   realtime: embedded
   sentinel:
-    # Coolify updates its agent independently, including before a platform upgrade.
     accept_target: true
-    version: "1.0.2"
+    version: 1.0.2
     registry: docker.io
     image_id_x86_64: sha256:9355fc746d5ca550b8c16577c514337a12dda54f88bb1876333e4ff2128e6371
 artifacts:
@@ -20,21 +16,20 @@ artifacts:
   docker-compose.prod.yml: sha256:4cd00e83e117e847e6d6bdfe64f2a2f958bb09965692c5230fa9231a0315f80f
   .env.production: sha256:7895e54f7c9d40063e76afec9b35839048d91e5c3b5107d64ea49ef6987c304a
 sentinel:
-  version: "1.0.2"
+  version: 1.0.2
   registry: docker.io
   image_id_x86_64: sha256:9355fc746d5ca550b8c16577c514337a12dda54f88bb1876333e4ff2128e6371
 qualification:
-  level: V3
-  evidence: reviews/2026-10-08-coolify-442-runtime.md
-  release_sha256: sha256:5e6ff2b2460369e1e35eb62f47f6195a586097f9735dc657e63de6501c248e76
+  level: V1
+  evidence: reviews/2026-10-09-coolify-443-runtime.md
+  release_sha256: sha256:6764fcfdddd8bc2e557123c658547840dacc44e813ee41aaa1801a3826f39814
 proxy:
-  version: "3.7.14"
+  version: 3.7.14
   image: traefik:v3.7.14@sha256:e849695bc5c317da0cec22bfee4794fd9e15871fe554f864d31b625983e883ff
   image_id_x86_64: sha256:e849695bc5c317da0cec22bfee4794fd9e15871fe554f864d31b625983e883ff
-  # Classic Docker stores expose the platform config ID; containerd exposes the index ID.
   image_config_id_x86_64: sha256:5a93040e5abdf181145d7c242964eca7999ffd700e0447b242ef212f3ee44d55
   upgrade_from:
-    - version: "3.6.25"
-      image_id_x86_64: sha256:31267173a15b4944e797a76ffd9c419707c8d8b32fe5b610f80cd0cfa05f372d
-    - version: "3.7.14"
-      image_id_x86_64: sha256:b588cb566045e1ebb185948a8e2456f9705cb915b5f0fb5ee698184233997817
+  - version: 3.6.25
+    image_id_x86_64: sha256:31267173a15b4944e797a76ffd9c419707c8d8b32fe5b610f80cd0cfa05f372d
+  - version: 3.7.14
+    image_id_x86_64: sha256:b588cb566045e1ebb185948a8e2456f9705cb915b5f0fb5ee698184233997817

@@ -5,8 +5,8 @@ Solo VPS installs Coolify without giving the upstream installer ownership of SSH
 ## Current pinned platform
 
 ```text
-Coolify:           4.3.21
-image:             docker.io/coollabsio/coolify:4.3.21
+Coolify:           {{ solo_vps_coolify_target }}
+image:             docker.io/coollabsio/coolify:{{ solo_vps_coolify_target }}
 Docker support:    29.x
 management bind:   127.0.0.1
 management ports:  8000, 6001, 6002
@@ -44,7 +44,7 @@ make platform
 
 On a fresh host, `make platform` performs readiness checks, installs the pinned release and verifies its bootstrap health and private ports. Complete the first account, HTTPS dashboard and Sentinel setup before `make verify-coolify`. On a previously managed host, `make platform` also runs the full verification.
 
-The separate Coolify Traefik proxy is restricted to public **TCP 80/443**. Solo VPS installs a persistent Compose port override before the first Coolify start. Host port 8080 and UDP 443 are not published; HTTP/3 is outside this core network profile. Coolify continues to own routing, certificates and the base proxy configuration.
+The separate Coolify Traefik proxy is restricted to public **TCP 80/443**. Solo VPS persists the port policy through Coolify’s native proxy configuration before first-install verification. Host port 8080 and UDP 443 are not published; HTTP/3 is outside this core network profile. Coolify continues to own routing, certificates and the base proxy configuration.
 
 On an older installation, `make platform` also repairs a running proxy with extra published ports. This recreates the proxy and briefly interrupts HTTP/HTTPS traffic. It does not pull a new proxy image, restart application containers or regenerate Coolify credentials. If the saved Compose model would change the image or drop extra application networks, automatic recreation stops for review; restart through Coolify's proxy UI after reviewing its configuration, then rerun verification.
 
@@ -82,7 +82,7 @@ http://127.0.0.1:18000
 
 Keep the tunnel terminal open; `-N` does not open a remote shell, so waiting without a prompt is normal. If SSH reports a forwarding error, resolve the local port conflict before opening the page. Create the first account through this private path.
 
-After you configure a normal HTTPS dashboard domain, set **Servers → localhost → Sentinel → Configuration → Coolify URL** to that URL, leave debug off, enable and sync Sentinel, and wait for **Sentinel In Sync**. Raw management ports and Sentinel port `8888` remain private. See [Coolify dashboard domain and browser terminal](operations/coolify-dashboard-domain.md).
+After you configure a normal HTTPS dashboard domain, set **Servers → `server.hostname` → Sentinel → Configuration → Coolify URL** to that URL, leave debug off, enable and sync Sentinel, and wait for **Sentinel In Sync**. Raw management ports and Sentinel port `8888` remain private. See [Coolify dashboard domain and browser terminal](operations/coolify-dashboard-domain.md).
 
 ## Verify Coolify
 
@@ -105,7 +105,6 @@ make platform
 
 reconciles only the supported integration state and verifies it. It does not intentionally regenerate first-install secrets or treat a rerun as an upgrade.
 
-A real second platform run after the proxy-port correction completed without changes. The full clean-user replay and a fresh installation with that correction already present remain release checks.
 
 ## If proxy/resource paths show permission errors
 
@@ -128,7 +127,7 @@ An interrupted unmarked first install is a recovery case, not a normal rerun. Us
 
 ## Upgrades
 
-A normal `make platform` does not upgrade Coolify. The supported alpha lifecycle is previous-supported `4.1.2` → current-supported `4.3.21`; use the [Upgrade guide](upgrades.md) for the safety-gated procedure.
+A normal `make platform` does not upgrade Coolify. The supported alpha lifecycle is previous-supported `{{ solo_vps_coolify_origin }}` → current-supported `{{ solo_vps_coolify_target }}`; use the [Upgrade guide](upgrades.md) for the safety-gated procedure.
 
 ## Related
 

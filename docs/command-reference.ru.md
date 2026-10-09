@@ -260,7 +260,7 @@ make verify-ci-deploy-transport
 
 Собирает обе локали через `mkdocs build --strict`. Используйте перед documentation commit.
 
-См. [Сайт документации](documentation-site.md) для ручного setup и публикации GitHub Pages.
+См. [Сайт документации](https://github.com/paracosm17/solo-vps/blob/main/docs/documentation-site.md) для ручного setup и публикации GitHub Pages.
 
 ## Project validation
 

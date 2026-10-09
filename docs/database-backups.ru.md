@@ -8,7 +8,7 @@ Solo VPS делегирует плановые logical backup **PostgreSQL по�
 
 Coolify отвечает за backup schedule и logical dumps. В Solo VPS есть helper для одного явно принадлежащего проекту schedule через loopback API; он **не запускает второй database dump scheduler**.
 
-> **Ограничение API Coolify 4.3.21:** на проверенном VPS API backup schedule вернул только числовой `s3_storage_id`, а API S3 storage — UUID без этого числового ID. Helper не может доказать, что выбранное хранилище совпадает с запрошенным, поэтому adoption и verification корректно останавливаются. Команды API ниже пока не считаются пройденным alpha gate на 4.3.21. Для этого релиза используйте [проверенный путь через интерфейс Coolify и прямой restore из B2](operations/offsite-backups.md); не отмечайте API helper как работающий до исправления соответствия и повторной проверки.
+> **API-помощник резервных копий:** проверка соответствия хранилища пока не подтверждена для текущего релиза. Используйте [панель Coolify и процедуру восстановления](operations/offsite-backups.md). Помощник отклоняет ответы, по которым нельзя доказать выбор нужного хранилища.
 
 ```text
 Coolify

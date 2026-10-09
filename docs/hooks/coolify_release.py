@@ -13,6 +13,7 @@ def on_page_markdown(markdown, page, config, files):
         "solo_vps_coolify_origin": release["upgrade_from"]["version"],
         "solo_vps_coolify_target": release["version"],
         "solo_vps_coolify_qualification": release["qualification"]["level"],
+        "solo_vps_coolify_evidence": release["qualification"]["evidence"],
     }
     for name, value in replacements.items():
         markdown = markdown.replace("{{ " + name + " }}", value)

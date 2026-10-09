@@ -5,8 +5,8 @@ Solo VPS устанавливает Coolify, не передавая upstream in
 ## Текущая зафиксированная платформа
 
 ```text
-Coolify:           4.3.21
-image:             docker.io/coollabsio/coolify:4.3.21
+Coolify:           {{ solo_vps_coolify_target }}
+image:             docker.io/coollabsio/coolify:{{ solo_vps_coolify_target }}
 Docker support:    29.x
 management bind:   127.0.0.1
 management ports:  8000, 6001, 6002
@@ -82,7 +82,7 @@ http://127.0.0.1:18000
 
 Оставьте терминал туннеля открытым: `-N` не запускает удалённую оболочку, поэтому ожидание без приглашения — нормально. Если SSH сообщает об ошибке перенаправления, устраните конфликт локального порта до открытия страницы. Создайте первый аккаунт через этот приватный path.
 
-После настройки HTTPS-домена панели укажите этот адрес в **Servers → localhost → Sentinel → Configuration → Coolify URL**, оставьте debug выключенным, включите Sentinel и выполните Sync. Дождитесь **Sentinel In Sync**. Raw management ports и порт Sentinel `8888` остаются приватными. См. [домен панели Coolify и browser terminal](operations/coolify-dashboard-domain.md).
+После настройки HTTPS-домена панели укажите этот адрес в **Servers → `server.hostname` → Sentinel → Configuration → Coolify URL**, оставьте debug выключенным, включите Sentinel и выполните Sync. Дождитесь **Sentinel In Sync**. Raw management ports и порт Sentinel `8888` остаются приватными. См. [домен панели Coolify и browser terminal](operations/coolify-dashboard-domain.md).
 
 ## Проверьте Coolify
 
@@ -105,7 +105,6 @@ make platform
 
 reconciles только поддерживаемое integration state и проверяет его. Он не должен заново генерировать first-install secrets и не рассматривает rerun как upgrade.
 
-Реальный повторный `platform` после исправления портов proxy прошёл без изменений. Полный пользовательский проход и первая установка с уже включённым исправлением остаются release-проверками.
 
 ## Если proxy/resource paths дают permission errors
 
@@ -128,7 +127,7 @@ make verify-coolify
 
 ## Обновления
 
-Обычный `make platform` не обновляет Coolify. Поддерживаемый alpha lifecycle: previous-supported `4.1.2` → current-supported `4.3.21`; safety-gated procedure описана в [руководстве по обновлению](upgrades.md).
+Обычный `make platform` не обновляет Coolify. Поддерживаемый alpha lifecycle: previous-supported `{{ solo_vps_coolify_origin }}` → current-supported `{{ solo_vps_coolify_target }}`; safety-gated procedure описана в [руководстве по обновлению](upgrades.md).
 
 ## Связанные страницы
 

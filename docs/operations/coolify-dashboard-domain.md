@@ -54,7 +54,7 @@ The verifier checks the loopback health endpoints and proves raw `8000/6001/6002
 
 ```text
 Servers
-→ localhost
+→ server.hostname
 → Security
 → Terminal Access
 ```

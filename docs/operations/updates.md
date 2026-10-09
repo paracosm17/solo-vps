@@ -27,7 +27,7 @@ The first command checks GitHub Releases for **Solo VPS and Coolify**; the secon
 
 A Coolify notification announces an upstream release. Installing through Solo VPS first requires a published Solo VPS release that qualifies the transition. **If none exists yet, retain the working version and wait for compatibility qualification.** Editing a version number does not replace that qualification.
 
-For example, you have Solo VPS **0.2.1** with Coolify **4.4.2**. If upstream offers a newer version, the old checkout still installs reviewed 4.4.2. Select the next published Solo VPS release whose notes support a transition from your installation. A Traefik-only compatibility release may retain the current Coolify version.
+Your installed checkout continues to use its reviewed version even when upstream releases a newer one. Select a published Solo VPS release whose notes support a transition from your installation. A Traefik-only compatibility release may retain the current Coolify version.
 
 ## 2. Choose a release and prepare recovery
 
@@ -70,7 +70,7 @@ Continue from the new directory. For a controller running on the VPS, retain the
 
 Compare the version shown in the dashboard with `make updates-plan` and the **new checkout's** release notes. When they match, continue to the next required component.
 
-For a supported transition, copy the exact HTTPS URL from **Servers → localhost → Sentinel → Configuration → Coolify URL**, including a trailing `/` when configured. Sentinel must report **In Sync**.
+For a supported transition, copy the exact HTTPS URL from **Servers → `server.hostname` → Sentinel → Configuration → Coolify URL**, including a trailing `/` when configured. Sentinel must report **In Sync**.
 
 ```bash
 printf '%s' 'Exact Coolify URL from Sentinel settings: '; read -r COOLIFY_SENTINEL_URL

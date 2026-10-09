@@ -131,6 +131,7 @@ def validate_architecture(root: Path) -> None:
     for adr_path in adrs:
         adr_id, _title, status = parse_adr(adr_path)
         relative = adr_path.relative_to(root / "docs").as_posix()
+        relative = "https://github.com/paracosm17/solo-vps/blob/main/docs/" + relative
         link = f"]({relative})"
         if link not in architecture:
             raise ContractError(f"architecture page missing ADR link: {adr_id}")
