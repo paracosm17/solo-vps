@@ -1,7 +1,7 @@
 # Solo VPS — ROADMAP
 
-> **Last updated:** 2026-10-09
-> **Current phase:** 0.2.2 maintenance alpha published; installed release verified
+> **Last updated:** 2026-10-10
+> **Current phase:** 0.2.3 maintenance alpha candidate; controlled upgrade verified
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
 > **Next action:** independently replay the current installation route on a fresh host; keep optional integrations separately qualified.
@@ -57,11 +57,11 @@ V5  real production-use evidence
 
 ## 2. Active maintenance work
 
-`v0.2.2` is published at `37fc10aa57298eb7b6daa2c0f3ae9a8ea913e855`. Exact-main CI/Pages, release dry-run with pinned QA and independent history scanning passed. Test and production now use that immutable annotated tag; both finished full verification with `changed=0`.
+`v0.2.3` qualifies Coolify 4.4.3 → 4.4.6. The controlled test transition and isolated migration fixtures passed; production upgrade completed. Production full verification/audit and no-op passed; hosted exact-main checks, release dry-run and publication remain release gates. Operational source is `ef4139b`; release metadata does not change that implementation.
 
-Coolify 4.4.2 → 4.4.3 has controlled V3 interruption/resume, isolated checkpoint restore, native hostname/custom-name behavior, analytics, TLS/WebSocket/SSH, verify/audit and no-op evidence. Production V5 preserves all 14 business containers, Traefik 3.7.14, credentials and six HTTPS health routes. Fresh recovery inputs and generated checkpoints are verified encrypted off-host. See [test qualification](reviews/2026-10-09-coolify-443-runtime.md) and [production result](reviews/2026-10-09-coolify-443-production.md).
+Coolify 4.4.3 → 4.4.6 has controlled V3 interruption/resume, isolated checkpoint restore and exact IPv6/dedup migration fixtures, analytics, TLS/WebSocket/SSH, verify/audit and no-op evidence. Production preserves all 14 business containers, Traefik 3.7.14, credentials, environment records and six HTTPS health routes. Fresh recovery inputs and generated checkpoints are verified encrypted off-host. See [test qualification](reviews/2026-10-09-coolify-446-runtime.md) and [production result](reviews/2026-10-10-coolify-446-production.md).
 
-Public documentation excludes internal decision pages from publication/search and describes the current integration. Fresh 4.4.3 installation remains unproven. Prior Traefik and corrected-host evidence remains scoped to [0.2.1 patch qualification](reviews/2026-10-08-coolify-442-runtime.md) and [the controlled fresh-host replay](reviews/2026-10-07-coolify-440-clean-runtime.md); original V4 is separate.
+Public documentation excludes internal decision pages from publication/search and describes the current integration. Fresh 4.4.6 installation remains unproven. Prior Traefik and corrected-host evidence remains scoped to [0.2.1 patch qualification](reviews/2026-10-08-coolify-442-runtime.md) and [the controlled fresh-host replay](reviews/2026-10-07-coolify-440-clean-runtime.md); original V4 is separate.
 
 ### Documentation/productization
 
@@ -100,7 +100,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 
 - Preserve the controlled 4.4.0 upgrade and owner-reset fresh-host evidence at V3, including corrected-source resume, native proxy lifecycle, real ingress packets, verification/audit and idempotency. Do not carry the original source's independent V4 label onto the changed route.
 - Complete the authorized production migration with verified offhost backups, production recovery access and exact-origin preflight; record actual results without a reliability guarantee.
-- Require green protected-main source CI, successful Pages deployment, exact-ref history/archive secret scans and `release-dry-run RELEASE_VERSION=v0.2.2` before tagging.
+- Require green protected-main source CI, successful Pages deployment, exact-ref history/archive secret scans and `release-dry-run RELEASE_VERSION=v0.2.3` before tagging.
 - Publish bounded release notes that preserve separate optional backup/monitoring, external IPv6 packet and uninterrupted browser-walkthrough limits.
 
 ### Explicitly deferred
@@ -120,23 +120,23 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 | CRIT-001 backup/restore/DR | RECOVERY PASS / V3 | Clean replacement host rebuilt from off-VPS inputs; Coolify, PostgreSQL, immutable app, HTTPS, new restic snapshot and restore-test passed; optional recovery stays V3 |
 | CRIT-002 failed deploy rollback | DONE / V3 | failed immutable candidate restores the known-good image; database rollback excluded |
 | CRIT-003 workstation admin key | DONE / V3 | independent human key, sudo, root denial and hardening gate proven |
-| CRIT-004 hosted self-CI / clean target | HISTORICAL CORE V4 / HOSTED PASS | Original V4 retained separately; controlled host V3 remains bounded; exact 0.2.2 release CI/Pages passed; fresh 4.4.3 replay remains next |
+| CRIT-004 hosted self-CI / clean target | HISTORICAL CORE V4 / HOSTED PASS | Original V4 retained separately; controlled host V3 remains bounded; exact 0.2.2 release CI/Pages passed; fresh 4.4.6 replay remains next |
 | CRIT-005 observability confidentiality | DONE / V3 | Repository-managed non-root Alloy uses a protected Unix socket boundary |
 | CRIT-006 Quick Start complexity | CORE V4 PASS | owner completed both public chapters unaided at `0fdba7f`; first-run copy/paste feedback addressed in docs-only follow-up |
 | CRIT-007 operator help surface | DONE / V2 | bounded `help`, `help-ops`, `help-dev`, `help-all` |
 | CRIT-008 Passport factual drift | DONE / V2 | Passport is design boundary; README owns current user contract |
 | CRIT-009 ROADMAP sprawl | DONE / V2 | current state, gates and next action are concise |
 | CRIT-010 contract-test imbalance | CORE V4 PASS | source gates and independent clean-user route passed; avoid additional wording tests without a concrete risk |
-| CRIT-011 Docker/Coolify lifecycle | HISTORICAL CORE V4 / PATCH V3 | Original clean install retained separately; 4.4.3 patch and previous Traefik interruption/resume/rollback passed controlled V3; bounded production V5 passed |
+| CRIT-011 Docker/Coolify lifecycle | HISTORICAL CORE V4 / PATCH V3 | Original clean install retained separately; 4.4.6 patch and previous Traefik interruption/resume/rollback passed controlled V3; bounded production V5 passed |
 | CRIT-012 CI deployment transport | DEFERRED | restricted SSH tunnel remains the proven default |
 | CRIT-013 recovery priority | CLOSED | recovery path implemented before optional observability expansion |
 | CRIT-014 private security channel | DONE | GitHub Private Vulnerability Reporting enabled; public **Report a vulnerability** entry verified |
 | CRIT-015 external outage detection | DONE / V3 | Provider-level VPS shutdown/restart produced real DOWN/UP emails outside the VPS; operator observed delivery within a few minutes, with no latency SLA claimed |
 | CRIT-016 migration safety | DONE / V2 | app-owned preflight and image-only rollback boundary |
-| CRIT-017 release/upgrade story | V3 / V5 PASS | 0.2.2 published; 4.4.3 patch qualification and bounded production migration passed; source tags stay immutable |
+| CRIT-017 release/upgrade story | V3 / V5 PASS | 0.2.3 candidate; 4.4.6 patch qualification and bounded production migration passed; source tags stay immutable |
 | CRIT-018 documentation duplication | DONE / V2 | user, architecture, plan and evidence roles separated |
 | CRIT-019 optional-feature leakage | DONE / V2 | optional capabilities do not gate the core Quick Start |
-| CRIT-020 revision metadata | DONE | 0.2.2 immutable annotated tag resolves to 37fc10a; installed source matches it on test and production |
+| CRIT-020 revision metadata | CANDIDATE | Operational source ef4139b verified; exact release-tag alignment follows hosted gates |
 
 The Coolify-native Custom FluentBit experiment is **rejected as the maintained default**. Grafana Cloud credential encryption/delivery integration PASS remains historical evidence. Repository-managed non-root Alloy is the maintained retained-log implementation.
 
@@ -154,7 +154,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M6 — Automatic Security Updates | P1 | DONE | Core V4 |
 | M7 — Docker Host | P1 | DONE | Docker 29.x, core V4 |
 | M8 — Optional Tailscale Administrative Plane | P3 | DEFERRED | post-release optional work |
-| M9 — Coolify Installation Backend | P1 | DONE / BOUNDED | Prior 4.4.0 corrected fresh-host V3 retained for unchanged host layer; fresh 4.4.3 installation remains unproven; original V4 separate |
+| M9 — Coolify Installation Backend | P1 | DONE / BOUNDED | Prior 4.4.0 corrected fresh-host V3 retained for unchanged host layer; fresh 4.4.6 installation remains unproven; original V4 separate |
 | M10 — First End-to-End Application | P1 | DONE | Core V4 |
 | M11 — GitHub Actions + GHCR Template | P1 | CORE V4 PASS | owner deployed and updated demo using the public guide at `0fdba7f`; original source V4 retained; new single-token workflow V3, not unchanged since |
 | M12 — Dependency & Image Hygiene | P2 | DONE | V2 |
@@ -174,7 +174,7 @@ The Coolify-native Custom FluentBit experiment is **rejected as the maintained d
 | M26 — Public README & Quick Start | P1 | CORE V4 PASS | owner completed both public chapters independently at `0fdba7f`; first-run wording/input polish merged in `bf02b74` |
 | M27 — Architecture Documentation & ADR | P2 | DONE | V2 |
 | M28 — SECURITY / CONTRIBUTING / LICENSE | P2 | DONE | V2; private reporting enabled and public reporter entry verified |
-| M29 — Upgrade Guide | P2 | V3 / V5 PASS | 4.4.3 and previous Traefik patch upgrade/resume/recovery passed; production verification passed; independent fresh browser replay separate |
+| M29 — Upgrade Guide | P2 | V3 / V5 PASS | 4.4.6 and previous Traefik patch upgrade/resume/recovery passed; production verification passed; independent fresh browser replay separate |
 | M30 — Release Process | P2 | DONE | 0.1.0–0.2.2 public process passed; every subsequent tag requires its own exact-source checks |
 
 ---
@@ -206,4 +206,4 @@ The maintained product topology remains one VPS; another permanent or additional
 - release-commit hosted CI/Pages checks and exact-ref secret/state scans;
 - clean release dry-run and final review; new runtime/publication work keeps its own evidence and authorization.
 
-**Current validation:** V3 for the 4.4.3 existing-host patch and V5 for the bounded production result; previous Traefik qualification remains unchanged. Unchanged host setup retains its prior controlled 4.4.0 V3 evidence; fresh 4.4.3 installation remains unproven. Original 0.1.0 core V4 and optional/recovery evidence stay separately scoped.
+**Current validation:** V3 for the 4.4.6 existing-host patch and V5 for the bounded production result; previous Traefik qualification remains unchanged. Unchanged host setup retains its prior controlled 4.4.0 V3 evidence; fresh 4.4.6 installation remains unproven. Original 0.1.0 core V4 and optional/recovery evidence stay separately scoped.
