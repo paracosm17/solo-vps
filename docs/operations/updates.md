@@ -6,7 +6,7 @@ Run every command **in Bash/WSL from the Solo VPS directory on the same controll
 
 ## What gets updated
 
-In Coolify, select the local server by its configured `server.hostname` display name, or its existing custom name if you renamed it in the UI.
+In Coolify, select the existing local server by its current display name. New installations use `server.hostname`; custom UI names are preserved. During preflight, the old default name may still be visible; the upgrade initializes it afterward.
 
 | Component | What changes | How to update |
 | --- | --- | --- |
