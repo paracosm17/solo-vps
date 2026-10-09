@@ -89,6 +89,8 @@ make verify-coolify
 
 The command retains a local checkpoint and performs the reviewed transition. Stop on failure and read [the resume procedure](../upgrades.md#interrupted-upgrade).
 
+Review data migrations in the target Solo VPS release notes before confirming. Coolify patches can delete duplicate environment-variable records or normalize addresses. Source/image rollback does not reverse those changes; keep the pre-upgrade database backup and pause settings/ENV edits until verification finishes.
+
 Use Solo VPS commands for this path. Coolify's **Update** button bypasses its checkpoint, reviewed artifacts and transaction/resume checks; that transition is outside this integration's qualified path.
 
 ## 5. Update Traefik when required by the release
