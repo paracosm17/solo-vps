@@ -154,7 +154,7 @@ The key design rule is to avoid two competing owners for the same state.
 
 ## Accepted ADR decisions
 
-The project owner accepted ADRs 0001–0004 below. **Acceptance establishes the architecture boundary**; it does not by itself prove runtime behavior.
+These design records live in the repository. **Acceptance establishes the architecture boundary**; it does not by itself prove runtime behavior.
 
 | ADR | Status | Decision |
 | --- | --- | --- |
@@ -162,15 +162,8 @@ The project owner accepted ADRs 0001–0004 below. **Acceptance establishes the 
 | [`ADR-0002`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0002-controller-side-sops-decryption.md) | **Accepted** | Keep the production age private key on the operator workstation; no second controller server is required |
 | [`ADR-0003`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0003-coolify-native-database-backups.md) | **Accepted** | Use Coolify-native logical backups for Coolify-managed PostgreSQL rather than a competing dump scheduler |
 | [`ADR-0004`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0004-external-operator-state.md) | **Accepted** | Keep per-installation controller state outside the disposable Git checkout |
-| [`ADR-0006`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0006-reviewed-update-channels.md) | **Accepted** | Separate release discovery, exact-tag source preparation and reviewed Coolify runtime upgrades |
-
-## Proposed ADR decisions
-
-Proposed entries do not change the supported architecture until their stated evidence is complete.
-
-| ADR | Status | Decision |
-| --- | --- | --- |
 | [`ADR-0005`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0005-coolify-sentinel-trust-boundary.md) | **Accepted** | Accept mandatory Sentinel only inside the reviewed high-trust Coolify boundary after disposable runtime proof |
+| [`ADR-0006`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0006-reviewed-update-channels.md) | **Accepted** | Separate release discovery, exact-tag source preparation and reviewed Coolify runtime upgrades |
 
 Change a long-lived boundary by updating/superseding the ADR first, then the user docs and implementation in the same coherent change.
 

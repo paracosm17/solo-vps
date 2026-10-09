@@ -4,7 +4,7 @@
 > **Current phase:** 0.2.2 maintenance alpha qualified; production patch verified
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** complete an independent uninterrupted fresh-user replay of the current Coolify installation route; keep optional integrations separately qualified.
+> **Next action:** complete exact-source 0.2.2 publication gates, then independently replay the current installation route on a fresh host; keep optional integrations separately qualified.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 

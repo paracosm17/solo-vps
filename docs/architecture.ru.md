@@ -154,7 +154,7 @@ Grafana Cloud  -> optional retained historical application logs
 
 ## Принятые ADR
 
-Владелец проекта принял ADR 0001–0004 ниже. **Acceptance устанавливает architecture boundary**, но само по себе не доказывает runtime behavior.
+Записи о проектных решениях хранятся в репозитории. Принятое решение задаёт границы архитектуры, но само по себе не доказывает работоспособность реализации.
 
 | ADR | Статус | Решение |
 | --- | --- | --- |
@@ -162,15 +162,8 @@ Grafana Cloud  -> optional retained historical application logs
 | [`ADR-0002`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0002-controller-side-sops-decryption.md) | **Accepted** | Оставить production age private key на workstation оператора; второй controller server не нужен |
 | [`ADR-0003`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0003-coolify-native-database-backups.md) | **Accepted** | Использовать Coolify-native logical backups для Coolify-managed PostgreSQL вместо конкурирующего dump scheduler |
 | [`ADR-0004`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0004-external-operator-state.md) | **Accepted** | Хранить per-installation controller state вне disposable Git checkout |
-| [`ADR-0006`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0006-reviewed-update-channels.md) | **Accepted** | Разделить проверку версий, подготовку исходников по тегу и проверенное обновление Coolify |
-
-## Предложенные ADR
-
-Предложенные записи не меняют поддерживаемую архитектуру до получения указанного evidence.
-
-| ADR | Статус | Решение |
-| --- | --- | --- |
 | [`ADR-0005`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0005-coolify-sentinel-trust-boundary.md) | **Accepted** | Принимать обязательный Sentinel только внутри проверенной high-trust границы Coolify после disposable runtime proof |
+| [`ADR-0006`](https://github.com/paracosm17/solo-vps/blob/main/docs/adr/0006-reviewed-update-channels.md) | **Accepted** | Разделить проверку версий, подготовку исходников по тегу и проверенное обновление Coolify |
 
 Долгоживущую boundary меняйте через update/supersede ADR, а затем согласованно обновляйте user docs и implementation.
 

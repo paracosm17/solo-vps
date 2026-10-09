@@ -6,6 +6,8 @@ The owner authorized Coolify 4.4.2 → 4.4.3 after disposable qualification. Ope
 
 Fresh database/source/SSH and proxy/configuration recovery inputs were created root-private. PostgreSQL archive listing passed. The bundle was encrypted on the workstation; streamed decryption SHA256 matched the original. A second encrypted Windows copy matched the encrypted checksum. The age private identity stayed off the VPS. Previous source and older business-data backups were retained.
 
+The automatically generated upgrade checkpoint was also checksum-validated, exported encrypted off-host and verified through streamed decryption; an encrypted Windows copy was retained.
+
 - Preflight: `ok=41 changed=0 failed=0`.
 - Upgrade: `ok=138 changed=10 failed=0`, with a new automatic control-plane checkpoint.
 - Full verification: `ok=163 changed=0 failed=0`.
