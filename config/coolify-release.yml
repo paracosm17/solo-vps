@@ -24,7 +24,7 @@ sentinel:
   registry: docker.io
   image_id_x86_64: sha256:9355fc746d5ca550b8c16577c514337a12dda54f88bb1876333e4ff2128e6371
 qualification:
-  level: V1
+  level: V3
   evidence: reviews/2026-10-09-coolify-443-runtime.md
   release_sha256: sha256:6764fcfdddd8bc2e557123c658547840dacc44e813ee41aaa1801a3826f39814
 proxy:
