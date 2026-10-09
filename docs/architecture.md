@@ -13,12 +13,10 @@ Solo VPS has one design goal: keep **host ownership**, **application-platform ow
 When two documents appear to disagree, use this order:
 
 ```text
-accepted ADR / explicit owner decision
--> PROJECT_PASSPORT.md
--> README.md
--> ROADMAP.md
--> current implementation
--> legacy research
+code, tests and runtime evidence: factual behavior
+-> README.md: supported user contract
+-> PROJECT_PASSPORT.md and ADRs: design boundaries
+-> ROADMAP.md: development state and next action
 ```
 
 This prevents a historical experiment or an unfinished roadmap item from silently becoming a user contract.

@@ -13,12 +13,10 @@ README.md, PROJECT_PASSPORT.md, ROADMAP.md and
 Если два документа кажутся противоречащими друг другу, используйте порядок:
 
 ```text
-accepted ADR / explicit owner decision
--> PROJECT_PASSPORT.md
--> README.md
--> ROADMAP.md
--> current implementation
--> legacy research
+код, тесты и runtime-проверки: фактическое поведение
+-> README.md: поддерживаемый пользовательский сценарий
+-> PROJECT_PASSPORT.md и ADR: границы архитектуры
+-> ROADMAP.md: состояние разработки и следующий шаг
 ```
 
 Это не позволяет историческому эксперименту или незавершённому roadmap item незаметно превратиться в user contract.

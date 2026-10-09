@@ -6,6 +6,8 @@ Run every command **in Bash/WSL from the Solo VPS directory on the same controll
 
 ## What gets updated
 
+In Coolify, select the local server by its configured `server.hostname` display name, or its existing custom name if you renamed it in the UI.
+
 | Component | What changes | How to update |
 | --- | --- | --- |
 | Solo VPS | Automation source and reviewed component versions | Prepare a new checkout of a published tag |
