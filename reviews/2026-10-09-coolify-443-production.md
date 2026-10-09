@@ -25,3 +25,7 @@ The default server display name was initialized without altering connection/reso
 ## Limits
 
 This is bounded production-use evidence, not a reliability guarantee, fresh-user replay or full application-data recovery test. Control-plane checkpoints exclude application data. Actual isolated checkpoint restoration was exercised on the test server, not by overwriting production. Final immutable source identity/publication checks are separate gates.
+
+## Published source handoff
+
+The annotated `v0.2.2` tag resolves to `37fc10aa57298eb7b6daa2c0f3ae9a8ea913e855`. Exact-main CI/Pages, release dry-run with pinned QA and independent history scan passed; GitHub Release is published. Both test and production controllers now use this exact tag. Their final full verification each completed `ok=163 changed=0 failed=0`.
