@@ -2,11 +2,11 @@
 # Reviewed integration release. Update this file for a compatible upstream release.
 # Hashes are mandatory: setting a version alone never trusts floating artifacts.
 schema_version: 1
-version: "4.4.3"
+version: "4.4.6"
 registry: docker.io
 realtime: embedded
 upgrade_from:
-  version: "4.4.2"
+  version: "4.4.3"
   registry: docker.io
   realtime: embedded
   sentinel:
@@ -24,9 +24,9 @@ sentinel:
   registry: docker.io
   image_id_x86_64: sha256:9355fc746d5ca550b8c16577c514337a12dda54f88bb1876333e4ff2128e6371
 qualification:
-  level: V3
-  evidence: reviews/2026-10-09-coolify-443-runtime.md
-  release_sha256: sha256:6764fcfdddd8bc2e557123c658547840dacc44e813ee41aaa1801a3826f39814
+  level: V1
+  evidence: reviews/2026-10-09-coolify-446-runtime.md
+  release_sha256: sha256:515180ccc73b09545155a6355d84fc8fae26c92b6afe9f91107e9b12959d777e
 proxy:
   version: "3.7.14"
   image: traefik:v3.7.14@sha256:e849695bc5c317da0cec22bfee4794fd9e15871fe554f864d31b625983e883ff
