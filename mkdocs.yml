@@ -131,6 +131,7 @@ plugins:
             Backup & recovery: Резервные копии
             Backups: Копирование
             restic off-site backups: Внешние backup через restic
+            Encrypted Coolify export: Зашифрованная копия Coolify
             Storage providers: Провайдеры S3
             Backblaze B2: Backblaze B2
             Cloudflare R2 (alternative): Cloudflare R2 (альтернатива)
@@ -235,6 +236,7 @@ nav:
       - Detailed upgrade procedures: upgrades.md
   - Backup & recovery:
       - Backups:
+          - Encrypted Coolify export: operations/coolify-backups.md
           - restic off-site backups: backups-restic.md
           - Storage providers:
               - Backblaze B2: backup-storage-backblaze-b2.md

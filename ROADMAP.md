@@ -63,6 +63,8 @@ Coolify 4.4.3 → 4.4.6 has controlled V3 interruption/resume, isolated checkpoi
 
 Public documentation excludes internal decision pages from publication/search and describes the current integration. Fresh 4.4.6 installation remains unproven. Prior Traefik and corrected-host evidence remains scoped to [0.2.1 patch qualification](reviews/2026-10-08-coolify-442-runtime.md) and [the controlled fresh-host replay](reviews/2026-10-07-coolify-440-clean-runtime.md); original V4 is separate.
 
+The unreleased workstation Coolify `.age` export has controlled V3 collection/decrypt/checksum and isolated database-restore evidence; application data remains separate. See [the bounded feature record](reviews/2026-10-10-coolify-backup-export-runtime.md). Published v0.2.3 does not include this new command yet.
+
 ### Documentation/productization
 
 The public README now leads with product capabilities, requirements and the two-part setup guide. Obsolete installation notes and duplicated planning documents have been removed; writing rules live in `.github/DOCUMENTATION.md`. Historical runtime results are summarized in [the integration evidence record](reviews/2026-09-28-runtime-evidence-summary.md), while the gates below remain the current release checklist.

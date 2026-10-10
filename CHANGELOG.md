@@ -6,6 +6,10 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 
 ## [Unreleased]
 
+### Added
+
+- Workstation `make coolify-backup-export`: fresh Coolify database/configuration/SSH-key/proxy backup received over SSH, encrypted locally with pinned age and verified before no-clobber publication. Application data remains separately backed up.
+
 ## [0.2.3] - 2026-10-10
 
 ### Changed
