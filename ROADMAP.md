@@ -1,10 +1,10 @@
 # Solo VPS — ROADMAP
 
 > **Last updated:** 2026-10-10
-> **Current phase:** 0.2.3 maintenance alpha published; installed release verified
+> **Current phase:** 0.2.4 encrypted-backup candidate; controlled V3 qualification passed
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** independently replay the current installation route on a fresh host; keep optional integrations separately qualified.
+> **Next action:** complete exact-commit release checks and publish the qualified 0.2.4 backup feature.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -63,7 +63,7 @@ Coolify 4.4.3 → 4.4.6 has controlled V3 interruption/resume, isolated checkpoi
 
 Public documentation excludes internal decision pages from publication/search and describes the current integration. Fresh 4.4.6 installation remains unproven. Prior Traefik and corrected-host evidence remains scoped to [0.2.1 patch qualification](reviews/2026-10-08-coolify-442-runtime.md) and [the controlled fresh-host replay](reviews/2026-10-07-coolify-440-clean-runtime.md); original V4 is separate.
 
-The unreleased workstation Coolify `.age` export has controlled V3 collection/decrypt/checksum and isolated database-restore evidence; application data remains separate. See [the bounded feature record](reviews/2026-10-10-coolify-backup-export-runtime.md). Published v0.2.3 does not include this new command yet.
+The `0.2.4` candidate adds workstation Coolify `.age` export and parameterless local VPS creation with a public recipient only. Controlled V3 covers off-host authenticated decryption, checksums, isolated database restore, overlap rejection and minimal cron-like execution, with unchanged running containers. See [export evidence](reviews/2026-10-10-coolify-backup-export-runtime.md) and [local capture evidence](reviews/2026-10-10-local-coolify-backup-runtime.md). Application data remains separate; no schedule, retention or fresh-host/production qualification is claimed. Published v0.2.3 does not include these commands.
 
 ### Documentation/productization
 
