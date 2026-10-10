@@ -1,10 +1,10 @@
 # Solo VPS — ROADMAP
 
 > **Last updated:** 2026-10-10
-> **Current phase:** 0.2.4 encrypted-backup candidate; controlled V3 qualification passed
+> **Current phase:** 0.2.4 encrypted-backup alpha published; installed tag and bounded backup evidence verified
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** complete exact-commit release checks and publish the qualified 0.2.4 backup feature.
+> **Next action:** independently replay the current installation route on a fresh host; keep optional integrations separately qualified.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -57,13 +57,13 @@ V5  real production-use evidence
 
 ## 2. Active maintenance work
 
-`v0.2.3` is published at `7373ae6487fac3370f3f38fcd1111aa9280f56de`. Exact-main CI/Pages, release dry-run with pinned QA and independent history scanning passed. Both VPS checkouts match the immutable annotated tag; exact-commit Coolify verification passed with `changed=0`. Production full verification/audit and no-op passed.
+The unchanged platform baseline was qualified for `v0.2.3` at `7373ae6487fac3370f3f38fcd1111aa9280f56de`: exact-commit Coolify verification passed with `changed=0`, followed by production full verification/audit and no-op. Current source publication is recorded below.
 
 Coolify 4.4.3 → 4.4.6 has controlled V3 interruption/resume, isolated checkpoint restore and exact IPv6/dedup migration fixtures, analytics, TLS/WebSocket/SSH, verify/audit and no-op evidence. Production preserves all 14 business containers, Traefik 3.7.14, credentials, environment records and six HTTPS health routes. Fresh recovery inputs and generated checkpoints are verified encrypted off-host. See [test qualification](reviews/2026-10-09-coolify-446-runtime.md) and [production result](reviews/2026-10-10-coolify-446-production.md).
 
 Public documentation excludes internal decision pages from publication/search and describes the current integration. Fresh 4.4.6 installation remains unproven. Prior Traefik and corrected-host evidence remains scoped to [0.2.1 patch qualification](reviews/2026-10-08-coolify-442-runtime.md) and [the controlled fresh-host replay](reviews/2026-10-07-coolify-440-clean-runtime.md); original V4 is separate.
 
-The `0.2.4` candidate adds workstation Coolify `.age` export and parameterless local VPS creation with a public recipient only. Controlled V3 covers off-host authenticated decryption, checksums, isolated database restore, overlap rejection and minimal cron-like execution, with unchanged running containers. See [export evidence](reviews/2026-10-10-coolify-backup-export-runtime.md) and [local capture evidence](reviews/2026-10-10-local-coolify-backup-runtime.md). Application data remains separate; no schedule, retention or fresh-host/production qualification is claimed. Published v0.2.3 does not include these commands.
+`v0.2.4` is published at `2748df373282ca77c191f9037b4b2da5837c7295`: exact-main CI/Pages, pinned QA/release dry-run and independent history scanning passed. Both VPS source checkouts match the annotated tag; previous sources are retained. Workstation Coolify `.age` export and public-recipient local creation have controlled V3 off-host decryption/checksum/isolated restore, overlap rejection and cron-like evidence. See [export evidence](reviews/2026-10-10-coolify-backup-export-runtime.md) and [local capture evidence](reviews/2026-10-10-local-coolify-backup-runtime.md). Bounded production local capture, encrypted transfer and authenticated manifest verification passed with all 20 running containers unchanged; see [installed-tag record](reviews/2026-10-10-backup-024-publication.md). Application data, full recovery and fresh-host qualification remain separate. No schedule or retention policy was enabled.
 
 ### Documentation/productization
 
