@@ -926,12 +926,20 @@ recovery-kit-export: ## Export a private recovery kit; copy and verify it off th
 	@test -n "$(RECOVERY_KIT_OUTPUT)" || { printf '%s\n' 'ERROR: set RECOVERY_KIT_OUTPUT to a new protected archive path.' >&2; exit 2; }
 	@$(PYTHON) $(RECOVERY_KIT) export --data-dir "$(SOLO_VPS_DATA_DIR)" --output "$(RECOVERY_KIT_OUTPUT)" --source-revision "$(RECOVERY_SOURCE_REVISION)"
 
-.PHONY: coolify-backup-export test-coolify-backup-export
+.PHONY: coolify-backup-export coolify-backup-local coolify-backup-local-prepare test-coolify-backup-export
+coolify-backup-local-prepare: ## VPS: one-time public recipient + pinned age preparation; never copies a private identity
+	@test -n "$(SOPS_AGE_RECIPIENT)" || { printf '%s\n' 'ERROR: supply SOPS_AGE_RECIPIENT=age1... from your workstation (public recipient only).' >&2; exit 2; }
+	@$(MAKE) --no-print-directory init-sops-policy
+	@$(MAKE) --no-print-directory secrets-tools
+
+coolify-backup-local: ## VPS: create a local age-encrypted Coolify backup using the existing public recipient (no download)
+	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/coolify_backup_local.py --data-dir "$(SOLO_VPS_DATA_DIR)" --recipient-file "$(SOPS_RECIPIENT_FILE)" --output "$(COOLIFY_BACKUP_OUTPUT)"
+
 coolify-backup-export: ## WORKSTATION: create, receive and verify an age-encrypted Coolify control-plane backup (excludes app data)
 	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/coolify_backup_export.py --inventory "$(INVENTORY)" --data-dir "$(SOLO_VPS_DATA_DIR)" --key-file "$(AGE_KEY_FILE)" --host "$(BACKUP_VPS_HOST)" --user "$(BACKUP_VPS_USER)" --ssh-identity "$(BACKUP_SSH_IDENTITY_FILE)" --remote-data "$(COOLIFY_BACKUP_REMOTE_DATA_DIR)" --remote-source "$(COOLIFY_BACKUP_REMOTE_SOURCE)" --output "$(COOLIFY_BACKUP_OUTPUT)"
 
 test-coolify-backup-export:
-	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests.test_coolify_backup_export
+	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests.test_coolify_backup_export tests.test_coolify_backup_local
 
 recovery-kit-verify: ## Verify one copied recovery kit without decrypting secrets
 	@test -n "$(RECOVERY_KIT_OUTPUT)" || { printf '%s\n' 'ERROR: set RECOVERY_KIT_OUTPUT to the copied recovery kit path.' >&2; exit 2; }
