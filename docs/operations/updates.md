@@ -44,6 +44,8 @@ Before changing runtime:
 
 See [off-site backups](offsite-backups.md), [PostgreSQL backups](postgresql-backups.md) and [recovery boundaries](../upgrades.md#rollback-and-recovery). Automatic local upgrade checkpoints supplement those backups and cannot survive VPS loss.
 
+For a one-command encrypted Coolify database/configuration/proxy export straight to your workstation, use [Encrypted Coolify export](coolify-backups.md). Application data remains a separate backup layer.
+
 ## 3. Prepare new Solo VPS source
 
 In the **old** project directory, retain the `make paths` output, then enter the exact published tag from Releases:

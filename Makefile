@@ -190,6 +190,9 @@ BACKUP_CREDENTIAL_INSTALLER := scripts/install_backup_credentials.py
 VPS_SECRETS_ADMIN_HOME ?=
 BACKUP_VPS_HOST ?=
 BACKUP_VPS_USER ?=
+COOLIFY_BACKUP_OUTPUT ?=
+COOLIFY_BACKUP_REMOTE_DATA_DIR ?=
+COOLIFY_BACKUP_REMOTE_SOURCE ?=
 BACKUP_REMOTE_PROJECT ?= ~/solo-vps
 BACKUP_SSH_IDENTITY_FILE ?=
 BACKUP_RETENTION_CONFIRM ?=
@@ -680,7 +683,7 @@ prove-disposable-clean-target: validate-disposable-clean-target test-disposable-
 
 ci-fast-source: validate-ai-coding validate-platform-lifecycle test-platform-lifecycle validate-documentation-governance test-documentation-governance validate-operator-surface test-operator-surface validate-application-migration-contract test-application-migration-contract validate-hosted-ci-contract test-hosted-ci-contract validate-disposable-clean-target test-disposable-clean-target validate-disaster-recovery test-disaster-recovery validate-backup-runtime test-backup-runtime validate-metrics-credentials test-metrics-credentials validate-metrics-runtime test-metrics-runtime validate-backup-policy test-backup-policy validate-database-backup-contract test-database-backup-contract validate-database-backup-runtime test-database-backup-runtime validate-state-layout test-state-layout validate-yaml validate-onboarding-contract test-onboarding-contract validate-coolify-contract test-coolify-install-backend validate-ci-template test-ci-template test-coolify-deploy-api validate-public-product-hygiene test-public-product-hygiene validate-qa-contract test-qa-contract validate-readme-contract test-readme-contract validate-architecture-docs test-architecture-docs validate-release-process test-release-process validate-external-uptime test-external-uptime ## Run the bounded source-only part of the public hosted CI gate
 
-ci-fast-source: test-source-update-prepare test-updates-check test-doc-command-values
+ci-fast-source: test-source-update-prepare test-updates-check test-doc-command-values test-coolify-backup-export
 
 ci-fast: ci-fast-source qa-tools qa-static ## Run the full public hosted CI fast gate, including the pinned real Ansible QA layer
 
@@ -922,6 +925,13 @@ test-disaster-recovery: ## Run M16 recovery-kit, Coolify-instance restore and co
 recovery-kit-export: ## Export a private recovery kit; copy and verify it off the VPS before claiming DR readiness
 	@test -n "$(RECOVERY_KIT_OUTPUT)" || { printf '%s\n' 'ERROR: set RECOVERY_KIT_OUTPUT to a new protected archive path.' >&2; exit 2; }
 	@$(PYTHON) $(RECOVERY_KIT) export --data-dir "$(SOLO_VPS_DATA_DIR)" --output "$(RECOVERY_KIT_OUTPUT)" --source-revision "$(RECOVERY_SOURCE_REVISION)"
+
+.PHONY: coolify-backup-export test-coolify-backup-export
+coolify-backup-export: ## WORKSTATION: create, receive and verify an age-encrypted Coolify control-plane backup (excludes app data)
+	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/coolify_backup_export.py --inventory "$(INVENTORY)" --data-dir "$(SOLO_VPS_DATA_DIR)" --key-file "$(AGE_KEY_FILE)" --host "$(BACKUP_VPS_HOST)" --user "$(BACKUP_VPS_USER)" --ssh-identity "$(BACKUP_SSH_IDENTITY_FILE)" --remote-data "$(COOLIFY_BACKUP_REMOTE_DATA_DIR)" --remote-source "$(COOLIFY_BACKUP_REMOTE_SOURCE)" --output "$(COOLIFY_BACKUP_OUTPUT)"
+
+test-coolify-backup-export:
+	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests.test_coolify_backup_export
 
 recovery-kit-verify: ## Verify one copied recovery kit without decrypting secrets
 	@test -n "$(RECOVERY_KIT_OUTPUT)" || { printf '%s\n' 'ERROR: set RECOVERY_KIT_OUTPUT to the copied recovery kit path.' >&2; exit 2; }
