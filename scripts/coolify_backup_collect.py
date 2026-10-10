@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 from datetime import datetime, timezone
+import fcntl
 import hashlib
 import json
 import os
@@ -14,8 +16,10 @@ import tarfile
 import tempfile
 
 if __package__:
+    from .coolify_backup_common import verify_members
     from .coolify_upgrade_checkpoint import checkpoint
 else:
+    from coolify_backup_common import verify_members
     from coolify_upgrade_checkpoint import checkpoint
 
 
@@ -36,6 +40,8 @@ def add_tree(tar: tarfile.TarFile, path: Path, name: str, hashes: dict) -> None:
 
 
 def collect(data: Path, operator: Path, source: Path, stage: Path) -> Path:
+    if any((data / name).exists() for name in (".solo-vps-upgrading", ".solo-vps-installing")):
+        raise ValueError("finish the pending upgrade before backup")
     cp = checkpoint(data, stage / "checkpoints")
     inspect = subprocess.run(
         ["/usr/bin/docker", "inspect", "coolify", "coolify-db", "coolify-proxy", "coolify-sentinel"],
@@ -65,7 +71,21 @@ def collect(data: Path, operator: Path, source: Path, stage: Path) -> Path:
             "restore": "Manual control-plane recovery; source/image downgrade does not undo database migrations",
         }, indent=2) + "\n")
         tar.add(manifest, arcname="manifest.json", recursive=False)
+    with archive.open("rb") as stream:
+        verify_members(stream)
     return archive
+
+
+@contextmanager
+def capture_lock(root: Path):
+    if root.is_symlink():
+        raise ValueError("unsafe staging root")
+    root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    os.chmod(root, 0o700)
+    fd = os.open(root / ".capture.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, "r+b") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        yield
 
 
 def main() -> int:
@@ -78,11 +98,7 @@ def main() -> int:
         if os.geteuid() != 0:
             raise ValueError("root required")
         root = Path("/var/lib/solo-vps/exports")
-        if root.is_symlink():
-            raise ValueError("unsafe staging root")
-        root.mkdir(mode=0o700, parents=True, exist_ok=True)
-        os.chmod(root, 0o700)
-        with tempfile.TemporaryDirectory(prefix="coolify-", dir=root) as tmp:
+        with capture_lock(root), tempfile.TemporaryDirectory(prefix="coolify-", dir=root) as tmp:
             archive = collect(Path("/data/coolify"), args.operator_data, args.source, Path(tmp))
             digest = hashlib.sha256()
             with archive.open("rb") as stream:
@@ -91,7 +107,10 @@ def main() -> int:
                     sys.stdout.buffer.write(block)
             sys.stdout.buffer.flush()
             print("SOLO_BACKUP_SHA256=" + digest.hexdigest(), file=sys.stderr)
-    except (OSError, ValueError, subprocess.SubprocessError, tarfile.TarError):
+    except BlockingIOError:
+        print("ERROR: another Coolify backup capture is running", file=sys.stderr)
+        return 2
+    except (OSError, ValueError, EOFError, subprocess.SubprocessError, tarfile.TarError):
         print("ERROR: private Coolify backup collection failed", file=sys.stderr)
         return 2
     return 0

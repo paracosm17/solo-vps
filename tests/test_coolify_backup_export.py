@@ -67,7 +67,7 @@ class ExportTests(unittest.TestCase):
 
     def test_code_payload_has_only_collector_and_checkpoint(self):
         with zipfile.ZipFile(io.BytesIO(payload())) as zip:
-            self.assertEqual(set(zip.namelist()), {"__main__.py", "coolify_upgrade_checkpoint.py"})
+            self.assertEqual(set(zip.namelist()), {"__main__.py", "coolify_upgrade_checkpoint.py", "coolify_backup_common.py"})
             self.assertNotIn(b"AGE-SECRET-KEY-", payload())
 
     def test_connection_rejects_injection_root_and_multiple_hosts(self):

@@ -6,9 +6,12 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-10-10
+
 ### Added
 
 - Workstation `make coolify-backup-export`: fresh Coolify database/configuration/SSH-key/proxy backup received over SSH, encrypted locally with pinned age and verified before no-clobber publication. Application data remains separately backed up.
+- VPS `make coolify-backup-local`: parameterless encrypted control-plane backup after one-time public-recipient preparation, with a unique private output file, shared capture lock and no private age identity on the server. Document manual cron use and Linux/WSL support boundaries.
 
 ## [0.2.3] - 2026-10-10
 
