@@ -93,6 +93,8 @@ The command retains a local checkpoint and performs the reviewed transition. Sto
 
 Review data migrations in the target Solo VPS release notes before confirming. Coolify patches can delete duplicate environment-variable records or normalize addresses. Source/image rollback does not reverse those changes; keep the pre-upgrade database backup and pause settings/ENV edits until verification finishes.
 
+The reviewed transition to {{ solo_vps_coolify_target }} preserves existing ENV escaping and encrypts additional stored secrets. Keep the original `APP_KEY` together with the database backup. API tokens need `read`, `write` and `deploy`; backup messages may be hidden without sensitive-read permission. Solo VPS checks the structured S3 upload result. Compose applications with `scale` or `replicas` above one must be corrected before their next deployment. Leave Coolify's optional server patching disabled: Solo VPS owns host security updates.
+
 Use Solo VPS commands for this path. Coolify's **Update** button bypasses its checkpoint, reviewed artifacts and transaction/resume checks; that transition is outside this integration's qualified path.
 
 ## 5. Update Traefik when required by the release
