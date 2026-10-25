@@ -63,6 +63,7 @@ def execution(**overrides):
         "created_at": "2026-08-17T10:00:00+00:00",
         "message": "Database backup successful",
         "status": "success",
+        "s3_uploaded": True,
     }
     value.update(overrides)
     return value
@@ -167,6 +168,18 @@ class CoolifyDatabaseBackupTests(unittest.TestCase):
         ):
             with self.subTest(item=item), self.assertRaises(DatabaseBackupError):
                 validate_execution(item, plan(freshness_hours=1), now=now)
+
+    def test_redacted_message_requires_explicit_s3_upload(self):
+        now = datetime(2026, 8, 17, 11, 0, tzinfo=timezone.utc)
+        for value in (False, None, "true", 1):
+            with self.subTest(value=value), self.assertRaises(DatabaseBackupError):
+                validate_execution(execution(message=None, s3_uploaded=value), plan(), now=now)
+        missing = execution(message=None)
+        del missing["s3_uploaded"]
+        with self.assertRaises(DatabaseBackupError):
+            validate_execution(missing, plan(), now=now)
+        evidence = validate_execution(execution(message=None), plan(), now=now)
+        self.assertTrue(evidence["s3_uploaded"])
 
     def test_verify_requires_owned_schedule_and_latest_success(self):
         with tempfile.TemporaryDirectory() as tmp:

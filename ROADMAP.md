@@ -1,10 +1,10 @@
 # Solo VPS — ROADMAP
 
-> **Last updated:** 2026-10-10
-> **Current phase:** 0.2.4 encrypted-backup alpha published; installed tag and bounded backup evidence verified
+> **Last updated:** 2026-10-25
+> **Current phase:** 0.2.5 maintenance candidate; Coolify 4.5.0 controlled and production upgrades verified
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** independently replay the current installation route on a fresh host; keep optional integrations separately qualified.
+> **Next action:** complete exact-commit publication checks for the qualified 0.2.5 candidate.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -57,13 +57,13 @@ V5  real production-use evidence
 
 ## 2. Active maintenance work
 
-The unchanged platform baseline was qualified for `v0.2.3` at `7373ae6487fac3370f3f38fcd1111aa9280f56de`: exact-commit Coolify verification passed with `changed=0`, followed by production full verification/audit and no-op. Current source publication is recorded below.
+The current candidate qualifies Coolify 4.4.6 to 4.5.0, including 4.4.7 security fixes, with Sentinel 1.1.2 and retained Traefik 3.7.14. Controlled V3 covers isolated restore/exact migrations, synthetic ENV/secret preservation, checkpoint interruption/resume, verify/audit and no-op. Bounded V5 preserves original credentials, 120 stored ENV values and 18 application/proxy containers; eight HTTPS codes match baseline, including pre-existing development-route 404/503 exceptions. See [test qualification](reviews/2026-10-24-coolify-450-runtime.md) and [production result](reviews/2026-10-24-coolify-450-production.md). Fresh 4.5.0 installation and new live S3 integration remain separate gates.
 
 Coolify 4.4.3 → 4.4.6 has controlled V3 interruption/resume, isolated checkpoint restore and exact IPv6/dedup migration fixtures, analytics, TLS/WebSocket/SSH, verify/audit and no-op evidence. Production preserves all 14 business containers, Traefik 3.7.14, credentials, environment records and six HTTPS health routes. Fresh recovery inputs and generated checkpoints are verified encrypted off-host. See [test qualification](reviews/2026-10-09-coolify-446-runtime.md) and [production result](reviews/2026-10-10-coolify-446-production.md).
 
-Public documentation excludes internal decision pages from publication/search and describes the current integration. Fresh 4.4.6 installation remains unproven. Prior Traefik and corrected-host evidence remains scoped to [0.2.1 patch qualification](reviews/2026-10-08-coolify-442-runtime.md) and [the controlled fresh-host replay](reviews/2026-10-07-coolify-440-clean-runtime.md); original V4 is separate.
+Public documentation excludes internal decision pages from publication/search and describes the current integration. Fresh 4.5.0 installation remains unproven. Prior Traefik and corrected-host evidence remains scoped to [0.2.1 patch qualification](reviews/2026-10-08-coolify-442-runtime.md) and [the controlled fresh-host replay](reviews/2026-10-07-coolify-440-clean-runtime.md); original V4 is separate.
 
-`v0.2.4` is published at `2748df373282ca77c191f9037b4b2da5837c7295`: exact-main CI/Pages, pinned QA/release dry-run and independent history scanning passed. Both VPS source checkouts match the annotated tag; previous sources are retained. Workstation Coolify `.age` export and public-recipient local creation have controlled V3 off-host decryption/checksum/isolated restore, overlap rejection and cron-like evidence. See [export evidence](reviews/2026-10-10-coolify-backup-export-runtime.md) and [local capture evidence](reviews/2026-10-10-local-coolify-backup-runtime.md). Bounded production local capture, encrypted transfer and authenticated manifest verification passed with all 20 running containers unchanged; see [installed-tag record](reviews/2026-10-10-backup-024-publication.md). Application data, full recovery and fresh-host qualification remain separate. No schedule or retention policy was enabled.
+`v0.2.4` is published at `2748df373282ca77c191f9037b4b2da5837c7295`: exact-main CI/Pages, pinned QA/release dry-run and independent history scanning passed. Both VPS source checkouts matched that tag at publication; previous sources are retained. Workstation Coolify `.age` export and public-recipient local creation have controlled V3 off-host decryption/checksum/isolated restore, overlap rejection and cron-like evidence. See [export evidence](reviews/2026-10-10-coolify-backup-export-runtime.md) and [local capture evidence](reviews/2026-10-10-local-coolify-backup-runtime.md). Bounded production local capture, encrypted transfer and authenticated manifest verification passed with all 20 running containers unchanged; see [installed-tag record](reviews/2026-10-10-backup-024-publication.md). Application data, full recovery and fresh-host qualification remain separate. No schedule or retention policy was enabled.
 
 ### Documentation/productization
 
@@ -79,7 +79,7 @@ Retained logs are V3: entries survived application redeploy and Alloy restart, a
 
 ### Coolify lifecycle
 
-The published `0.1.0` source supported Coolify `4.3.21`, with `4.1.2` as the previous upgrade origin. The current source qualifies `4.3.21 → 4.4.0` at V3 on a disposable VPS, including native Sentinel `1.0.2`; the corrected fresh-host V3 and bounded production V5 records remain separate. The reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data. The `4.1.2` → `4.3.21` interruption/resume and replacement-host exercises passed, followed by same-host verification of the promoted source.
+The published `0.1.0` source supported Coolify `4.3.21`, with `4.1.2` as the previous upgrade origin. The earlier 0.2.0 source qualified `4.3.21 → 4.4.0` at V3 on a disposable VPS, including native Sentinel `1.0.2`; the corrected fresh-host V3 and bounded production V5 records remain separate. The reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data. The `4.1.2` → `4.3.21` interruption/resume and replacement-host exercises passed, followed by same-host verification of the promoted source.
 
 Sentinel is a Coolify-managed Linux/Docker metrics agent. The old verified "Sentinel absent" result records a `4.1.2` bridge-to-loopback incompatibility; it is not the desired contract for `4.3.19+`. A safety-gated [exercise sheet](docs/coolify-4.3.21-evaluation.md) records exact artifacts, HTTPS push path, the high-trust Docker/host boundary, absence of unintended public ports and interruption/forward-resume behavior. The `database-backup-adopt` API helper fails closed because the `4.3.21` schedule API omits the required S3 storage UUID; Coolify UI backup and isolated B2 restore passed instead. The promoted `4.3.21` source now also has core V4 clean-install and idempotency evidence.
 
@@ -102,7 +102,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 
 - Preserve the controlled 4.4.0 upgrade and owner-reset fresh-host evidence at V3, including corrected-source resume, native proxy lifecycle, real ingress packets, verification/audit and idempotency. Do not carry the original source's independent V4 label onto the changed route.
 - Complete the authorized production migration with verified offhost backups, production recovery access and exact-origin preflight; record actual results without a reliability guarantee.
-- Require green protected-main source CI, successful Pages deployment, exact-ref history/archive secret scans and `release-dry-run RELEASE_VERSION=v0.2.3` before tagging.
+- Require green protected-main source CI, successful Pages deployment, exact-ref history/archive secret scans and `release-dry-run RELEASE_VERSION=v0.2.5` before tagging.
 - Publish bounded release notes that preserve separate optional backup/monitoring, external IPv6 packet and uninterrupted browser-walkthrough limits.
 
 ### Explicitly deferred
@@ -208,4 +208,4 @@ The maintained product topology remains one VPS; another permanent or additional
 - release-commit hosted CI/Pages checks and exact-ref secret/state scans;
 - clean release dry-run and final review; new runtime/publication work keeps its own evidence and authorization.
 
-**Current validation:** V3 for the 4.4.6 existing-host patch and V5 for the bounded production result; previous Traefik qualification remains unchanged. Unchanged host setup retains its prior controlled 4.4.0 V3 evidence; fresh 4.4.6 installation remains unproven. Original 0.1.0 core V4 and optional/recovery evidence stay separately scoped.
+**Current validation:** V3 for the 4.4.6 → 4.5.0 existing-host transition and V5 for the bounded production result; previous Traefik qualification remains unchanged. Unchanged host setup retains its prior controlled 4.4.0 V3 evidence; fresh 4.5.0 installation remains unproven. Original 0.1.0 core V4 and optional/recovery evidence stay separately scoped.

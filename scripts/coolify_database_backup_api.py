@@ -370,6 +370,10 @@ def validate_execution(execution: dict[str, Any], plan: BackupPlan, *, now: date
     message = str(execution.get("message", "")).strip()
     if status not in SUCCESS_STATUSES:
         raise DatabaseBackupError(f"latest database backup execution is not successful: {status or 'missing'}")
+    # Success can mean only the local dump succeeded. Messages may be redacted
+    # for the normal read/write/deploy token; require explicit upload evidence.
+    if execution.get("s3_uploaded") is not True:
+        raise DatabaseBackupError("latest database backup has no confirmed S3 upload")
     lowered = message.lower()
     if "s3" in lowered and ("warning" in lowered or "fail" in lowered or "error" in lowered):
         raise DatabaseBackupError("latest database backup reports an S3 upload warning/failure")
@@ -390,6 +394,7 @@ def validate_execution(execution: dict[str, Any], plan: BackupPlan, *, now: date
     return {
         "execution_uuid": execution_uuid,
         "status": status,
+        "s3_uploaded": True,
         "filename": filename,
         "size": size,
         "created_at": created.isoformat(),

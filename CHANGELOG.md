@@ -6,6 +6,17 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-10-25
+
+### Changed
+
+- Qualify Coolify 4.4.6 to 4.5.0, including 4.4.7 security fixes and Sentinel 1.1.2; retain Traefik 3.7.14. Document API/Compose incompatibilities, forward-only secret migrations and host-patching ownership.
+
+### Fixed
+
+- Require explicit S3 upload success when verifying database backups, including redacted API execution messages.
+- Accept equivalent timezone-file aliases such as UTC and Etc/UTC during read-only host verification, while rejecting a different timezone.
+
 ## [0.2.4] - 2026-10-10
 
 ### Added
