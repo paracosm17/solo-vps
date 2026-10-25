@@ -79,7 +79,7 @@ Retained logs are V3: entries survived application redeploy and Alloy restart, a
 
 ### Coolify lifecycle
 
-The published `0.1.0` source supported Coolify `4.3.21`, with `4.1.2` as the previous upgrade origin. The current source qualifies `4.3.21 → 4.4.0` at V3 on a disposable VPS, including native Sentinel `1.0.2`; the corrected fresh-host V3 and bounded production V5 records remain separate. The reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data. The `4.1.2` → `4.3.21` interruption/resume and replacement-host exercises passed, followed by same-host verification of the promoted source.
+The published `0.1.0` source supported Coolify `4.3.21`, with `4.1.2` as the previous upgrade origin. The earlier 0.2.0 source qualified `4.3.21 → 4.4.0` at V3 on a disposable VPS, including native Sentinel `1.0.2`; the corrected fresh-host V3 and bounded production V5 records remain separate. The reviewed path crosses the [`4.3.19` Sentinel change](https://github.com/coollabsio/coolify/releases/tag/v4.3.19), which made Sentinel mandatory on regular servers. The [official update guide](https://coolify.io/docs/core/instance-management/update) requires an instance backup, release-note review, no active deployments and post-update verification; downgrade does not roll back workloads or their data. The `4.1.2` → `4.3.21` interruption/resume and replacement-host exercises passed, followed by same-host verification of the promoted source.
 
 Sentinel is a Coolify-managed Linux/Docker metrics agent. The old verified "Sentinel absent" result records a `4.1.2` bridge-to-loopback incompatibility; it is not the desired contract for `4.3.19+`. A safety-gated [exercise sheet](docs/coolify-4.3.21-evaluation.md) records exact artifacts, HTTPS push path, the high-trust Docker/host boundary, absence of unintended public ports and interruption/forward-resume behavior. The `database-backup-adopt` API helper fails closed because the `4.3.21` schedule API omits the required S3 storage UUID; Coolify UI backup and isolated B2 restore passed instead. The promoted `4.3.21` source now also has core V4 clean-install and idempotency evidence.
 
@@ -102,7 +102,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 
 - Preserve the controlled 4.4.0 upgrade and owner-reset fresh-host evidence at V3, including corrected-source resume, native proxy lifecycle, real ingress packets, verification/audit and idempotency. Do not carry the original source's independent V4 label onto the changed route.
 - Complete the authorized production migration with verified offhost backups, production recovery access and exact-origin preflight; record actual results without a reliability guarantee.
-- Require green protected-main source CI, successful Pages deployment, exact-ref history/archive secret scans and `release-dry-run RELEASE_VERSION=v0.2.3` before tagging.
+- Require green protected-main source CI, successful Pages deployment, exact-ref history/archive secret scans and `release-dry-run RELEASE_VERSION=v0.2.5` before tagging.
 - Publish bounded release notes that preserve separate optional backup/monitoring, external IPv6 packet and uninterrupted browser-walkthrough limits.
 
 ### Explicitly deferred
@@ -208,4 +208,4 @@ The maintained product topology remains one VPS; another permanent or additional
 - release-commit hosted CI/Pages checks and exact-ref secret/state scans;
 - clean release dry-run and final review; new runtime/publication work keeps its own evidence and authorization.
 
-**Current validation:** V3 for the 4.4.6 existing-host patch and V5 for the bounded production result; previous Traefik qualification remains unchanged. Unchanged host setup retains its prior controlled 4.4.0 V3 evidence; fresh 4.4.6 installation remains unproven. Original 0.1.0 core V4 and optional/recovery evidence stay separately scoped.
+**Current validation:** V3 for the 4.4.6 → 4.5.0 existing-host transition and V5 for the bounded production result; previous Traefik qualification remains unchanged. Unchanged host setup retains its prior controlled 4.4.0 V3 evidence; fresh 4.5.0 installation remains unproven. Original 0.1.0 core V4 and optional/recovery evidence stay separately scoped.
