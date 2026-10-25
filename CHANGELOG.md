@@ -6,6 +6,13 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-10-25
+
+### Changed
+
+- Qualify the exact reviewed Traefik 3.7.14 to 3.7.16 patch with immutable image identities, controlled interruption/resume/rollback and preserved production workloads. Coolify 4.5.0 and Sentinel 1.1.2 remain unchanged.
+- Clarify host security-update ownership, held firmware dependency checks and planned reboot operations in English/Russian documentation. Make the rollback regression fixture independent of the current manifest version.
+
 ## [0.2.5] - 2026-10-25
 
 ### Changed

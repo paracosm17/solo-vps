@@ -19,6 +19,7 @@ Only the preceding v0.2.5 integration's exact 3.7.14 index/config identities are
 - Full verify: ok=163 changed=0 failed=0. Audit: ok=96 changed=0 failed=0.
 - All four non-proxy containers retained IDs, images, networks and mounts; stored ENV and source credential bytes matched the on-server baseline. Proxy/logrotate recreation was scoped to their own stack.
 - Native YAML comparison confirmed only the proxy image field changed. The ACME storage file remained byte-identical to the checkpoint. TLS WebSocket returned 101; explicit HTTP/1.1 and HTTP/2 CONNECT probes returned 501.
+- Native Coolify 4.5 startup created its internal error-pages helper. It belongs to the proxy stack, publishes no host port and mounts only the error-pages directory read-only. This was not a business-resource deployment.
 - The complete final checkpoint includes native YAML, proxy archive and previous-image archive, all checked against transaction hashes. It was encrypted on the VPS with the public recipient, transferred encrypted only and authenticated/manifest-verified off-host without writing a plaintext recovery archive. Prior image/checkpoints were retained.
 
 No production interruption/rollback was performed as part of this controlled exercise. This is V3 existing-host Linux amd64 evidence, not a clean-install V4 or full VPS recovery claim. Rollback preserves current mounted certificate data; it does not restore that archive or arbitrary concurrent configuration changes.
