@@ -1,10 +1,10 @@
 # Solo VPS — ROADMAP
 
 > **Last updated:** 2026-10-25
-> **Current phase:** 0.2.6 maintenance candidate; Traefik 3.7.16 and host reboot qualified on test and production
+> **Current phase:** 0.2.6 runtime-qualified candidate installed; publication blocked by Ansible Galaxy HTTP 500
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** complete exact-commit publication gates for the qualified 0.2.6 candidate.
+> **Next action:** rerun hosted CI when the pinned Ansible Galaxy artifact is available, then complete exact-main publication gates.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -56,6 +56,8 @@ V5  real production-use evidence
 ---
 
 ## 2. Active maintenance work
+
+The tested `e665e2c` candidate is installed on both VPS controllers in the standard source path; v0.2.5 checkouts are retained separately. Local source/pinned-QA/dry-run/docs and independent secret scans passed. [PR #32](https://github.com/paracosm17/solo-vps/pull/32) remains unmerged: hosted CI passed source checks but failed three dependency-download attempts with HTTP 500 for pinned community.general 13.0.1; the exact URL also failed directly. No release tag was created and no CI gate was bypassed. See [candidate status](reviews/2026-10-25-release-026-status.md).
 
 Traefik 3.7.14 to 3.7.16 has [controlled V3 interruption/resume/rollback evidence](reviews/2026-10-25-traefik-3716-runtime.md) and [bounded production V5 evidence](reviews/2026-10-25-traefik-3716-production.md). Source credentials, ENV, application workloads, TLS material and HTTPS baseline were preserved. [Firmware/planned reboot](reviews/2026-10-25-host-maintenance.md) completed on test then production; production now boots the installed kernel, with clean package/reboot flags. Coolify 4.5.0/Sentinel 1.1.2 are unchanged; host security updates remain Solo VPS-owned. Fresh installation remains a separate gate.
 
