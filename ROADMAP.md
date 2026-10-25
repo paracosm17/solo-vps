@@ -1,10 +1,10 @@
 # Solo VPS — ROADMAP
 
 > **Last updated:** 2026-10-25
-> **Current phase:** 0.2.5 maintenance candidate; Coolify 4.5.0 controlled and production upgrades verified
+> **Current phase:** 0.2.5 maintenance alpha published; installed tag and Coolify 4.5.0 verified
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** complete exact-commit publication checks for the qualified 0.2.5 candidate.
+> **Next action:** independently replay the current installation route on a fresh host; keep optional integrations separately qualified.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -57,7 +57,9 @@ V5  real production-use evidence
 
 ## 2. Active maintenance work
 
-The current candidate qualifies Coolify 4.4.6 to 4.5.0, including 4.4.7 security fixes, with Sentinel 1.1.2 and retained Traefik 3.7.14. Controlled V3 covers isolated restore/exact migrations, synthetic ENV/secret preservation, checkpoint interruption/resume, verify/audit and no-op. Bounded V5 preserves original credentials, 120 stored ENV values and 18 application/proxy containers; eight HTTPS codes match baseline, including pre-existing development-route 404/503 exceptions. See [test qualification](reviews/2026-10-24-coolify-450-runtime.md) and [production result](reviews/2026-10-24-coolify-450-production.md). Fresh 4.5.0 installation and new live S3 integration remain separate gates.
+`v0.2.5` is published at `3f8cef4c20fb1c7d5846dc15ec1717003f2d9d53`. Exact-main CI/Pages, pinned QA/dry-run and independent history scanning passed. Both installed source checkouts match the annotated tag and exact-tag Coolify verification passed with changed=0; previous sources and authenticated encrypted off-host backups are retained. See [publication and installed-tag evidence](reviews/2026-10-25-release-025-publication.md).
+
+The published integration qualifies Coolify 4.4.6 to 4.5.0, including 4.4.7 security fixes, with Sentinel 1.1.2 and retained Traefik 3.7.14. Controlled V3 covers isolated restore/exact migrations, synthetic ENV/secret preservation, checkpoint interruption/resume, verify/audit and no-op. Bounded V5 preserves original credentials, 120 stored ENV values and 18 application/proxy containers; eight HTTPS codes match baseline, including pre-existing development-route 404/503 exceptions. See [test qualification](reviews/2026-10-24-coolify-450-runtime.md) and [production result](reviews/2026-10-24-coolify-450-production.md). Fresh 4.5.0 installation and new live S3 integration remain separate gates.
 
 Coolify 4.4.3 → 4.4.6 has controlled V3 interruption/resume, isolated checkpoint restore and exact IPv6/dedup migration fixtures, analytics, TLS/WebSocket/SSH, verify/audit and no-op evidence. Production preserves all 14 business containers, Traefik 3.7.14, credentials, environment records and six HTTPS health routes. Fresh recovery inputs and generated checkpoints are verified encrypted off-host. See [test qualification](reviews/2026-10-09-coolify-446-runtime.md) and [production result](reviews/2026-10-10-coolify-446-production.md).
 
@@ -101,7 +103,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 ### Current maintenance-alpha gates
 
 - Preserve the controlled 4.4.0 upgrade and owner-reset fresh-host evidence at V3, including corrected-source resume, native proxy lifecycle, real ingress packets, verification/audit and idempotency. Do not carry the original source's independent V4 label onto the changed route.
-- Complete the authorized production migration with verified offhost backups, production recovery access and exact-origin preflight; record actual results without a reliability guarantee.
+- The authorized production migration passed with verified off-host inputs, exact-origin preflight and bounded V5 evidence; retain its recovery limits and do not infer a reliability guarantee.
 - Require green protected-main source CI, successful Pages deployment, exact-ref history/archive secret scans and `release-dry-run RELEASE_VERSION=v0.2.5` before tagging.
 - Publish bounded release notes that preserve separate optional backup/monitoring, external IPv6 packet and uninterrupted browser-walkthrough limits.
 
