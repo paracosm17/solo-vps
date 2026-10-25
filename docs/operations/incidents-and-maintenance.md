@@ -210,6 +210,16 @@ If a token leaked, revoke that token immediately, create its scoped replacement,
 
 ## 9. Prepare for a planned reboot
 
+Solo VPS already enables Ubuntu security updates through `unattended-upgrades`. Coolify's **Automatic security updates: Off** describes its own optional controller, not the host's existing policy; leave that switch off. General package updates are separate operator maintenance and can restart Docker/system services. A temporary `coolify-redis` DNS error during a Docker restart requires a post-update health check, not immediate reinstallation.
+
+If a package remains **kept back**, inspect its dependency plan first. For example, a split `linux-firmware` package can require additional packages that `apt-get upgrade` will not install:
+
+```bash
+sudo apt-get -s --no-remove install --only-upgrade linux-firmware
+```
+
+Review added packages, required disk space and service restarts before explicitly installing that package. Do not run `autoremove` or a broad `full-upgrade` merely to clear the dashboard badge. An available update is distinct from an incomplete/broken package transaction; check `sudo dpkg --audit` when an update fails.
+
 Solo VPS does not enable automatic reboot after Ubuntu security updates. If the system says a reboot is required, choose a maintenance window when you can verify the server immediately afterward.
 
 **Before reboot, on the VPS:**
