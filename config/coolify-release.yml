@@ -24,7 +24,7 @@ sentinel:
   registry: docker.io
   image_id_x86_64: sha256:1762968e066f516d94438ab01cb7366c9fb38bbaaa87ef612f7112855c8c3d14
 qualification:
-  level: V1
+  level: V3
   evidence: reviews/2026-10-25-traefik-3716-runtime.md
   release_sha256: sha256:cf1a45fdb01df32e0c4c5d5373fe9cb7096f3df4d45ab8ef10bb9cd0fabc8b4d
 proxy:
