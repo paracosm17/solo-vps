@@ -1368,3 +1368,9 @@ verify-ssh: doctor-admin-local ## Read-only verification of activated OpenSSH ha
 	@$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) $(PLAYBOOK_DIR)/verify-ssh.yml -e @$(CONFIG)
 
 .PHONY: validate-metrics-credentials test-metrics-credentials validate-metrics-runtime test-metrics-runtime metrics-tooling metrics-secrets-init metrics-secrets-check metrics-secrets-push verify-metrics-credentials metrics-runtime verify-metrics-runtime
+
+.PHONY: test-coolify-453-artifacts
+test-coolify-453-artifacts: ## Run Coolify 4.5.3 artifact tests
+	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest tests.test_coolify_453_artifact_checks
+
+validate ci-fast-source: test-coolify-453-artifacts
