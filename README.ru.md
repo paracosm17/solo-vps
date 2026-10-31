@@ -7,11 +7,10 @@
   <a href="https://github.com/paracosm17/solo-vps/actions/workflows/repository-ci.yml"><img src="https://github.com/paracosm17/solo-vps/actions/workflows/repository-ci.yml/badge.svg?branch=main" alt="Repository CI"></a>
   <a href="https://paracosm17.github.io/solo-vps/ru/"><img src="https://img.shields.io/badge/docs-English%20%2F%20Русский-3273dc" alt="Документация на русском и английском"></a>
   <a href="https://paracosm17.github.io/solo-vps/ru/quick-start/"><img src="https://img.shields.io/badge/Ubuntu-24.04%20LTS-E95420?logo=ubuntu&amp;logoColor=white" alt="Ubuntu 24.04 LTS"></a>
-  <a href="config/coolify-release.yml"><img src="https://img.shields.io/badge/Coolify-4.5.3-6366f1?logo=docker&amp;logoColor=white" alt="Pinned Coolify version 4.5.3 (V1 candidate)"></a>
+  <a href="config/coolify-release.yml"><img src="https://img.shields.io/badge/Coolify-4.5.3-6366f1?logo=docker&amp;logoColor=white" alt="Coolify 4.5.3"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-2ea44f" alt="Лицензия Apache-2.0"></a>
 </p>
 
-> Coolify **4.5.3** закреплён как **кандидат, проверенный по исходникам**; обновление 4.5.0 → 4.5.3 **ещё не прошло V3-проверку на VPS**. См. [проверку исходников](reviews/2026-10-30-coolify-453-source.md).
 <p align="center">
   <a href="https://paracosm17.github.io/solo-vps/ru/quick-start/"><strong>Начать установку</strong></a> ·
   <a href="https://paracosm17.github.io/solo-vps/ru/">Документация</a> ·
