@@ -26,15 +26,15 @@ sentinel:
 qualification:
   level: V1
   evidence: reviews/2026-10-30-coolify-453-source.md
-  release_sha256: sha256:c6e6b6cf89c1711a920c2ac586b89a71232b379ec046d2fba7205f1f108fe603
+  release_sha256: sha256:8f8931c04c3d9cbf591f227235581d48b2f83d11ec32edb974ec9f5f7a978eea
 proxy:
-  version: "3.7.14"
-  image: traefik:v3.7.14@sha256:e849695bc5c317da0cec22bfee4794fd9e15871fe554f864d31b625983e883ff
-  image_id_x86_64: sha256:e849695bc5c317da0cec22bfee4794fd9e15871fe554f864d31b625983e883ff
+  version: "3.7.16"
+  image: traefik:v3.7.16@sha256:c8a121e4bb1347e8fd52657fab12f2cb70b68f8a018895e2068f92c9e519b9c2
+  image_id_x86_64: sha256:c8a121e4bb1347e8fd52657fab12f2cb70b68f8a018895e2068f92c9e519b9c2
   # Classic Docker stores expose the platform config ID; containerd exposes the index ID.
-  image_config_id_x86_64: sha256:5a93040e5abdf181145d7c242964eca7999ffd700e0447b242ef212f3ee44d55
+  image_config_id_x86_64: sha256:3733df53e74cd0df7d1b839168e30d2bd7f5e77dd6214ef3d8056ee1f21392b7
   upgrade_from:
-    - version: "3.6.25"
-      image_id_x86_64: sha256:31267173a15b4944e797a76ffd9c419707c8d8b32fe5b610f80cd0cfa05f372d
     - version: "3.7.14"
-      image_id_x86_64: sha256:b588cb566045e1ebb185948a8e2456f9705cb915b5f0fb5ee698184233997817
+      image_id_x86_64: sha256:e849695bc5c317da0cec22bfee4794fd9e15871fe554f864d31b625983e883ff
+    - version: "3.7.14"
+      image_id_x86_64: sha256:5a93040e5abdf181145d7c242964eca7999ffd700e0447b242ef212f3ee44d55

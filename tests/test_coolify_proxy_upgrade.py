@@ -110,7 +110,10 @@ class ProxyUpgradeTests(unittest.TestCase):
                 self.assertEqual(native.call_count,1)
 
     def test_rollback_pins_mutable_source_before_native_pull(self):
-        release=copy.deepcopy(load_release());release['proxy']['upgrade_from'][0]['image_id_x86_64']='old-id'
+        release=copy.deepcopy(load_release())
+        # This recovery fixture deliberately uses a floating v3.6 source tag;
+        # its binary version is independent of the current release manifest.
+        release['proxy']['upgrade_from'][0]={'version':'3.6.25','image_id_x86_64':'old-id'}
         from scripts.coolify_proxy_upgrade import digest
         with tempfile.TemporaryDirectory() as root:
             proxy=Path(root);(proxy/'docker-compose.yml').write_text(CONFIG);(proxy/'native.yml').write_text(CONFIG)

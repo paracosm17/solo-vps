@@ -6,14 +6,17 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-10-31
+
 ### Changed
 
-- Prepare the Coolify 4.5.0 → 4.5.3 pinned integration candidate with a 4.5.0 upgrade origin, Sentinel 1.1.3 and unchanged pinned Traefik 3.7.14.
-- Add Coolify version badges to the English and Russian READMEs.
+- Prepare Coolify 4.5.0 → 4.5.3 with pinned artifacts, Sentinel 1.1.3 and README badges.
+- Retain Traefik 3.7.16 with its separate V3/V5 qualification and production evidence.
+- Include host maintenance documentation and version-neutral proxy regression fixes.
 
 ### Validation pending
 
-- Source-only V1 candidate; verify upstream release-file SHA-256 digests and perform the controlled upgrade/recovery, `verify-coolify`, `verify`, and `audit` before a tagged Solo VPS release. Do not carry the older Coolify 4.5.0 V3/V5 evidence onto this target.
+- Coolify 4.5.3 has source-level evidence only. Production upgrade and verification are pending. Disposable Coolify V3 recovery testing was not performed.
 
 ## [0.2.5] - 2026-10-25
 

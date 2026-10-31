@@ -1,14 +1,14 @@
 # Solo VPS — ROADMAP
 
-> **Last updated:** 2026-10-30
-> **Current phase:** v0.2.5 published and Coolify 4.5.0 V3/V5 verified; Coolify 4.5.3 V1 candidate under review
+> **Last updated:** 2026-10-31
+> **Current phase:** v0.2.6 candidate: Traefik 3.7.16 production-verified; Coolify 4.5.3 source-verified, runtime pending
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** confirm v4.5.3 upstream artifact hashes and qualify the 4.5.0 → 4.5.3 lifecycle on a disposable Ubuntu 24.04 VPS before any release; independent clean-user replay remains separate.
+> **Next action:** merge CI, prepare reviewed production source, then upgrade Coolify 4.5.0 → 4.5.3 and verify
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
-**Candidate boundary (2026-10-30):** `config/coolify-release.yml` now targets Coolify 4.5.3 with Sentinel 1.1.3 and 4.5.0 as the reviewed upgrade origin. The older 4.5.0 V3/V5 results remain historical; 4.5.3 has no controlled VPS upgrade/rollback proof yet. The release is **BLOCKED** pending upstream SHA verification, lifecycle V3, source CI, independent secret scan and the standard publication gates. See [source review](reviews/2026-10-30-coolify-453-source.md).
+**Candidate boundary (2026-10-31):** The combined manifest targets Coolify 4.5.3, Sentinel 1.1.3 and production-tested Traefik 3.7.16. Coolify has only V1 source evidence; production verification and disposable V3 remain outstanding. See the Coolify source and Traefik runtime reviews.
 
 ---
 
