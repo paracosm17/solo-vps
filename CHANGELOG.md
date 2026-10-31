@@ -14,9 +14,9 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 - Retain Traefik 3.7.16 with its separate V3/V5 qualification and production evidence.
 - Include host maintenance documentation and version-neutral proxy regression fixes.
 
-### Validation pending
+### Validation and limitations
 
-- Coolify 4.5.3 has source-level evidence only. Production upgrade and verification are pending. Disposable Coolify V3 recovery testing was not performed.
+- Coolify 4.5.3 production upgrade and read-only verification/audit passed at bounded V5. Disposable Coolify V3 and controlled recovery were not performed; this is an explicit release-specific exception.
 
 ## [0.2.5] - 2026-10-25
 
