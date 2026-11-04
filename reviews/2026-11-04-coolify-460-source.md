@@ -31,3 +31,7 @@ Source/contract/unit qualification: **V2**. GitHub Actions Repository CI `fast-s
 Before production mutation: verify the current marker/image is exactly 4.5.3, external encrypted Coolify control-plane backup and application-data backup are current, decryption/restore boundary is understood, SSH/provider recovery works, Sentinel is In Sync, and `make coolify-upgrade-preflight` passes. Use the explicit project-owned `make coolify-upgrade`, not the Coolify UI update button. Pause deployments.
 
 After production mutation: record the actual 4.6.0 image, health/realtime/terminal endpoints, Sentinel and proxy, private ports, full `make verify-coolify`, `make verify`, `make audit`, application HTTPS/CI/API checks, migration warnings, backup checkpoint and available recovery. Update the manifest qualification fingerprint/evidence *only after observed results*. Check v0.2.7 release prerequisites and request release approval separately; do not publish a tag from this source review.
+
+## Subsequent production qualification
+
+The owner subsequently supplied the real-host upgrade and post-upgrade verification logs. Bounded production V5 is recorded in [the separate dated production report](2026-11-04-coolify-460-production.md). This source-only record preserves what was known before the live change; it is not a substitute for the separate production evidence or unverified recovery/application checks.
