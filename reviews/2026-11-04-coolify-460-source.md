@@ -26,7 +26,7 @@ The 4.6.0 release notes require:
 
 ## Validation and promotion gates
 
-At initial commit this candidate is **V0**, not V3/V5. Hosted source checks, unit/contract and YAML validation remain to be observed on the PR. No disposable server is used at the owner's request. No target server, migration, live API token or backup has been accessed by this change.
+Source/contract/unit qualification: **V2**. GitHub Actions Repository CI `fast-source` succeeded for candidate commit `3e763392ada99e1cbb9e57a2a8d117ebd876061d` (run [41745001036](https://github.com/paracosm17/solo-vps/actions/runs/41745001036)); Documentation `build` succeeded (run [41745000936](https://github.com/paracosm17/solo-vps/actions/runs/41745000936)). Checks included 153 YAML files, the platform lifecycle/upgrade regression tests, Ansible syntax checks and static lint (`0 failure(s), 0 warning(s)` in 183 processed files). The first commit's CI failure exposed a 4.5.3-only historical artifact checker; a follow-up made that checker use the current release manifest and its regression tests passed. These are **not V3 or V5**. No disposable server is used at the owner's request; no target server, live migration, API token or backup has been accessed.
 
 Before production mutation: verify the current marker/image is exactly 4.5.3, external encrypted Coolify control-plane backup and application-data backup are current, decryption/restore boundary is understood, SSH/provider recovery works, Sentinel is In Sync, and `make coolify-upgrade-preflight` passes. Use the explicit project-owned `make coolify-upgrade`, not the Coolify UI update button. Pause deployments.
 
