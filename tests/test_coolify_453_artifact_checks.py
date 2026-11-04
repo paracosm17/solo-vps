@@ -1,4 +1,4 @@
-"""Offline contract checks for Coolify v4.5.3 upstream-artifact checks.
+"""Offline contract checks for reviewed Coolify upstream-artifact checks.
 
 Use unittest: the repository's pinned QA toolchain does not include pytest.
 """
@@ -25,6 +25,7 @@ def _invoke(args: list[str], *, match: bool):
     namespace = runpy.run_path(str(SCRIPT))
     main = namespace["main"]
     raw_by_name = {name: f"test-content-for-{name}\n".encode() for name in namespace["NAMES"]}
+    target_version = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["version"]
 
     with tempfile.TemporaryDirectory(prefix="coolify-453-artifacts-") as directory:
         staging = Path(directory) / "coolify-release.yml"
@@ -59,7 +60,7 @@ def _invoke(args: list[str], *, match: bool):
                 return self.content
 
         def fake_urlopen(url, timeout):
-            assert url.startswith("https://raw.githubusercontent.com/coollabsio/coolify/v4.5.3/")
+            assert url.startswith(f"https://raw.githubusercontent.com/coollabsio/coolify/v{target_version}/")
             assert timeout == 30
             return FakeResponse(raw_by_name[url.rsplit("/", 1)[-1]])
 

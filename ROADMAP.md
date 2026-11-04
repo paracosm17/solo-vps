@@ -1,14 +1,14 @@
 # Solo VPS — ROADMAP
 
-> **Last updated:** 2026-10-31
-> **Current phase:** v0.2.6 candidate: Traefik 3.7.16 production-verified; Coolify 4.5.3 production V5 verified; disposable V3 deferred
+> **Last updated:** 2026-11-04
+> **Current phase:** v0.2.7 candidate: Coolify 4.5.3 → 4.6.0 bounded production V5 passed; disposable V3 skipped by owner instruction
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** publish v0.2.6 after release checks; preserve the outstanding Coolify V3 recovery gate
+> **Next action:** review the bounded Coolify 4.6.0 production evidence and unverified application/restore gates; review v0.2.7 release prerequisites and obtain explicit publication approval
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
-**Candidate boundary (2026-10-31):** The combined manifest targets Coolify 4.5.3, Sentinel 1.1.3 and production-tested Traefik 3.7.16. Coolify production V5 passed; disposable V3 and controlled recovery remain outstanding by explicit owner exception. See the Coolify source and Traefik runtime reviews.
+**Candidate boundary (2026-11-04):** The proposed manifest targets Coolify 4.6.0 from production-reported 4.5.3, retains Sentinel 1.1.3 and production-tested Traefik 3.7.16. The 4.6.0 integration is now qualified at **bounded production V5**: on the existing maintained host, preflight, checkpointed upgrade and read-only verify-coolify/verify/audit succeeded with 23 of 23 containers running and no audit warnings. The encrypted control-plane copy was checked off-host with matching SHA-256 and authenticated age decryption. See [the production evidence](reviews/2026-11-04-coolify-460-production.md). No disposable V3, isolated database restore, application-specific business smoke or external restic freshness proof is claimed.
 
 ---
 

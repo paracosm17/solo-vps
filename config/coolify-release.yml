@@ -2,19 +2,19 @@
 # Reviewed integration release. Update this file for a compatible upstream release.
 # Hashes are mandatory: setting a version alone never trusts floating artifacts.
 schema_version: 1
-version: "4.5.3"
+version: "4.6.0"
 registry: docker.io
 realtime: embedded
 upgrade_from:
-  version: "4.5.0"
+  version: "4.5.3"
   registry: docker.io
   realtime: embedded
   sentinel:
     # Coolify updates its agent independently, including before a platform upgrade.
-    accept_target: true
-    version: "1.1.2"
+    accept_target: false
+    version: "1.1.3"
     registry: docker.io
-    image_id_x86_64: sha256:1762968e066f516d94438ab01cb7366c9fb38bbaaa87ef612f7112855c8c3d14
+    image_id_x86_64: sha256:81f8ab984ea5c5fdbd696ea2f47f08c9e31ec41db7493a657b53a52256e26a82
 artifacts:
   docker-compose.yml: sha256:2532ee9258e10ad4e86cb3c2b46c29fe9329f5a0dace0f7da410744feec279bd
   docker-compose.prod.yml: sha256:f8b104aadfca48d0033fdee6cb87fea13c68bc5c67c63ba18b1934e9f901ff5d
@@ -25,8 +25,8 @@ sentinel:
   image_id_x86_64: sha256:81f8ab984ea5c5fdbd696ea2f47f08c9e31ec41db7493a657b53a52256e26a82
 qualification:
   level: V5
-  evidence: reviews/2026-10-31-coolify-453-production.md
-  release_sha256: sha256:8f8931c04c3d9cbf591f227235581d48b2f83d11ec32edb974ec9f5f7a978eea
+  evidence: reviews/2026-11-04-coolify-460-production.md
+  release_sha256: sha256:15da525b8c463f0fcc278522decf3ec3ce1c3406bee1da20d71c081659787be1
 proxy:
   version: "3.7.16"
   image: traefik:v3.7.16@sha256:c8a121e4bb1347e8fd52657fab12f2cb70b68f8a018895e2068f92c9e519b9c2
