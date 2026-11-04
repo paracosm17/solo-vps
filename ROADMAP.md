@@ -1,14 +1,14 @@
 # Solo VPS — ROADMAP
 
-> **Last updated:** 2026-10-31
-> **Current phase:** v0.2.6 candidate: Traefik 3.7.16 production-verified; Coolify 4.5.3 production V5 verified; disposable V3 deferred
+> **Last updated:** 2026-11-04
+> **Current phase:** v0.2.7 candidate: Coolify 4.5.3 → 4.6.0 source preparation; production verification pending; no disposable V3 by owner instruction
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** publish v0.2.6 after release checks; preserve the outstanding Coolify V3 recovery gate
+> **Next action:** verify the 4.5.3 → 4.6.0 transition on production with off-host backup and read-only preflight; record bounded V5 evidence, then review v0.2.7 release gates
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
-**Candidate boundary (2026-10-31):** The combined manifest targets Coolify 4.5.3, Sentinel 1.1.3 and production-tested Traefik 3.7.16. Coolify production V5 passed; disposable V3 and controlled recovery remain outstanding by explicit owner exception. See the Coolify source and Traefik runtime reviews.
+**Candidate boundary (2026-11-04):** The proposed manifest targets Coolify 4.6.0 from production-reported 4.5.3, retains Sentinel 1.1.3 and production-tested Traefik 3.7.16. The 4.6.0 manifest is V0 pending hosted source checks and actual production V5 verification. No disposable V3 or recovery exercise is planned under this owner's production-first instruction. Prior 4.5.3 production V5 is historical evidence only; it does not qualify 4.6.0.
 
 ---
 
