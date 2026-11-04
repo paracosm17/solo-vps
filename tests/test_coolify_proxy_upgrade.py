@@ -36,6 +36,16 @@ def before():
 
 
 class ProxyUpgradeTests(unittest.TestCase):
+    def setUp(self):
+        # Keep unit tests hermetic on an installed VPS: its root-private
+        # /var/lib/solo-vps/checkpoints must not be inspected as a normal user.
+        scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(scratch.cleanup)
+        checkpoints = patch('scripts.coolify_proxy_upgrade.CHECKPOINTS',
+                            Path(scratch.name) / 'checkpoints')
+        checkpoints.start()
+        self.addCleanup(checkpoints.stop)
+
     def test_image_only_patch_preserves_analytics_and_yaml_scalars(self):
         result = replace_image(CONFIG, 'traefik:v3.7.14@sha256:' + 'a'*64)
         self.assertEqual(result.replace('"traefik:v3.7.14@sha256:' + 'a'*64 + '"', "'traefik:v3.6'"), CONFIG)
