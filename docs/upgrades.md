@@ -111,6 +111,8 @@ A source rollback is not a Docker package downgrade.
 
 ## Coolify
 
+For the **4.5.3 → 4.6.0** candidate, the three upstream release artifacts are byte-for-byte identical to 4.5.3, but the Coolify application and database migrations still change. Coolify 4.6 reads its version from the container image; Solo VPS removes the obsolete `COOLIFY_VERSION` entry from `.env` during install/upgrade/resume without touching secret values. API deletes now require the `delete` (or `root`) ability; do **not** grant that ability to normal deploy-only tokens. Until production verification is recorded, this is a source candidate, not production evidence.
+
 **Release status: {{ solo_vps_coolify_qualification }}.** This revision reviews the patch transition shown below; realtime remains in-container Reverb. Read [the current evidence record](https://github.com/paracosm17/solo-vps/blob/main/{{ solo_vps_coolify_evidence }}) and [upstream release notes](https://github.com/coollabsio/coolify/releases/tag/v{{ solo_vps_coolify_target }}).
 
 Use Solo VPS upgrade commands below. The Coolify **Update** button and automatic upgrades bypass its checkpoint, reviewed artifact hashes and transaction/resume checks; they are not a qualified upgrade path for this installation.

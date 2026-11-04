@@ -124,6 +124,31 @@ def validate(root: Path) -> None:
             'legacy realtime ports must be released before the embedded runtime starts')
     require(resume.index('retire-legacy-realtime.yml') < resume.index('Retry only the current supported Coolify target'),
             'resume must release legacy realtime ports before retrying the target')
+    # Since v4.6, Coolify obtains its version from the image; an obsolete .env
+    # override must not survive install, upgrade or interrupted forward resume.
+    for relative in (
+        "ansible/roles/coolify/tasks/install.yml",
+        "ansible/roles/coolify/tasks/upgrade.yml",
+        "ansible/roles/coolify/tasks/upgrade-resume.yml",
+    ):
+        source = read(root / relative)
+        tasks = yaml.safe_load(source)
+        cleanup = [
+            task for task in tasks
+            if task.get("name") == "Remove obsolete COOLIFY_VERSION from the Coolify environment"
+        ]
+        require(len(cleanup) == 1, f"{relative}: obsolete Coolify version cleanup is required")
+        options = cleanup[0].get("ansible.builtin.lineinfile", {})
+        require(
+            options.get("path") == "{{ solo_vps_coolify_env_path }}"
+            and options.get("regexp") == "^COOLIFY_VERSION="
+            and options.get("state") == "absent",
+            f"{relative}: COOLIFY_VERSION must be removed from the existing environment",
+        )
+        require("    - key: COOLIFY_VERSION" not in source, f"{relative}: obsolete Coolify version cannot be pinned again")
+        if relative.endswith("/upgrade.yml"):
+            require(cleanup[0].get("when") == "solo_vps_coolify_upgrade_required", "version cleanup cannot mutate a no-op upgrade")
+
     marker_checks = [condition for task in yaml.safe_load(resume)
                      for condition in task.get("ansible.builtin.assert", {}).get("that", [])
                      if isinstance(condition, str) and "solo_vps_coolify_upgrade_resume_marker_raw" in condition]

@@ -131,12 +131,19 @@
       value: "false"
     - key: REGISTRY_URL
       value: "{{ solo_vps_coolify_release.registry }}"
-    - key: COOLIFY_VERSION
-      value: "{{ solo_vps_coolify_version }}"
     - key: PUSHER_BACKEND_HOST
       value: "127.0.0.1"
     - key: PUSHER_BACKEND_PORT
       value: "6001"
+
+- name: Remove obsolete COOLIFY_VERSION from the Coolify environment
+  ansible.builtin.lineinfile:
+    path: "{{ solo_vps_coolify_env_path }}"
+    regexp: '^COOLIFY_VERSION='
+    state: absent
+    owner: "9999"
+    group: "0"
+    mode: "0600"
 
 - name: Ensure the administrator SSH directory exists
   ansible.builtin.file:

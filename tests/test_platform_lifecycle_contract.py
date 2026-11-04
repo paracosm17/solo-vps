@@ -21,7 +21,7 @@ class PlatformLifecycleContractTests(unittest.TestCase):
             "Makefile", "docs/contracts/platform-lifecycle-policy.yml", "docs/upgrades.md",
             "docs/release-process.md", "ansible/roles/docker/defaults/main.yml",
             "ansible/roles/docker/tasks/main.yml", "ansible/roles/docker/tasks/verify.yml",
-            "ansible/roles/coolify/defaults/main.yml", "ansible/roles/coolify/tasks/upgrade-preflight.yml",
+            "ansible/roles/coolify/defaults/main.yml", "ansible/roles/coolify/tasks/install.yml", "ansible/roles/coolify/tasks/upgrade-preflight.yml",
             "ansible/roles/coolify/tasks/upgrade.yml", "ansible/roles/coolify/tasks/upgrade-resume.yml",
             "ansible/roles/coolify/tasks/evaluation-preflight.yml",
             "ansible/roles/coolify/tasks/evaluate-sentinel.yml",
@@ -113,6 +113,18 @@ class PlatformLifecycleContractTests(unittest.TestCase):
             self.mutate(root, "ansible/roles/coolify/tasks/upgrade-resume.yml", old, new)
             with self.assertRaises(ContractError):
                 validate(root)
+
+    def test_legacy_coolify_version_override_must_be_removed(self) -> None:
+        for relative in (
+            "ansible/roles/coolify/tasks/install.yml",
+            "ansible/roles/coolify/tasks/upgrade.yml",
+            "ansible/roles/coolify/tasks/upgrade-resume.yml",
+        ):
+            with self.subTest(relative=relative):
+                root = self.fixture()
+                self.mutate(root, relative, "    regexp: '^COOLIFY_VERSION='", "    regexp: '^WRONG_KEY='")
+                with self.assertRaises(ContractError):
+                    validate(root)
 
     def test_custom_realtime_preflight_is_required(self) -> None:
         root = self.fixture()
