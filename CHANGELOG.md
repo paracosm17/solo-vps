@@ -13,7 +13,8 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 
 ### Validation and limitations
 
-- Source candidate only. No disposable-VPS testing by owner instruction; production verification and release approval are pending. This does not inherit Coolify 4.5.3 V5 evidence.
+- Bounded production V5 on the maintained host: exact 4.5.3 → 4.6.0 upgrade, preflight, verify-coolify/verify/audit and off-host age-encrypted control-plane backup validation passed. See [production evidence](reviews/2026-11-04-coolify-460-production.md).
+- No disposable-VPS V3 by owner instruction. Application data backup/restore, external restic freshness and end-to-end application/API smoke remain unverified; release approval is pending.
 
 ## [0.2.6] - 2026-10-31
 
