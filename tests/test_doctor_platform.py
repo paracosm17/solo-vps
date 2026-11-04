@@ -14,6 +14,18 @@ from scripts.secrets_toolchain import ToolchainError
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
+def inspect_example_fixture(config_path: pathlib.Path, inventory_path: pathlib.Path):
+    """Never read a controller's real SOPS policy while testing sample inputs."""
+    scratch = config_path.parent
+    return inspect_capabilities(
+        ROOT,
+        config_path,
+        inventory_path,
+        sops_policy=scratch / "sops/.sops.yaml",
+        sops_recipient=scratch / "sops/production.txt",
+    )
+
+
 class PlatformDoctorTests(unittest.TestCase):
     def setUp(self) -> None:
         self.config = yaml.safe_load((ROOT / "config/config.example.yml").read_text())
@@ -35,7 +47,7 @@ class PlatformDoctorTests(unittest.TestCase):
                 inventory or self.inventory,
             )
             with mock.patch("scripts.doctor_platform.default_cache_root", return_value=tmp_path / "cache"):
-                results = inspect_capabilities(ROOT, config_path, inventory_path)
+                results = inspect_example_fixture(config_path, inventory_path)
         return {result.name: result.status for result in results}
 
     def test_example_optional_capabilities_reflect_clean_public_source(self) -> None:
@@ -64,7 +76,7 @@ class PlatformDoctorTests(unittest.TestCase):
             config_path, inventory_path = self.write_inputs(tmp_path, config, self.inventory)
             with mock.patch("scripts.doctor_platform.default_cache_root", return_value=tmp_path / "cache"):
                 with self.assertRaises(PlatformDoctorError):
-                    inspect_capabilities(ROOT, config_path, inventory_path)
+                    inspect_example_fixture(config_path, inventory_path)
 
     def test_missing_backup_block_is_not_an_error(self) -> None:
         config = copy.deepcopy(self.config)
@@ -80,7 +92,7 @@ class PlatformDoctorTests(unittest.TestCase):
                 side_effect=ToolchainError("manifest drift"),
             ):
                 with self.assertRaisesRegex(PlatformDoctorError, "manifest drift"):
-                    inspect_capabilities(ROOT, config_path, inventory_path)
+                    inspect_example_fixture(config_path, inventory_path)
 
     def test_corrupt_existing_toolchain_is_fatal(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -97,7 +109,7 @@ class PlatformDoctorTests(unittest.TestCase):
                 ),
             ):
                 with self.assertRaisesRegex(PlatformDoctorError, "tampered cache"):
-                    inspect_capabilities(ROOT, config_path, inventory_path)
+                    inspect_example_fixture(config_path, inventory_path)
 
     def test_make_doctor_sequences_remote_preflight_after_local_report(self) -> None:
         makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
@@ -116,7 +128,7 @@ class PlatformDoctorTests(unittest.TestCase):
                 mock.patch("scripts.doctor_platform.default_cache_root", return_value=tmp_path / "cache"),
                 mock.patch("urllib.request.urlopen", side_effect=AssertionError("network must not be used")),
             ):
-                results = inspect_capabilities(ROOT, config_path, inventory_path)
+                results = inspect_example_fixture(config_path, inventory_path)
             self.assertTrue(results)
 
 
