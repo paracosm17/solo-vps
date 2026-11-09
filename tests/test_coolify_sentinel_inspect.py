@@ -4,6 +4,7 @@ import copy
 import unittest
 
 from scripts.inspect_coolify_sentinel import SentinelInspectionError, evaluate_inspect
+from scripts.coolify_release import load_release
 
 
 EXPECTED_ENDPOINT = "https://coolify.example.com"
@@ -37,6 +38,34 @@ def fixture() -> list[dict]:
 
 
 class CoolifySentinelInspectTests(unittest.TestCase):
+    def test_release_transition_requires_exact_origin_and_target_sentinel_identities(self):
+        release = load_release()
+        origin = release["upgrade_from"]["sentinel"]
+        target = release["sentinel"]
+        if origin["version"] != target["version"]:
+            self.assertTrue(origin["accept_target"], "a Sentinel version bump must accept an early upstream agent sync")
+
+        arguments = dict(
+            expected_image=f"{origin['registry']}/coollabsio/sentinel:{origin['version']}",
+            expected_image_id=origin["image_id_x86_64"],
+            expected_version=origin["version"],
+            alternative_image=f"{target['registry']}/coollabsio/sentinel:{target['version']}",
+            alternative_image_id=target["image_id_x86_64"],
+            alternative_version=target["version"],
+        )
+        for version, image_id in (
+            (origin["version"], origin["image_id_x86_64"]),
+            (target["version"], target["image_id_x86_64"]),
+        ):
+            with self.subTest(version=version):
+                payload = fixture()
+                payload[0]["Config"]["Image"] = f"docker.io/coollabsio/sentinel:{version}"
+                payload[0]["Image"] = image_id
+                self.assertEqual(evaluate_inspect(payload, observed_version=version, **arguments)["status"], "PASS")
+                payload[0]["Image"] = "sha256:" + "0" * 64
+                with self.assertRaises(SentinelInspectionError):
+                    evaluate_inspect(payload, observed_version=version, **arguments)
+
     def test_reviewed_alternative_requires_the_complete_matching_identity(self):
         payload = fixture()
         payload[0]['Config']['Image'] = 'docker.io/coollabsio/sentinel:1.0.2'
