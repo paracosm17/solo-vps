@@ -22,12 +22,14 @@ artifacts:
 sentinel:
   version: "1.1.5"
   registry: docker.io
-  # Verified Docker image config ID from the official v1.1.5 linux/amd64 GitHub Actions build.
-  image_id_x86_64: sha256:e677a5637ab4276589839b7f16b7c0eecd16f36c7e5aff915f45da62f2f7b211
+  # Official Docker Hub v1.1.5 multi-platform index (Docker 29 containerd store).
+  image_id_x86_64: sha256:b3ee40d4d00b508c1018e67dc6a9e5693d0027b117f560c9fb003f464879243e
+  # Official v1.1.5 linux/amd64 image config digest (classic Docker store).
+  image_config_id_x86_64: sha256:e677a5637ab4276589839b7f16b7c0eecd16f36c7e5aff915f45da62f2f7b211
 qualification:
-  level: V2
+  level: V1
   evidence: reviews/2026-11-10-coolify-473-source.md
-  release_sha256: sha256:47c2547ba360d71437f039fd0dc650fadc21f01e248903cad6b5b162f9c5bcb3
+  release_sha256: sha256:0a2cf5bc365c0aca9b8f44b59591a1b69da2083a62d3ebaa65656062ca1cf902
 proxy:
   version: "3.7.16"
   image: traefik:v3.7.16@sha256:c8a121e4bb1347e8fd52657fab12f2cb70b68f8a018895e2068f92c9e519b9c2

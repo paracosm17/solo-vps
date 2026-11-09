@@ -6,10 +6,12 @@
       --docker {{ solo_vps_coolify_docker_binary | quote }}
       --expected-image {{ (solo_vps_coolify_sentinel_contract.registry ~ '/coollabsio/sentinel:' ~ solo_vps_coolify_sentinel_contract.version) | quote }}
       {{ ('--expected-image-id ' ~ (solo_vps_coolify_sentinel_contract.image_id_x86_64 | quote)) if ansible_facts.architecture == 'x86_64' else '' }}
+      {{ ('--expected-image-config-id ' ~ (solo_vps_coolify_sentinel_contract.image_config_id_x86_64 | quote)) if ansible_facts.architecture == 'x86_64' and solo_vps_coolify_sentinel_contract.image_config_id_x86_64 is defined else '' }}
       --expected-version {{ solo_vps_coolify_sentinel_contract.version | quote }}
       {% if solo_vps_coolify_sentinel_verify_origin | default(false) | bool and solo_vps_coolify_release.upgrade_from.sentinel.accept_target | default(false) | bool %}
       --alternative-image {{ solo_vps_coolify_sentinel_image | quote }}
       {{ ('--alternative-image-id ' ~ (solo_vps_coolify_sentinel_image_id_x86_64 | quote)) if ansible_facts.architecture == 'x86_64' else '' }}
+      {{ ('--alternative-image-config-id ' ~ (solo_vps_coolify_release.sentinel.image_config_id_x86_64 | quote)) if ansible_facts.architecture == 'x86_64' and solo_vps_coolify_release.sentinel.image_config_id_x86_64 is defined else '' }}
       --alternative-version {{ solo_vps_coolify_sentinel_version | quote }}
       {% endif %}
       {{ ('--expected-push-endpoint ' ~ (solo_vps_coolify_sentinel_expected_url | quote)) if solo_vps_coolify_sentinel_expected_url | default('') | length > 0 else '' }}

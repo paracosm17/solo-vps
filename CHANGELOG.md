@@ -8,14 +8,14 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 
 ### Changed
 
-- Prepare the exact Coolify **4.6.0 → 4.7.3** source upgrade with official 4.7.3 artifacts, Sentinel 1.1.5 image identity and retained Traefik 3.7.16; permit either reviewed Sentinel 1.1.3 or 1.1.5 on the origin while requiring 1.1.5 after the upgrade.
+- Prepare the exact Coolify **4.6.0 → 4.7.3** source upgrade with official 4.7.3 artifacts, Sentinel 1.1.5 dual pinned index/config identities and retained Traefik 3.7.16; permit either reviewed Sentinel 1.1.3 or 1.1.5 on the origin while requiring 1.1.5 after the upgrade.
 - Document 4.7.0 breaking changes: superseded queued webhook builds are cancelled by default, narrower team/API authorization, Resend sender field migration, SSH host-key pinning, and scheduled-task failure disablement; include 4.7.1–4.7.3 security/fix notes.
 - Prepare the exact Coolify 4.5.3 → 4.6.0 production-first candidate, retaining Sentinel 1.1.3 and Traefik 3.7.16 with unchanged upstream Compose/ENV SHA-256 pins.
 - Remove the legacy `COOLIFY_VERSION` override during Coolify install, upgrade and interrupted forward resume; document v4.6 API `delete` permission behavior and restricted token scopes.
 
 ### Validation and limitations
 
-- **4.7.3: source V2 from successful hosted fast-source + documentation build on candidate `86fe3e7`; no production upgrade, Sentinel synchronization, application regression, restore exercise or release approval yet.** See [source review](reviews/2026-11-10-coolify-473-source.md). The prior 4.6.0 V5 result cannot qualify this transition.
+- **4.7.3: initial source V2 passed hosted fast-source + documentation build, but the corrected Sentinel image identity source is V1 pending its own CI; no production upgrade, Sentinel synchronization, application regression, restore exercise or release approval yet.** See [source review](reviews/2026-11-10-coolify-473-source.md). The prior 4.6.0 V5 result cannot qualify this transition.
 - Bounded production V5 on the maintained host: exact 4.5.3 → 4.6.0 upgrade, preflight, verify-coolify/verify/audit and off-host age-encrypted control-plane backup validation passed. See [production evidence](reviews/2026-11-04-coolify-460-production.md).
 - No disposable-VPS V3 by owner instruction. Application data backup/restore, external restic freshness and end-to-end application/API smoke remain unverified; release approval is pending.
 

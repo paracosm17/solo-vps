@@ -48,23 +48,34 @@ class CoolifySentinelInspectTests(unittest.TestCase):
         arguments = dict(
             expected_image=f"{origin['registry']}/coollabsio/sentinel:{origin['version']}",
             expected_image_id=origin["image_id_x86_64"],
+            expected_image_config_id=origin.get("image_config_id_x86_64"),
             expected_version=origin["version"],
             alternative_image=f"{target['registry']}/coollabsio/sentinel:{target['version']}",
             alternative_image_id=target["image_id_x86_64"],
+            alternative_image_config_id=target.get("image_config_id_x86_64"),
             alternative_version=target["version"],
         )
-        for version, image_id in (
-            (origin["version"], origin["image_id_x86_64"]),
-            (target["version"], target["image_id_x86_64"]),
-        ):
-            with self.subTest(version=version):
-                payload = fixture()
-                payload[0]["Config"]["Image"] = f"docker.io/coollabsio/sentinel:{version}"
-                payload[0]["Image"] = image_id
-                self.assertEqual(evaluate_inspect(payload, observed_version=version, **arguments)["status"], "PASS")
-                payload[0]["Image"] = "sha256:" + "0" * 64
-                with self.assertRaises(SentinelInspectionError):
-                    evaluate_inspect(payload, observed_version=version, **arguments)
+        for contract in (origin, target):
+            version = contract["version"]
+            reviewed_ids = (contract["image_id_x86_64"],)
+            if contract.get("image_config_id_x86_64"):
+                reviewed_ids += (contract["image_config_id_x86_64"],)
+            for image_id in reviewed_ids:
+                with self.subTest(version=version, image_id=image_id):
+                    payload = fixture()
+                    payload[0]["Config"]["Image"] = f"docker.io/coollabsio/sentinel:{version}"
+                    payload[0]["Image"] = image_id
+                    self.assertEqual(evaluate_inspect(payload, observed_version=version, **arguments)["status"], "PASS")
+                    payload[0]["Image"] = "sha256:" + "0" * 64
+                    with self.assertRaises(SentinelInspectionError):
+                        evaluate_inspect(payload, observed_version=version, **arguments)
+
+        # A known target image ID is not trusted for the old Sentinel version.
+        payload = fixture()
+        payload[0]["Config"]["Image"] = f"docker.io/coollabsio/sentinel:{origin['version']}"
+        payload[0]["Image"] = target["image_id_x86_64"]
+        with self.assertRaises(SentinelInspectionError):
+            evaluate_inspect(payload, observed_version=origin["version"], **arguments)
 
     def test_reviewed_alternative_requires_the_complete_matching_identity(self):
         payload = fixture()

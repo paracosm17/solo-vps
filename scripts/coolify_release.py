@@ -44,6 +44,13 @@ def validate_manifest(data: object) -> dict:
         raise ValueError("Sentinel requires reviewed x86_64 content identity")
     if not SHA256.fullmatch(str(data['upgrade_from']['sentinel'].get('image_id_x86_64', ''))):
         raise ValueError('origin Sentinel requires reviewed x86_64 content identity')
+    for sentinel in (data['sentinel'], data['upgrade_from']['sentinel']):
+        if 'image_config_id_x86_64' in sentinel:
+            config_id = sentinel['image_config_id_x86_64']
+            if not isinstance(config_id, str) or not SHA256.fullmatch(config_id):
+                raise ValueError('Sentinel requires a valid reviewed x86_64 config identity')
+            if config_id == sentinel['image_id_x86_64']:
+                raise ValueError('Sentinel index and config identities must be distinct')
     if 'proxy' in data:
         proxy = data['proxy']
         if not isinstance(proxy, dict) or not SEMVER.fullmatch(str(proxy.get('version', ''))):
