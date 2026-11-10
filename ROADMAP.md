@@ -1,14 +1,14 @@
 # Solo VPS — ROADMAP
 
 > **Last updated:** 2026-11-10
-> **Current phase:** v0.2.7 candidate: Coolify 4.6.0 → 4.7.3 source V2; prior 4.6.0 bounded production V5 retained
+> **Current phase:** v0.2.7 candidate: Coolify 4.6.0 → 4.7.3 bounded production V5; prior 4.6.0 bounded V5 retained
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** validate the exact 4.6.0 → 4.7.3 transition on the maintained production host after backup/preflight; then review release prerequisites and request approval
+> **Next action:** review exact-head CI, application/HTTPS proof and release dry run; then promote stacked PRs and publish only after release approval
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
-**Candidate boundary (2026-11-10):** The new source candidate targets the *observed* production Coolify 4.6.0 → 4.7.3 transition, with upstream Sentinel 1.1.5 and unchanged Traefik 3.7.16; see [the source/compatibility review](reviews/2026-11-10-coolify-473-source.md). The original 4.7.3 source passed **V2**, but the corrective dual-identity Sentinel source revision is **V1 pending exact-head CI**; the initial candidate had hosted [fast-source](https://github.com/paracosm17/solo-vps/actions/runs/42703500766) and [documentation build](https://github.com/paracosm17/solo-vps/actions/runs/42703500772) successful on initial candidate `86fe3e7`; it is not yet production-qualified. The previous 4.5.3 → 4.6.0 upgrade has separate [bounded production V5 evidence](reviews/2026-11-04-coolify-460-production.md), which does **not** transfer to 4.7.3. PR #36, containing that preceding 4.6.0 step, is not yet merged; this 4.7.3 change is prepared as a stacked PR. No new disposable V3 is asserted. Application database/volume backup, isolated restore, application-specific smoke and external restic freshness remain separate gates.
+**Candidate boundary (2026-11-10):** Coolify **4.6.0 → 4.7.3** completed on the maintained production VPS with **bounded V5** evidence: guarded upgrade `ok=139 changed=9 failed=0`, dedicated `verify-coolify` `ok=56 failed=0`, platform `verify` `ok=163 failed=0` and security `audit` `ok=96 failed=0`; 17/17 containers running, Sentinel 1.1.5 and Traefik 3.7.16 healthy. See [production record](reviews/2026-11-10-coolify-473-production.md) and [source review](reviews/2026-11-10-coolify-473-source.md). The earlier 4.5.3 → 4.6.0 transition retains its separate [bounded V5 evidence](reviews/2026-11-04-coolify-460-production.md). PRs #36 and #38 are stacked and not yet merged; published release is unchanged. There is no new disposable-VPS V3. App-specific HTTPS/API smoke, independent application restore, provider snapshot and restic freshness are not evidenced by these logs.
 
 ---
 

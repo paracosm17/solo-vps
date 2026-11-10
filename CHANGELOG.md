@@ -15,9 +15,9 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 
 ### Validation and limitations
 
-- **4.7.3: initial source V2 passed hosted fast-source + documentation build, but the corrected Sentinel image identity source is V1 pending its own CI; no production upgrade, Sentinel synchronization, application regression, restore exercise or release approval yet.** See [source review](reviews/2026-11-10-coolify-473-source.md). The prior 4.6.0 V5 result cannot qualify this transition.
+- **4.7.3: bounded production V5 on the maintained VPS,** exact 4.6.0 → 4.7.3 guarded upgrade and post-upgrade `verify-coolify`/`verify`/`audit` passed; Sentinel 1.1.5 and Traefik 3.7.16 healthy. See [production evidence](reviews/2026-11-10-coolify-473-production.md) and [source review](reviews/2026-11-10-coolify-473-source.md). Corrected dual-identity Sentinel source also passed exact-head CI.
 - Bounded production V5 on the maintained host: exact 4.5.3 → 4.6.0 upgrade, preflight, verify-coolify/verify/audit and off-host age-encrypted control-plane backup validation passed. See [production evidence](reviews/2026-11-04-coolify-460-production.md).
-- No disposable-VPS V3 by owner instruction. Application data backup/restore, external restic freshness and end-to-end application/API smoke remain unverified; release approval is pending.
+- No disposable-VPS V3 by owner instruction. The owner affirmed application backups, but independent application restore, external restic freshness and end-to-end application/API smoke remain unverified; release publication is pending.
 
 ## [0.2.6] - 2026-10-31
 

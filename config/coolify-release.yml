@@ -27,8 +27,8 @@ sentinel:
   # Official v1.1.5 linux/amd64 image config digest (classic Docker store).
   image_config_id_x86_64: sha256:e677a5637ab4276589839b7f16b7c0eecd16f36c7e5aff915f45da62f2f7b211
 qualification:
-  level: V1
-  evidence: reviews/2026-11-10-coolify-473-source.md
+  level: V5
+  evidence: reviews/2026-11-10-coolify-473-production.md
   release_sha256: sha256:0a2cf5bc365c0aca9b8f44b59591a1b69da2083a62d3ebaa65656062ca1cf902
 proxy:
   version: "3.7.16"
