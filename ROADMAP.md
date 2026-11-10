@@ -1,10 +1,10 @@
 # Solo VPS — ROADMAP
 
 > **Last updated:** 2026-11-10
-> **Current phase:** v0.2.7 candidate: Coolify 4.6.0 → 4.7.3 bounded production V5; prior 4.6.0 bounded V5 retained
+> **Current phase:** v0.2.7 release candidate prepared for publication: Coolify 4.6.0 → 4.7.3 bounded production V5; prior 4.6.0 bounded V5 retained
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** review exact-head CI, application/HTTPS proof and release dry run; then promote stacked PRs and publish only after release approval
+> **Next action:** finish release QA and documented evidence review, merge stacked PRs #36 then #38 and publish v0.2.7 with explicit owner approval
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
