@@ -6,15 +6,20 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 
 ## [Unreleased]
 
+## [0.2.7] - 2026-11-10
+
 ### Changed
 
+- Prepare the exact Coolify **4.6.0 → 4.7.3** source upgrade with official 4.7.3 artifacts, Sentinel 1.1.5 dual pinned index/config identities and retained Traefik 3.7.16; permit either reviewed Sentinel 1.1.3 or 1.1.5 on the origin while requiring 1.1.5 after the upgrade.
+- Document 4.7.0 breaking changes: superseded queued webhook builds are cancelled by default, narrower team/API authorization, Resend sender field migration, SSH host-key pinning, and scheduled-task failure disablement; include 4.7.1–4.7.3 security/fix notes.
 - Prepare the exact Coolify 4.5.3 → 4.6.0 production-first candidate, retaining Sentinel 1.1.3 and Traefik 3.7.16 with unchanged upstream Compose/ENV SHA-256 pins.
 - Remove the legacy `COOLIFY_VERSION` override during Coolify install, upgrade and interrupted forward resume; document v4.6 API `delete` permission behavior and restricted token scopes.
 
 ### Validation and limitations
 
+- **4.7.3: bounded production V5 on the maintained VPS,** exact 4.6.0 → 4.7.3 guarded upgrade and post-upgrade `verify-coolify`/`verify`/`audit` passed; Sentinel 1.1.5 and Traefik 3.7.16 healthy. See [production evidence](reviews/2026-11-10-coolify-473-production.md) and [source review](reviews/2026-11-10-coolify-473-source.md). Corrected dual-identity Sentinel source also passed exact-head CI.
 - Bounded production V5 on the maintained host: exact 4.5.3 → 4.6.0 upgrade, preflight, verify-coolify/verify/audit and off-host age-encrypted control-plane backup validation passed. See [production evidence](reviews/2026-11-04-coolify-460-production.md).
-- No disposable-VPS V3 by owner instruction. Application data backup/restore, external restic freshness and end-to-end application/API smoke remain unverified; release approval is pending.
+- No disposable-VPS V3 by owner instruction. The owner affirmed application backups, but independent application restore, external restic freshness and end-to-end application/API smoke remain unverified; application/API regression and full restore are not independently validated.
 
 ## [0.2.6] - 2026-10-31
 

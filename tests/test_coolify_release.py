@@ -52,3 +52,13 @@ class ReleaseManifestTests(unittest.TestCase):
         data = deepcopy(load_release())
         data['sentinel']['image_id_x86_64'] = ''
         with self.assertRaises(ValueError): variables(data)
+
+    def test_sentinel_config_identity_must_be_reviewed_and_distinct(self):
+        data = deepcopy(load_release())
+        data['sentinel']['image_config_id_x86_64'] = 'sha256:bad'
+        with self.assertRaisesRegex(ValueError, 'valid reviewed'):
+            validate_manifest(data)
+        data = deepcopy(load_release())
+        data['sentinel']['image_config_id_x86_64'] = data['sentinel']['image_id_x86_64']
+        with self.assertRaisesRegex(ValueError, 'must be distinct'):
+            validate_manifest(data)

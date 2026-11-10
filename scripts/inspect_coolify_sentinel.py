@@ -44,15 +44,19 @@ def evaluate_inspect(
     expected_push_endpoint: str | None = None,
     expected_image: str | None = None,
     expected_image_id: str | None = None,
+    expected_image_config_id: str | None = None,
     observed_version: str | None = None,
     expected_version: str | None = None,
     alternative_image: str | None = None,
     alternative_image_id: str | None = None,
+    alternative_image_config_id: str | None = None,
     alternative_version: str | None = None,
 ) -> dict[str, Any]:
     if alternative_version and observed_version == alternative_version:
         _require(bool(alternative_image), 'alternative Sentinel identity must be complete')
-        expected_image, expected_image_id, expected_version = alternative_image, alternative_image_id, alternative_version
+        expected_image, expected_image_id, expected_image_config_id, expected_version = (
+            alternative_image, alternative_image_id, alternative_image_config_id, alternative_version
+        )
     if expected_push_endpoint is not None:
         parsed_url = urlparse(expected_push_endpoint)
         _require(
@@ -109,7 +113,15 @@ def evaluate_inspect(
             allowed_images.add("docker.io/" + expected_image.removeprefix("ghcr.io/"))
         _require(image in allowed_images, "Sentinel image does not match the evaluation candidate")
         if expected_image_id:
-            _require(inspect.get("Image") == expected_image_id, "Sentinel image content does not match the evaluation candidate")
+            reviewed_ids = {expected_image_id}
+            if expected_image_config_id:
+                reviewed_ids.add(expected_image_config_id)
+            _require(
+                inspect.get("Image") in reviewed_ids,
+                "Sentinel image content does not match the evaluation candidate",
+            )
+        else:
+            _require(not expected_image_config_id, "Sentinel image config ID requires a primary image ID")
     if expected_version:
         _require(observed_version == expected_version, "Sentinel API version does not match the evaluation candidate")
 
@@ -148,9 +160,11 @@ def main() -> int:
     parser.add_argument("--expected-push-endpoint")
     parser.add_argument("--expected-image")
     parser.add_argument("--expected-image-id")
+    parser.add_argument("--expected-image-config-id")
     parser.add_argument("--expected-version")
     parser.add_argument('--alternative-image')
     parser.add_argument('--alternative-image-id')
+    parser.add_argument('--alternative-image-config-id')
     parser.add_argument('--alternative-version')
     args = parser.parse_args()
 
@@ -169,10 +183,12 @@ def main() -> int:
             expected_push_endpoint=args.expected_push_endpoint,
             expected_image=args.expected_image,
             expected_image_id=args.expected_image_id,
+            expected_image_config_id=args.expected_image_config_id,
             observed_version=observed_version,
             expected_version=args.expected_version,
             alternative_image=args.alternative_image,
             alternative_image_id=args.alternative_image_id,
+            alternative_image_config_id=args.alternative_image_config_id,
             alternative_version=args.alternative_version,
         )
     except (OSError, json.JSONDecodeError, SentinelInspectionError) as exc:
