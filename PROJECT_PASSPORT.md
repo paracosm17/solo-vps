@@ -4,6 +4,7 @@
 > **Status:** TARGET / DESIGN BOUNDARY — this file is **not** the current implementation-status ledger.  
 > **Current supported contract:** [`README.md`](README.md).  
 > **Current development state / blockers / next action:** [`ROADMAP.md`](ROADMAP.md).  
+> **Future owner ideas and design questions:** [`BACKLOG.md`](BACKLOG.md) (not current capabilities).  
 > **Engineering process:** [`.agents/skills/solo-vps-project-engineer/SKILL.md`](.agents/skills/solo-vps-project-engineer/SKILL.md).
 
 Solo VPS is an opinionated open-source path from a clean Ubuntu VPS to a small, reproducible application platform for a solo developer operating it directly.
@@ -29,7 +30,7 @@ A user should be able to take a supported clean VPS and, with a small number of 
 
 The project should feel like a **small product**, not a bag of shell snippets.
 
-The normal operator workflow should converge toward:
+The existing five-command operator baseline is:
 
 ```text
 make setup
@@ -39,7 +40,7 @@ make platform
 make verify
 ```
 
-Additional operations such as backup, recovery, upgrades, diagnostics, and optional observability must remain explicit and independently understandable.
+Additional operations such as backup, recovery, upgrades, diagnostics, and optional observability must remain explicit and independently understandable. The future owner-directed UX goal is a minimal product CLI for humans and authorized agents, a couple of commands for installation, one command for routine updates, opt-in scheduled updates and compact shareable reports. See [BACKLOG.md](BACKLOG.md) for the proposed design; the current Make contract stays supported until its replacement is implemented and validated.
 
 ---
 

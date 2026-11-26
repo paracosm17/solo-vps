@@ -4,7 +4,7 @@
 > **Current phase:** v0.2.8 published and installed; Coolify 4.7.8 bounded production V5
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** routine maintenance; plan the pending OS reboot separately and retain distinct application/recovery evidence gates
+> **Next action:** review and select the CLI / install / update / reporting redesign scope in [BACKLOG.md](BACKLOG.md); keep the pending OS reboot and distinct recovery evidence separate.
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
@@ -108,6 +108,10 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 - The authorized production migration passed with verified off-host inputs, exact-origin preflight and bounded V5 evidence; retain its recovery limits and do not infer a reliability guarantee.
 - v0.2.8 publication and installed-tag checks passed as recorded above. For the next release, require green protected-main source CI, successful Pages deployment, exact-ref history/archive secret scans and `release-dry-run` for the new unused version before tagging.
 - Publish bounded release notes that preserve separate optional backup/monitoring, external IPv6 packet and uninterrupted browser-walkthrough limits.
+
+### Future product direction
+
+Owner ideas recorded on 2026-11-26: [BACKLOG.md](BACKLOG.md) is the planning list for a minimal product CLI, one-command / opt-in scheduled updates, agent-oriented output and docs, dependency automation, and possible optional runner / observability / shell profiles. All new items are unimplemented; current README, accepted ADRs and existing evidence remain authoritative for supported behavior.
 
 ### Explicitly deferred
 
