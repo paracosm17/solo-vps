@@ -9,6 +9,7 @@ Read only what the task needs.
 - `README.md` — current public user contract and current status.
 - `PROJECT_PASSPORT.md` — product and architecture boundaries.
 - `ROADMAP.md` — current development state, blockers, validation level, and next action.
+- `BACKLOG.md` — owner ideas, proposed product direction and deferred work; not proof of supported commands or approval to implement.
 - `docs/architecture.md` and `docs/adr/` — current ownership/architecture decisions.
 - `docs/` — user operations and reference behavior.
 - repository code/tests/runtime evidence — factual implementation behavior.
