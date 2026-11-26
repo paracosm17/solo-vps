@@ -271,7 +271,8 @@ class CoolifyInstallBackendTests(unittest.TestCase):
     def test_control_plane_dependency_health_gate_fails_closed(self) -> None:
         for old, new in (
             ("    - coolify-redis\n", "    - another-container\n"),
-            ("      - --format\n", "      - --size\n"),
+            ("      - container\n      - inspect\n      - --format\n",
+             "      - container\n      - inspect\n      - --size\n"),
             ("solo_vps_coolify_control_plane_health.stdout | trim == 'healthy'",
              "solo_vps_coolify_control_plane_health.stdout | trim != 'healthy'"),
         ):
