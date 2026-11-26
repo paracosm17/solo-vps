@@ -203,6 +203,32 @@ def validate(root: Path) -> list[str]:
         require(runtime, phrase, "runtime verifier")
 
 
+    # Both control-plane dependencies must pass their upstream healthchecks.
+    # Only the status is safe to inspect; Redis's healthcheck embeds its password.
+    runtime_tasks = yaml.safe_load(runtime)
+    health_tasks = [task for task in runtime_tasks
+                    if task.get("name") == "Require healthy Coolify control-plane PostgreSQL and Redis"]
+    if len(health_tasks) != 1:
+        raise ContractError("runtime verifier requires a control-plane dependency health gate")
+    health = health_tasks[0]
+    if (
+        health.get("ansible.builtin.command", {}).get("argv") != [
+            "{{ solo_vps_coolify_docker_binary }}", "container", "inspect",
+            "--format", "{{ '{{.State.Health.Status}}' }}", "{{ item }}",
+        ]
+        or health.get("loop") != ["coolify-db", "coolify-redis"]
+        or health.get("changed_when") is not False
+        or health.get("register") != "solo_vps_coolify_control_plane_health"
+        or health.get("until") != (
+            "solo_vps_coolify_control_plane_health.rc == 0 and "
+            "solo_vps_coolify_control_plane_health.stdout | trim == 'healthy'"
+        )
+        or any(key in health for key in ("ignore_errors", "failed_when", "when"))
+    ):
+        raise ContractError("runtime verifier must fail closed on both dependency health statuses without inspecting secrets")
+    if runtime.index(health["name"]) > runtime.index("Assert pinned image, healthy runtime, loopback publishes, and M7 ownership"):
+        raise ContractError("control-plane dependency health must be checked before runtime assertion")
+
     if runtime.count("HostIp == solo_vps_coolify_management_bind_address") != 3:
         raise ContractError("runtime verifier must enforce loopback HostIp for all three management publishes")
 

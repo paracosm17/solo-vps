@@ -1,14 +1,14 @@
 # Solo VPS — ROADMAP
 
-> **Last updated:** 2026-11-10
-> **Current phase:** v0.2.7 release candidate prepared for publication: Coolify 4.6.0 → 4.7.3 bounded production V5; prior 4.6.0 bounded V5 retained
+> **Last updated:** 2026-11-26
+> **Current phase:** Coolify 4.7.3 → 4.7.8 source candidate (V1); published v0.2.7 and previous bounded V5 retained
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** finish release QA and documented evidence review, merge stacked PRs #36 then #38 and publish v0.2.7 with explicit owner approval
+> **Next action:** obtain green candidate CI and maintained-VPS upgrade/verification evidence before merge and release preparation
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
-**Candidate boundary (2026-11-10):** Coolify **4.6.0 → 4.7.3** completed on the maintained production VPS with **bounded V5** evidence: guarded upgrade `ok=139 changed=9 failed=0`, dedicated `verify-coolify` `ok=56 failed=0`, platform `verify` `ok=163 failed=0` and security `audit` `ok=96 failed=0`; 17/17 containers running, Sentinel 1.1.5 and Traefik 3.7.16 healthy. See [production record](reviews/2026-11-10-coolify-473-production.md) and [source review](reviews/2026-11-10-coolify-473-source.md). The earlier 4.5.3 → 4.6.0 transition retains its separate [bounded V5 evidence](reviews/2026-11-04-coolify-460-production.md). PRs #36 and #38 are stacked and not yet merged; published release is unchanged. There is no new disposable-VPS V3. App-specific HTTPS/API smoke, independent application restore, provider snapshot and restic freshness are not evidenced by these logs.
+**Candidate boundary (2026-11-26):** Coolify **4.7.3 → 4.7.8** source candidate; exact upstream artifacts, migration risks and dependency checks reviewed in [source review](reviews/2026-11-26-coolify-478-source.md). Hosted CI and maintained-VPS verification are pending; no production V5 or disposable V3 is claimed for 4.7.8. Published v0.2.7 retains the earlier [4.7.3 bounded V5](reviews/2026-11-10-coolify-473-production.md) and [4.6.0 bounded V5](reviews/2026-11-04-coolify-460-production.md). Application/API smoke and restore evidence remain separate gates.
 
 ---
 

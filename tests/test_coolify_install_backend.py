@@ -268,6 +268,19 @@ class CoolifyInstallBackendTests(unittest.TestCase):
         with self.assertRaises(ContractError):
             validate(root)
 
+    def test_control_plane_dependency_health_gate_fails_closed(self) -> None:
+        for old, new in (
+            ("    - coolify-redis\n", "    - another-container\n"),
+            ("      - --format\n", "      - --size\n"),
+            ("solo_vps_coolify_control_plane_health.stdout | trim == 'healthy'",
+             "solo_vps_coolify_control_plane_health.stdout | trim != 'healthy'"),
+        ):
+            with self.subTest(old=old):
+                root = self.make_fixture()
+                self.mutate(root, "ansible/roles/coolify/tasks/verify-runtime.yml", old, new)
+                with self.assertRaises(ContractError):
+                    validate(root)
+
     def test_stale_pre_wait_inspect_evidence_is_rejected(self) -> None:
         root = self.make_fixture()
         self.mutate(
