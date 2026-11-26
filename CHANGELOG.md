@@ -6,6 +6,19 @@ Solo VPS is an alpha project. Published versions are listed in [GitHub Releases]
 
 ## [Unreleased]
 
+## [0.2.8] - 2026-11-26
+
+### Changed
+
+- Prepare the exact Coolify **4.7.3 → 4.7.8** candidate, including 4.7.6/4.7.7 security fixes and the 4.7.8 persistent-volume regression fix. Pin the changed production Compose artifact and retain reviewed Sentinel 1.1.5 and Traefik 3.7.16 identities.
+- Require healthy control-plane PostgreSQL and Redis before successful runtime verification, inspecting only Docker health status.
+- Document ENV deduplication, domain normalization, preview secret restrictions, Compose storage/healthcheck changes and migration risks in both update guides.
+
+### Validation and limitations
+
+- **4.7.8: bounded production V5**, guarded 4.7.3 → 4.7.8 upgrade completed on the maintained VPS: `ok=141 changed=10 failed=0`; `verify-coolify`, `verify` and `audit` passed with `changed=0 failed=0`. All 17 containers running, control-plane PostgreSQL/Redis, Sentinel and Traefik healthy. See [production evidence](reviews/2026-11-26-coolify-478-production.md) and [source review](reviews/2026-11-26-coolify-478-source.md).
+- The tested runtime source passed hosted fast-source and strict documentation build, as well as operator-run `make validate`. No new disposable V3, clean-install replay, application-specific/API deployment smoke, off-site backup validation or independent restore was demonstrated. Automatic local checkpoint succeeded; separate backups were omitted at operator request. Publication remains subject to release-specific review, exact-commit QA, dry run and explicit owner approval.
+
 ## [0.2.7] - 2026-11-10
 
 ### Changed

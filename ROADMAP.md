@@ -1,14 +1,14 @@
 # Solo VPS — ROADMAP
 
-> **Last updated:** 2026-11-10
-> **Current phase:** v0.2.7 release candidate prepared for publication: Coolify 4.6.0 → 4.7.3 bounded production V5; prior 4.6.0 bounded V5 retained
+> **Last updated:** 2026-11-26
+> **Current phase:** v0.2.8 candidate: Coolify 4.7.3 → 4.7.8 bounded production V5; published v0.2.7 retained
 > **Current supported user contract:** [`README.md`](README.md)  
 > **Architecture north star:** [`PROJECT_PASSPORT.md`](PROJECT_PASSPORT.md)  
-> **Next action:** finish release QA and documented evidence review, merge stacked PRs #36 then #38 and publish v0.2.7 with explicit owner approval
+> **Next action:** confirm application smoke and release approval, then complete exact-candidate QA and publication gates for v0.2.8
 
 This file is intentionally short. It records what is true now, what blocks release, and what happens next. Historical implementation detail belongs in Git history, [`CHANGELOG.md`](CHANGELOG.md), or bounded review/evidence files.
 
-**Candidate boundary (2026-11-10):** Coolify **4.6.0 → 4.7.3** completed on the maintained production VPS with **bounded V5** evidence: guarded upgrade `ok=139 changed=9 failed=0`, dedicated `verify-coolify` `ok=56 failed=0`, platform `verify` `ok=163 failed=0` and security `audit` `ok=96 failed=0`; 17/17 containers running, Sentinel 1.1.5 and Traefik 3.7.16 healthy. See [production record](reviews/2026-11-10-coolify-473-production.md) and [source review](reviews/2026-11-10-coolify-473-source.md). The earlier 4.5.3 → 4.6.0 transition retains its separate [bounded V5 evidence](reviews/2026-11-04-coolify-460-production.md). PRs #36 and #38 are stacked and not yet merged; published release is unchanged. There is no new disposable-VPS V3. App-specific HTTPS/API smoke, independent application restore, provider snapshot and restic freshness are not evidenced by these logs.
+**Candidate boundary (2026-11-26):** Coolify **4.7.3 → 4.7.8** completed on the maintained production VPS at `e159635615d106645c23744c112ae6f79d96b046` with bounded V5: upgrade `ok=141 changed=10 failed=0`, `verify-coolify` `ok=57 changed=0 failed=0`, `verify` `ok=164 changed=0 failed=0`, `audit` `ok=96 changed=0 failed=0`; all 17 containers running and all three pinned artifact hashes verified. See [production evidence](reviews/2026-11-26-coolify-478-production.md) and [source review](reviews/2026-11-26-coolify-478-source.md). Published v0.2.7 retains the earlier [4.7.3 bounded V5](reviews/2026-11-10-coolify-473-production.md) and [4.6.0 bounded V5](reviews/2026-11-04-coolify-460-production.md). No additional off-site backup was performed at operator request; automatic checkpoint retained. Application/API smoke, disposable V3 and independent restore remain unevidenced. PR #41 remains unmerged; exact-head QA/dry run, exact-ref history scans and owner publication approval remain pending.
 
 ---
 
@@ -106,7 +106,7 @@ The public upstream is `https://github.com/paracosm17/solo-vps`; its initial `ma
 
 - Preserve the controlled 4.4.0 upgrade and owner-reset fresh-host evidence at V3, including corrected-source resume, native proxy lifecycle, real ingress packets, verification/audit and idempotency. Do not carry the original source's independent V4 label onto the changed route.
 - The authorized production migration passed with verified off-host inputs, exact-origin preflight and bounded V5 evidence; retain its recovery limits and do not infer a reliability guarantee.
-- Require green protected-main source CI, successful Pages deployment, exact-ref history/archive secret scans and `release-dry-run RELEASE_VERSION=v0.2.5` before tagging.
+- Require green protected-main source CI, successful Pages deployment, exact-ref history/archive secret scans and `release-dry-run RELEASE_VERSION=v0.2.8` before tagging the current candidate.
 - Publish bounded release notes that preserve separate optional backup/monitoring, external IPv6 packet and uninterrupted browser-walkthrough limits.
 
 ### Explicitly deferred
