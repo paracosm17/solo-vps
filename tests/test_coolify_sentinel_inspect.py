@@ -44,17 +44,24 @@ class CoolifySentinelInspectTests(unittest.TestCase):
         target = release["sentinel"]
         if origin["version"] != target["version"]:
             self.assertTrue(origin["accept_target"], "a Sentinel version bump must accept an early upstream agent sync")
+        else:
+            self.assertFalse(origin.get("accept_target", False), "unchanged Sentinel needs no alternate identity")
+            for key in ("registry", "image_id_x86_64", "image_config_id_x86_64"):
+                self.assertEqual(origin.get(key), target.get(key), key)
 
         arguments = dict(
             expected_image=f"{origin['registry']}/coollabsio/sentinel:{origin['version']}",
             expected_image_id=origin["image_id_x86_64"],
             expected_image_config_id=origin.get("image_config_id_x86_64"),
             expected_version=origin["version"],
-            alternative_image=f"{target['registry']}/coollabsio/sentinel:{target['version']}",
-            alternative_image_id=target["image_id_x86_64"],
-            alternative_image_config_id=target.get("image_config_id_x86_64"),
-            alternative_version=target["version"],
         )
+        if origin.get("accept_target", False):
+            arguments.update(
+                alternative_image=f"{target['registry']}/coollabsio/sentinel:{target['version']}",
+                alternative_image_id=target["image_id_x86_64"],
+                alternative_image_config_id=target.get("image_config_id_x86_64"),
+                alternative_version=target["version"],
+            )
         for contract in (origin, target):
             version = contract["version"]
             reviewed_ids = (contract["image_id_x86_64"],)
@@ -70,12 +77,17 @@ class CoolifySentinelInspectTests(unittest.TestCase):
                     with self.assertRaises(SentinelInspectionError):
                         evaluate_inspect(payload, observed_version=version, **arguments)
 
-        # A known target image ID is not trusted for the old Sentinel version.
+        # A known target image ID is not trusted for a mismatched tag/API version.
         payload = fixture()
-        payload[0]["Config"]["Image"] = f"docker.io/coollabsio/sentinel:{origin['version']}"
         payload[0]["Image"] = target["image_id_x86_64"]
+        if origin["version"] != target["version"]:
+            wrong_version = origin["version"]
+            payload[0]["Config"]["Image"] = f"{origin['registry']}/coollabsio/sentinel:{wrong_version}"
+        else:
+            wrong_version = "0.0.0"
+            payload[0]["Config"]["Image"] = f"{target['registry']}/coollabsio/sentinel:{target['version']}"
         with self.assertRaises(SentinelInspectionError):
-            evaluate_inspect(payload, observed_version=origin["version"], **arguments)
+            evaluate_inspect(payload, observed_version=wrong_version, **arguments)
 
     def test_reviewed_alternative_requires_the_complete_matching_identity(self):
         payload = fixture()
